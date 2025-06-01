@@ -7,6 +7,8 @@ services:
     networks:
       - network
     restart: unless-stopped
+    volumes:
+      -  ./frontend:/var/www/html:ro
 
 networks:
   network:
