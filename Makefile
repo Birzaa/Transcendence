@@ -8,8 +8,7 @@ down:
 clean:
 	docker compose -f docker-compose.yml down
 
-fclean: clean 
-	@sudo chown -R $(shell whoami):$(shell whoami)
+fclean: clean
 
 re: fclean all
 
