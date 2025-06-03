@@ -1,0 +1,19 @@
+# Dependencies
+**/node_modules/
+**/.pnp
+.pnp.js
+
+
+# Build files
+**/dist/
+**/build/
+**/public/style.css  # Fichier généré par Tailwind
+
+# IDE/Editor
+.vscode/
+
+# TypeScript
+*.tsbuildinfo
+
+# Docker
+docker-compose.override.yml

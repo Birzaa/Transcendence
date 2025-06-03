@@ -1,0 +1,18 @@
+**/.git
+**/.dockerignore
+**/.gitignore
+
+# Dependencies (reinstallées dans le conteneur)
+**/node_modules/
+
+# Fichiers de dev
+**/npm-debug.log
+**/.env
+**/*.md
+**/docker-compose.yml  # Sauf si nécessaire
+
+# Fichiers inutiles pour le build
+**/tsconfig.json
+**/tailwind.config.js
+**/src/             # Sauf si vous avez besoin des sources
+**/test/
