@@ -1,15 +1,10 @@
 services:
-  nginx:
-    build: ./nginx
-    container_name: nginx
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
     ports:
-      - "443:443"
-    networks:
-      - network
-    restart: unless-stopped
-    volumes:
-      -  ./frontend:/var/www/html:ro
-
-networks:
-  network:
-    driver: bridge
+      - "3000:3000"
+    # volumes:
+    #   - .:/app
+    command: sh -c "npm run build && serve -s public -l 3000"

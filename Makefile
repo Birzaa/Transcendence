@@ -1,15 +1,31 @@
-all:
-	@docker compose -f ./docker-compose.yml up
-	# @docker compose -f ./docker-compose.yml up -d
+NAME = ft_transcendence
+
+# Couleurs pour un affichage sympa
+GREEN = \033[0;32m
+NC = \033[0m
+
+all: up
+
+build:
+	@echo "$(GREEN)🛠️  Build de l'image Docker...$(NC)"
+	docker-compose build
+
+up:
+	@echo "$(GREEN)🚀 Lancement de l'application...$(NC)"
+	docker-compose up
 
 down:
-	docker compose -f docker-compose.yml down
+	@echo "$(GREEN)🛑 Arrêt des containers...$(NC)"
+	docker-compose down
+
+re: down build up
+
+logs:
+	@echo "$(GREEN)📋 Logs des containers...$(NC)"
+	docker-compose logs -f
 
 clean:
-	docker compose -f docker-compose.yml down
+	@echo "$(GREEN)🧹 Suppression des containers/images...$(NC)"
+	docker-compose down --rmi all --volumes --remove-orphans
 
-fclean: clean
-
-re: fclean all
-
-.PHONY: all re down clean fclean
+.PHONY: all build up down re logs clean
