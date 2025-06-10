@@ -13,4 +13,10 @@ services:
       - "3001:3001"
     volumes:
       - ./backend:/app
+      - db_data:/data
       - /app/node_modules
+    environment:
+      - DB_PATH=/data/transcendence.db
+
+volumes:
+  db_data:

@@ -1,15 +1,23 @@
-import Fastify from 'fastify';
+import fastify from 'fastify';
+import db from './database';
 
-const server = Fastify();
+const app = fastify({ logger: true });
 
-server.get('/', async () => {
-  return { message: 'Hello from Fastify!' };
+// Exemple de route
+app.get('/users', async () => {
+  const stmt = db.prepare('SELECT * FROM users');
+  return stmt.all();
 });
 
-server.listen({ port: 4000, host: '0.0.0.0' }, (err, address) => {
-  if (err) {
-    console.error(err);
+// Démarrer le serveur
+const start = async () => {
+  try {
+    await app.listen({ port: 3001, host: '0.0.0.0' });
+    console.log('🚀 Server ready');
+  } catch (err) {
+    app.log.error(err);
     process.exit(1);
   }
-  console.log(`🚀 Fastify server is running at ${address}`);
-});
+};
+
+start();

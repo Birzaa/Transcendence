@@ -1,0 +1,8 @@
+{
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13"
+  },
+  "dependencies": {
+    "sqlite3": "^5.1.7"
+  }
+}
