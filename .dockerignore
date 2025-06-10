@@ -1,6 +1,4 @@
 **/.git
-**/.dockerignore
-**/.gitignore
 
 # Dependencies (reinstallées dans le conteneur)
 **/node_modules/
