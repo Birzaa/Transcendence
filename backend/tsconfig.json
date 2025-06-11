@@ -7,5 +7,6 @@
     "strict": true,
     "skipLibCheck": true,
     "typeRoots": ["./node_modules/@types", "./types"]
-  }
+  },
+  "include": ["src", "types"]
 }

@@ -13,6 +13,7 @@ services:
       - "3001:3001"
     volumes:
       - ./backend:/app
+      - /app/node_modules  # ← ajoute cette ligne !
     environment:
       - DB_PATH=/app/transcendence.db
     env_file:
