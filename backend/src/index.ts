@@ -1,19 +1,24 @@
-import fastify from 'fastify';
-import db from './database';
+import Fastify from 'fastify';
+import formbody from '@fastify/formbody';
+import registerRoutes from './routes/register';
+import loginRoutes from './routes/login';
+import logoutRoutes from './routes/logout';
+import session from './plugins/session';
+import 'dotenv/config';
 
-const app = fastify({ logger: true });
+const app = Fastify({ logger: true });
 
-// Exemple de route
-app.get('/users', async () => {
-  const stmt = db.prepare('SELECT * FROM users');
-  return stmt.all();
-});
+app.register(formbody);
+app.register(session);
 
-// Démarrer le serveur
+// Routes
+app.register(registerRoutes);
+app.register(loginRoutes);
+app.register(logoutRoutes);
+
 const start = async () => {
   try {
     await app.listen({ port: 3001, host: '0.0.0.0' });
-    console.log('🚀 Server ready');
   } catch (err) {
     app.log.error(err);
     process.exit(1);

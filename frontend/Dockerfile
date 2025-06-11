@@ -14,9 +14,6 @@ RUN npm install
 # 4) Copier le reste du projet (src/, public/, tailwind.config.js, tsconfig.json, etc.)
 COPY . .
 
-# 5) Exposer le port 3000 (celui que 'serve' va écouter)
-EXPOSE 3000
-
 RUN npm install -g serve
 
 # 6) Par défaut, exécuter le script 'start' défini dans package.json
