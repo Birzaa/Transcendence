@@ -1,20 +1,23 @@
 services:
   frontend:
     build: ./frontend
-    ports:
-      - "3000:3000"
     volumes:
       - ./frontend:/app
       - /app/node_modules
+      - frontend-public:/app/public  # ← public compilé ici
 
   backend:
     build: ./backend
-    ports:
-      - "3001:3001"
     volumes:
       - ./backend:/app
-      - /app/node_modules  # ← ajoute cette ligne !
+      - /app/node_modules
+      - frontend-public:/app/frontend/public  # ← lecture des fichiers ici
+    ports:
+      - "3001:3001"
     environment:
       - DB_PATH=/app/transcendence.db
     env_file:
-    - ./backend/.env
+      - ./backend/.env
+
+volumes:
+  frontend-public:
