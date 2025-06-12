@@ -19,17 +19,14 @@ app.register(loginRoutes);
 app.register(logoutRoutes);
 
 app.register(fastifyStatic, {
-  root: path.join(__dirname, '../frontend/public'), // ← chemin correct
+  root: path.join(__dirname, '../public'), // ← chemin correct
   prefix: '/',
-  wildcard: false
+  wildcard: true
 })
 
 app.setNotFoundHandler((req, reply) => {
-  if (req.raw.url?.startsWith('/api')) {
-    return reply.status(404).send({ error: 'API route not found' })
-  }
-  return reply.sendFile('index.html') // fallback SPA
-})
+  reply.type('text/html').sendFile('index.html'); // SPA
+});
 
 const start = async () => {
   try {

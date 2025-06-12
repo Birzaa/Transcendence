@@ -1,52 +1,27 @@
-const app = document.getElementById("app")!;
+import { renderHome } from "./views/home.js";
+import { renderProfil } from "./views/profil.js";
+import { renderChat } from "./views/chat.js";
+import { renderAuth } from "./views/auth.js";
+
 
 function render(path: string): void {
   switch (path) {
-    case '/':
-  app.innerHTML = `
-    <h1 class="text-3xl font-bold mb-4">Home</h1>
-    <button class="btn px-4 py-2 bg-blue-600 text-white rounded mr-2" id="profil">Profil</button>
-    <button class="btn px-4 py-2 bg-green-600 text-white rounded" id="chat">Chat</button>
-  `;
-  document.getElementById('profil')?.addEventListener('click', () => {
-    navigate('/profil');
-  });
-  document.getElementById('chat')?.addEventListener('click', () => {
-    navigate('/chat');
-  });
-  break;
-
-
-    case '/profil':
-      app.innerHTML = `
-        <h1 class="text-3xl font-bold mb-4">Profil</h1>
-        <button class="btn px-4 py-2 bg-blue-600 text-white rounded" id="home">Home</button>
-      `;
-      document.getElementById('home')?.addEventListener('click', () => {
-        navigate('/');
-      });
-      break;
-
-    case '/chat':
-      app.innerHTML = `
-        <h1 class="text-3xl font-bold mb-4">Chat</h1>
-        <button class="btn px-4 py-2 bg-blue-600 text-white rounded" id="home">Home</button>
-      `;
-      document.getElementById('home')?.addEventListener('click', () => {
-        navigate('/');
-      });
-      break;
-
+    case '/': renderHome(navigate); break;
+    case '/profil': renderProfil(navigate); break;
+    case '/chat': renderChat(navigate); break;
+    case '/auth': renderAuth(navigate); break;
     default:
-      app.innerHTML = `<h1>Page non trouvée</h1>`;
-  }
+      document.getElementById("app")!.innerHTML = `<h1>Page non trouvée</h1>`;
+    }
 }
+
 
 function navigate(path: string): void {
   window.history.pushState({}, '', path);
   render(path);
 }
 
+// Gérer les retours en arrière du navigateur
 window.addEventListener('popstate', () => {
   render(window.location.pathname);
 });

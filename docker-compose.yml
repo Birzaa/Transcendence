@@ -1,17 +1,18 @@
 services:
   frontend:
     build: ./frontend
+    working_dir: /app
     volumes:
-      - ./frontend:/app
-      - /app/node_modules
-      - frontend-public:/app/public  # ← public compilé ici
+      - /app/node_modules           # évite les conflits de dépendances locales
+      - frontend-public:/app/public  # output de `npm run build` ici
 
   backend:
     build: ./backend
+    working_dir: /app
     volumes:
-      - ./backend:/app
+      - ./backend:/app              # monte ton code backend
       - /app/node_modules
-      - frontend-public:/app/frontend/public  # ← lecture des fichiers ici
+      - frontend-public:/app/public  # récupère les fichiers compilés du frontend
     ports:
       - "3001:3001"
     environment:
