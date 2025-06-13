@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Chat</title>
+  <script type="module" src="/src/main.ts"></script>
+  <link href="/style.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 flex flex-col items-center justify-center h-screen p-4">
+  <div class="w-full max-w-md bg-white p-4 shadow rounded">
+    <h1 class="text-xl font-bold mb-4">Chat</h1>
+    <div id="messages" class="h-64 overflow-y-auto border p-2 mb-2 rounded"></div>
+    <div class="flex">
+      <input id="input" type="text" class="flex-grow border rounded p-2 mr-2" placeholder="Type a message" />
+      <button id="send" class="bg-blue-500 text-white px-4 py-2 rounded">Send</button>
+    </div>
+  </div>
+</body>
+</html>
