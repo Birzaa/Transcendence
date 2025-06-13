@@ -1,12 +1,21 @@
+// frontend/tsconfig.json
 {
   "compilerOptions": {
-    "outDir": "./public",
-    "rootDir": "./src",
-    "module": "ESNext",
-    "target": "ES2017",
-    "moduleResolution": "node",
+    "target": "es2020", // ou un autre standard ECMAScript
+    "module": "esnext",
     "strict": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "./public", // <--- C'est la ligne importante !
+    "rootDir": "./src",   // Indique où sont tes fichiers sources
+    "moduleResolution": "node",
+    "resolveJsonModule": true
   },
-  "include": ["src/**/*"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }
