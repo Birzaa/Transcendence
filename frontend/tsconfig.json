@@ -1,10 +1,12 @@
 {
   "compilerOptions": {
-    "target": "ES6",
-    "module": "ESNext",
-    "outDir": "./public/assets",
+    "outDir": "./public",
     "rootDir": "./src",
+    "module": "ESNext",
+    "target": "ES2017",
+    "moduleResolution": "node",
     "strict": true,
-    "moduleResolution": "node"
-  }
+    "esModuleInterop": true
+  },
+  "include": ["src/**/*"]
 }

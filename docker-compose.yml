@@ -1,20 +1,24 @@
 services:
   frontend:
     build: ./frontend
-    ports:
-      - "3000:3000"
+    working_dir: /app
     volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      - /app/node_modules           # évite les conflits de dépendances locales
+      - frontend-public:/app/public  # output de `npm run build` ici
 
   backend:
     build: ./backend
+    working_dir: /app
+    volumes:
+      - ./backend:/app              # monte ton code backend
+      - /app/node_modules
+      - frontend-public:/app/public  # récupère les fichiers compilés du frontend
     ports:
       - "3001:3001"
-    volumes:
-      - ./backend:/app
-      - /app/node_modules  # ← ajoute cette ligne !
     environment:
       - DB_PATH=/app/transcendence.db
     env_file:
-    - ./backend/.env
+      - ./backend/.env
+
+volumes:
+  frontend-public:
