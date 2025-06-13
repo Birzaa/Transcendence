@@ -3,16 +3,17 @@ services:
     build: ./frontend
     working_dir: /app
     volumes:
-      - /app/node_modules           # évite les conflits de dépendances locales
-      - frontend-public:/app/public  # output de `npm run build` ici
+      - ./frontend:/app             # <-- TRÈS IMPORTANT : Monte tout le code source frontend
+      - /app/node_modules           # Exclut node_modules
+    # ... autres configs comme les ports si tu as un serveur de dev frontend
 
   backend:
     build: ./backend
     working_dir: /app
     volumes:
-      - ./backend:/app              # monte ton code backend
+      - ./backend:/app              # Monte le code source backend
       - /app/node_modules
-      - frontend-public:/app/public  # récupère les fichiers compilés du frontend
+      - ./frontend/public:/app/public # <-- TRÈS IMPORTANT : Le backend lit le public de l'hôte
     ports:
       - "3001:3001"
     environment:
@@ -20,5 +21,6 @@ services:
     env_file:
       - ./backend/.env
 
-volumes:
-  frontend-public:
+# Assure-toi que la section 'volumes:' pour 'frontend-public' est commentée ou supprimée :
+# volumes:
+#   frontend-public:

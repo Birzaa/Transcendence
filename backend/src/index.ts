@@ -19,7 +19,7 @@ app.register(loginRoutes);
 app.register(logoutRoutes);
 
 app.register(fastifyStatic, {
-  root: path.join(__dirname, '../public'), // ← chemin correct
+  root: '/app/public',
   prefix: '/',
   wildcard: true
 })

@@ -12,7 +12,7 @@ build:
 
 up:
 	@echo "$(GREEN)🚀 Lancement de l'application...$(NC)"
-	docker-compose up --build
+	docker-compose up
 
 down:
 	@echo "$(GREEN)🛑 Arrêt des containers...$(NC)"

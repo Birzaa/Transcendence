@@ -1,6 +1,6 @@
-export function navBar() : HTMLElement{
-	const nav = document.createElement('nav');
-	nav.innerHTML = `
+export function navBar() {
+    const nav = document.createElement('nav');
+    nav.innerHTML = `
 	<nav class="flex justify-between items-center px-6 py-4 bg-pink-400 text-white text-2xl">
  		<div>
    			<a href="/" class="font-medium  rounded-lg px-3 py-3 hover:bg-gray-700">LOGO</a>
@@ -13,6 +13,5 @@ export function navBar() : HTMLElement{
 		</div>
 	</nav>
 	`;
-
-	return nav;
+    return nav;
 }

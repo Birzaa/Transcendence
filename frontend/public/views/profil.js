@@ -1,7 +1,6 @@
-export function renderProfil(): void {
-	const app = document.getElementById('app')!;
-
-	app.innerHTML = `
+export function renderProfil() {
+    const app = document.getElementById('app');
+    app.innerHTML = `
 		<div class="flex flex-row">
 			<div class="basis-1/6 bg-slate-500 p-4"> 
 				<div class="text-2xl"> 
