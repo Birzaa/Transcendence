@@ -24,20 +24,24 @@ export function renderChat() {
     setupWebSocket();
 }
 function setupWebSocket() {
-    const socket = new WebSocket('ws://localhost:3000/ws');
+    const socket = new WebSocket('ws://localhost:3001/ws');
     const messagesContainer = document.getElementById('messages');
     const input = document.getElementById('input');
     const sendButton = document.getElementById('send');
     const usersContainer = document.getElementById('users');
+    const blockedUsers = new Set();
     socket.onopen = () => {
-        console.log('✅ WebSocket connecté');
+        console.log('WebSocket connected');
+        socket.send(JSON.stringify({ type: 'set_username', username: 'Test' }));
     };
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
         if (data.type === 'message') {
+            if (blockedUsers.has(data.from))
+                return;
             const div = document.createElement('div');
-            div.textContent = `${data.from}: ${data.content}`;
-            div.className = 'bg-gray-200 p-2 rounded';
+            div.textContent = `${data.from} : ${data.content}`;
+            div.className = 'bg-gray-200 p-2 rounded break-words break-all w-full overflow-hidden';
             messagesContainer.appendChild(div);
         }
         if (data.type === 'user_list') {
@@ -57,6 +61,12 @@ function setupWebSocket() {
             });
         }
     };
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && input.value.trim()) {
+            socket.send(JSON.stringify({ type: 'message', content: input.value }));
+            input.value = '';
+        }
+    });
     sendButton.addEventListener('click', () => {
         if (input.value.trim()) {
             socket.send(JSON.stringify({ type: 'message', content: input.value }));
@@ -67,6 +77,61 @@ function setupWebSocket() {
         socket.send(JSON.stringify({ type: 'invite', to: username }));
     };
     window.block = (username) => {
+        blockedUsers.add(username);
         socket.send(JSON.stringify({ type: 'block', target: username }));
     };
 }
+// const token = localStorage.getItem('token'); // ou depuis les cookies si tu utilises ça
+// if (!token) {
+// 	alert("Vous devez être connecté pour accéder au chat.");
+// 	window.location.href = "/login"; // redirection si non connecté
+// }
+// const socket = new WebSocket(`ws://localhost:3001/ws?token=${encodeURIComponent(token)}`);
+// import { FastifyInstance } from 'fastify';
+// import { WebSocketServer, WebSocket } from 'ws';
+// import { parse } from 'url';
+// import jwt from 'jsonwebtoken';
+// interface ExtendedWebSocket extends WebSocket {
+// 	username?: string;
+// }
+// const JWT_SECRET = 'votre_clé_secrète'; // Même clé que celle utilisée pour signer les JWT
+// export default async function setupWebSocket(fastify: FastifyInstance) {
+// 	const wss = new WebSocketServer({ noServer: true });
+// 	wss.on('connection', (socket: ExtendedWebSocket, request) => {
+// 		const parsedUrl = parse(request.url!, true);
+// 		const token = parsedUrl.query.token?.toString();
+// 		if (!token) {
+// 			socket.close(4001, 'Token manquant');
+// 			return;
+// 		}
+// 		try {
+// 			const payload = jwt.verify(token, JWT_SECRET) as { username: string };
+// 			socket.username = payload.username;
+// 			console.log(`[+] ${socket.username} connecté`);
+// 			socket.send(JSON.stringify({ type: 'message', from: 'Server', content: 'Bienvenue dans le chat !' }));
+// 			socket.on('message', (msg) => {
+// 				const data = JSON.parse(msg.toString());
+// 				if (data.type === 'message') {
+// 					wss.clients.forEach(client => {
+// 						if (client.readyState === WebSocket.OPEN) {
+// 							client.send(JSON.stringify({
+// 								type: 'message',
+// 								from: socket.username,
+// 								content: data.content,
+// 							}));
+// 						}
+// 					});
+// 				}
+// 			});
+// 		} catch (err) {
+// 			socket.close(4002, 'Token invalide');
+// 		}
+// 	});
+// 	fastify.server.on('upgrade', (request, socket, head) => {
+// 		if (request.url?.startsWith('/ws')) {
+// 			wss.handleUpgrade(request, socket, head, (ws) => {
+// 				wss.emit('connection', ws as ExtendedWebSocket, request);
+// 			});
+// 		}
+// 	});
+// }

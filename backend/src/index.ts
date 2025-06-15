@@ -6,6 +6,7 @@ import logoutRoutes from './routes/logout';
 import session from './plugins/session';
 import fastifyStatic from '@fastify/static';
 import path from 'path';
+import setupWebSocket from './ws';
 import 'dotenv/config';
 
 const app = Fastify({ logger: true });
@@ -31,6 +32,7 @@ app.setNotFoundHandler((req, reply) => {
 const start = async () => {
   try {
     await app.listen({ port: 3001, host: '0.0.0.0' });
+    await setupWebSocket(app);
     console.log('Server running on http://localhost:3001');
   } catch (err) {
     app.log.error(err);
