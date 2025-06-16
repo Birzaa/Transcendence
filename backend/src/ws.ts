@@ -20,6 +20,13 @@ export default async function setupWebSocket(fastify: FastifyInstance) {
     });
   }
 
+  function getSocketByUsername(username: string): WebSocket | undefined {
+    for (const [sock, name] of clients.entries()) {
+      if (name === username) return sock;
+    }
+    return undefined;
+  }
+
   wss.on('connection', (socket) => {
     socket.send(JSON.stringify({ type: 'message', from: 'Server', content: 'Bienvenue dans le chat !' }));
 
@@ -29,6 +36,7 @@ export default async function setupWebSocket(fastify: FastifyInstance) {
       try {
         const data = JSON.parse(message.toString());
 
+        // 1. Définition du username
         if (data.type === 'set_username') {
           username = data.username;
           clients.set(socket, username);
@@ -38,6 +46,7 @@ export default async function setupWebSocket(fastify: FastifyInstance) {
           return;
         }
 
+        // 2. Blocage / Déblocage
         if (data.type === 'block' && username) {
           blockedMap.get(username)?.add(data.target);
           return;
@@ -48,6 +57,7 @@ export default async function setupWebSocket(fastify: FastifyInstance) {
           return;
         }
 
+        // 3. Message global
         if (data.type === 'message' && username) {
           const payload = JSON.stringify({
             type: 'message',
@@ -60,13 +70,34 @@ export default async function setupWebSocket(fastify: FastifyInstance) {
             if (
               client.readyState === WebSocket.OPEN &&
               recipient &&
-              !blockedMap.get(username)?.has(recipient) && // sender n’a pas bloqué le receiver
-              !blockedMap.get(recipient)?.has(username)    // receiver n’a pas bloqué le sender
+              !blockedMap.get(username)?.has(recipient) &&
+              !blockedMap.get(recipient)?.has(username)
             ) {
               client.send(payload);
             }
           });
+          return;
         }
+
+        // 4. Message privé
+        if (data.type === 'private_message' && username) {
+          const recipientSocket = getSocketByUsername(data.to);
+          const recipientName = data.to;
+
+          if (
+            recipientSocket &&
+            recipientSocket.readyState === WebSocket.OPEN &&
+            !blockedMap.get(recipientName)?.has(username)
+          ) {
+            recipientSocket.send(JSON.stringify({
+              type: 'private_message',
+              from: username,
+              content: data.content
+            }));
+          }
+          return;
+        }
+
       } catch (err) {
         console.error('Invalid message format', err);
       }
@@ -81,6 +112,7 @@ export default async function setupWebSocket(fastify: FastifyInstance) {
     });
   });
 
+  // WebSocket upgrade
   fastify.server.on('upgrade', (request, socket, head) => {
     if (request.url === '/ws') {
       wss.handleUpgrade(request, socket, head, (ws) => {
