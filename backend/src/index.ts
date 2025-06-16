@@ -6,6 +6,9 @@ import logoutRoutes from './routes/logout';
 import apiRoutes from './api/api';
 import meRoute from './api/me';
 import userIdByName from './api/userIdByName';
+import removeFriend from './api/removeFriend';
+import addFriend from './api/addFriend';
+import friendList from './api/friendList';
 import session from './plugins/session';
 import fastifyStatic from '@fastify/static';
 import path from 'path';
@@ -24,6 +27,9 @@ async function start() {
   await app.register(apiRoutes);
   await app.register(userIdByName);
   await app.register(meRoute);
+  await app.register(friendList);
+  await app.register(addFriend);
+  await app.register(removeFriend);
 
   app.register(fastifyStatic, {
     root: '/app/public', // attention ici : vérifie si ce chemin est correct dans ton conteneur

@@ -1,3 +1,5 @@
+import { navigate } from "../main.js";
+
 export async function navBar() : Promise<HTMLElement> {
 	// Verification de connexion
 	let isLogin = false;
@@ -15,11 +17,28 @@ export async function navBar() : Promise<HTMLElement> {
 				<a href="/chat" class="font-medium rounded-lg px-3 py-3 hover:bg-gray-700">Chat</a>
 				<a href="/profil" class="font-medium rounded-lg px-3 py-3 hover:bg-gray-700">Profile</a>
 				${isLogin 
-					? `<a href="/logout" class="font-medium rounded-lg px-3 py-3 hover:bg-gray-700">Logout</a>`
+					? `<a href="/logout" id="logout-btn" class="font-medium rounded-lg px-3 py-3 hover:bg-gray-700">Logout</a>`
 					: `<a href="/auth" class="font-medium rounded-lg px-3 py-3 hover:bg-gray-700">Login</a>`}
 			</div>
 		</nav>
 	`;
+
+	if (isLogin) {
+		const logoutBtn = nav.querySelector('#logout-btn');
+		if (logoutBtn) {
+			logoutBtn.addEventListener('click', async (e) => {
+				e.preventDefault(); // Empêche la navigation
+
+				await fetch('/logout', {
+					method: 'POST',
+					credentials: 'include',
+				});
+
+				// Redirige vers la page d’accueil ou login
+				navigate('/');
+			});
+		}
+	}
 
 	return nav;
 }

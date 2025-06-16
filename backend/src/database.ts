@@ -37,4 +37,16 @@ CREATE TABLE IF NOT EXISTS games (
 `);
 
 
+// Tables friends
+db.exec(`
+    CREATE TABLE IF NOT EXISTS friends (
+    user_id INTEGER NOT NULL,
+    friend_id INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, friend_id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (friend_id) REFERENCES users(id)
+);
+`);
+
 export default db;

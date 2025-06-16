@@ -3,9 +3,15 @@ import { renderProfil } from "./views/profil.js";
 import { renderChat } from "./views/chat.js";
 import { renderAuth } from "./views/auth.js";
 import { navBar } from "./components/navbar.js";
-async function init() {
+async function renderNav() {
+    const existingNav = document.querySelector('nav');
+    if (existingNav)
+        existingNav.remove();
     const nav = await navBar();
     document.body.prepend(nav);
+}
+async function init() {
+    await renderNav(); // initial load
     render(window.location.pathname + window.location.search);
 }
 init();
@@ -50,7 +56,7 @@ document.addEventListener('click', (e) => {
     }
 });
 // SPA
-function navigate(pathWithQuery) {
+export function navigate(pathWithQuery) {
     window.history.pushState({}, '', pathWithQuery);
     render(pathWithQuery);
 }

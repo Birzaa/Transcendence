@@ -1,3 +1,5 @@
+import { navigate } from "../main.js";
+
 export async function renderAuth(): Promise<void> {
   const app = document.getElementById('app');
   if (!app) return;
@@ -89,6 +91,7 @@ export async function renderAuth(): Promise<void> {
 
         message.style.color = 'green';
         message.textContent = 'Connecté avec succès !';
+        navigate('/');
 
         // Ici tu peux rediriger ou appeler une fonction pour afficher la page profil, etc.
       } catch (err: any) {
