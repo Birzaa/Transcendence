@@ -1,3 +1,6 @@
+let socket: WebSocket | null = null;
+const blockedUsers = new Set<string>(JSON.parse(localStorage.getItem('blockedUsers') || '[]'));
+
 export function renderChat(): void {
 	const app = document.getElementById('app');
 	if (!app) return;
@@ -22,144 +25,143 @@ export function renderChat(): void {
 		</div>
 	`;
 
-	setupWebSocket();
+	initChatWebSocket();
 }
 
-function setupWebSocket(): void {
-	const socket = new WebSocket('ws://localhost:3001/ws');
+async function initChatWebSocket(): Promise<void> {
+	let username = 'WhoAreU?';
+
+	try {
+		const res = await fetch('/api/me');
+		if (res.ok) {
+			const data = await res.json();
+			username = data.name;
+		}
+	} catch (err) {
+		console.warn('Utilisateur non connecté ou erreur de session.');
+	}
+
+	// Fermer l’ancienne connexion si elle existe
+	if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+		socket.close();
+		socket = null;
+	}
+
+	setupWebSocket(username);
+}
+
+function setupWebSocket(username: string): void {
+	socket = new WebSocket('ws://localhost:3001/ws');
 
 	const messagesContainer = document.getElementById('messages')!;
 	const input = document.getElementById('input') as HTMLInputElement;
 	const sendButton = document.getElementById('send')!;
 	const usersContainer = document.getElementById('users')!;
-    const blockedUsers = new Set<string>();
 
 	socket.onopen = () => {
-		console.log('WebSocket connected');
-        socket.send(JSON.stringify({ type: 'set_username', username: 'Test' }));
+		socket!.send(JSON.stringify({ type: 'set_username', username }));
 	};
 
 	socket.onmessage = (event: MessageEvent) => {
 		const data = JSON.parse(event.data);
 
 		if (data.type === 'message') {
-            if (blockedUsers.has(data.from))
-                return;
+			if (data.from !== username && blockedUsers.has(data.from)) return;
+
 			const div = document.createElement('div');
 			div.textContent = `${data.from} : ${data.content}`;
 			div.className = 'bg-gray-200 p-2 rounded break-words break-all w-full overflow-hidden';
 			messagesContainer.appendChild(div);
+			messagesContainer.scrollTop = messagesContainer.scrollHeight;
 		}
 
 		if (data.type === 'user_list') {
-			usersContainer.innerHTML = ''; // Clear list
+			usersContainer.innerHTML = '';
 			data.users.forEach((user: string) => {
+				const isSelf = user === username;
+				const isBlocked = blockedUsers.has(user);
+
 				const li = document.createElement('li');
 				li.innerHTML = `
 					<div class="flex justify-between items-center">
-						<span>${user}</span>
+						<a href="/profil" onclick="event.preventDefault(); openUserProfile('${user}');" class="text-blue-600 hover:underline cursor-pointer">${user}</a>
 						<div class="space-x-1">
 							<button class="text-blue-500 hover:underline" onclick="invite('${user}')">Inviter</button>
-							<button class="text-red-500 hover:underline" onclick="block('${user}')">Bloquer</button>
+							${!isSelf ? `<button class="${isBlocked ? 'text-green-500' : 'text-red-500'} hover:underline cursor-pointer" onclick="block('${user}')">${isBlocked ? 'Débloquer' : 'Bloquer'}</button>` : ''}
 						</div>
 					</div>
 				`;
+
 				usersContainer.appendChild(li);
 			});
 		}
 	};
 
-    input.addEventListener('keydown', (e) => {
-	    if (e.key === 'Enter' && input.value.trim()) {
-		    socket.send(JSON.stringify({ type: 'message', content: input.value }));
-		    input.value = '';
-	    }
-    });
-
-
-	sendButton.addEventListener('click', () => {
-		if (input.value.trim()) {
-			socket.send(JSON.stringify({ type: 'message', content: input.value }));
+	input.addEventListener('keydown', (e) => {
+		if (e.key === 'Enter' && !e.shiftKey && input.value.trim()) {
+			e.preventDefault();
+			socket!.send(JSON.stringify({ type: 'message', content: input.value }));
 			input.value = '';
 		}
 	});
 
-	(window as any).invite = (username: string) => {
-		socket.send(JSON.stringify({ type: 'invite', to: username }));
+	sendButton.addEventListener('click', () => {
+		if (input.value.trim()) {
+			socket!.send(JSON.stringify({ type: 'message', content: input.value }));
+			input.value = '';
+		}
+	});
+
+	(window as any).invite = (targetUsername: string) => {
+		if (confirm(`Voulez-vous inviter ${targetUsername} ?`)) {
+			socket!.send(JSON.stringify({ type: 'invite', to: targetUsername }));
+		}
 	};
 
-    (window as any).block = (username: string) => {
-	    blockedUsers.add(username);
-	    socket.send(JSON.stringify({ type: 'block', target: username }));
-    };
+	(window as any).block = (target: string) => {
+	if (blockedUsers.has(target)) {
+		if (confirm(`Voulez-vous débloquer ${target} ?`)) {
+			blockedUsers.delete(target);
+			localStorage.setItem('blockedUsers', JSON.stringify(Array.from(blockedUsers)));
+			socket!.send(JSON.stringify({ type: 'unblock', target }));
+			updateBlockButton(target, false);
+		}
+	} else {
+		if (confirm(`Voulez-vous bloquer ${target} ?`)) {
+			blockedUsers.add(target);
+			localStorage.setItem('blockedUsers', JSON.stringify(Array.from(blockedUsers)));
+			socket!.send(JSON.stringify({ type: 'block', target }));
+			updateBlockButton(target, true);
+		}
+	}
+};
+
+    function updateBlockButton(username: string, blocked: boolean) {
+        const usersContainer = document.getElementById('users');
+        if (!usersContainer) return;
+    
+        const listItems = usersContainer.querySelectorAll('li');
+        listItems.forEach(li => {
+            const userLink = li.querySelector('a');
+            if (userLink && userLink.textContent === username) {
+                const btn = li.querySelector('button.text-red-500, button.text-green-500');
+                if (btn) {
+                    btn.textContent = blocked ? 'Débloquer' : 'Bloquer';
+                    btn.className = blocked ? 'text-green-500 hover:underline cursor-pointer' : 'text-red-500 hover:underline cursor-pointer';
+                }
+            }
+        });
+    }
+    
+	function renderUserList() {
+		if (socket && socket.readyState === WebSocket.OPEN) {
+			socket.send(JSON.stringify({ type: 'request_user_list' }));
+		}
+	}
+
+	(window as any).openUserProfile = (username: string) => {
+		window.location.href = `/profil`;
+		// Si besoin de passer le nom en query param, décommenter la ligne suivante :
+		// window.location.href = `/profil?user=${encodeURIComponent(username)}`;
+	};
 }
-
-
-// const token = localStorage.getItem('token'); // ou depuis les cookies si tu utilises ça
-
-// if (!token) {
-// 	alert("Vous devez être connecté pour accéder au chat.");
-// 	window.location.href = "/login"; // redirection si non connecté
-// }
-
-// const socket = new WebSocket(`ws://localhost:3001/ws?token=${encodeURIComponent(token)}`);
-
-// import { FastifyInstance } from 'fastify';
-// import { WebSocketServer, WebSocket } from 'ws';
-// import { parse } from 'url';
-// import jwt from 'jsonwebtoken';
-
-// interface ExtendedWebSocket extends WebSocket {
-// 	username?: string;
-// }
-
-// const JWT_SECRET = 'votre_clé_secrète'; // Même clé que celle utilisée pour signer les JWT
-
-// export default async function setupWebSocket(fastify: FastifyInstance) {
-// 	const wss = new WebSocketServer({ noServer: true });
-
-// 	wss.on('connection', (socket: ExtendedWebSocket, request) => {
-// 		const parsedUrl = parse(request.url!, true);
-// 		const token = parsedUrl.query.token?.toString();
-
-// 		if (!token) {
-// 			socket.close(4001, 'Token manquant');
-// 			return;
-// 		}
-
-// 		try {
-// 			const payload = jwt.verify(token, JWT_SECRET) as { username: string };
-// 			socket.username = payload.username;
-// 			console.log(`[+] ${socket.username} connecté`);
-
-// 			socket.send(JSON.stringify({ type: 'message', from: 'Server', content: 'Bienvenue dans le chat !' }));
-
-// 			socket.on('message', (msg) => {
-// 				const data = JSON.parse(msg.toString());
-
-// 				if (data.type === 'message') {
-// 					wss.clients.forEach(client => {
-// 						if (client.readyState === WebSocket.OPEN) {
-// 							client.send(JSON.stringify({
-// 								type: 'message',
-// 								from: socket.username,
-// 								content: data.content,
-// 							}));
-// 						}
-// 					});
-// 				}
-// 			});
-// 		} catch (err) {
-// 			socket.close(4002, 'Token invalide');
-// 		}
-// 	});
-
-// 	fastify.server.on('upgrade', (request, socket, head) => {
-// 		if (request.url?.startsWith('/ws')) {
-// 			wss.handleUpgrade(request, socket, head, (ws) => {
-// 				wss.emit('connection', ws as ExtendedWebSocket, request);
-// 			});
-// 		}
-// 	});
-// }
-
