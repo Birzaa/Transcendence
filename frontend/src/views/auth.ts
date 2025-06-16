@@ -3,7 +3,7 @@ export async function renderAuth(): Promise<void> {
   if (!app) return;
 
   app.innerHTML = `
-    <div class="max-w-md mx-auto mt-20 p-6 bg-white rounded shadow">
+    <div class="max-w-md mx-auto p-6 bg-white rounded shadow mt-[368px]">
       <h1 class="text-3xl font-bold mb-6 text-center">Connexion / Inscription</h1>
 
       <div id="formContainer">

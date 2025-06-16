@@ -4,20 +4,38 @@ import { renderChat } from "./views/chat.js";
 import { renderAuth } from "./views/auth.js";
 import { navBar } from "./components/navbar.js";
 
-// Barre de navigation
-const body = document.body;
-body.prepend(navBar());
+async function init() {
+  const nav = await navBar();
+  document.body.prepend(nav);
+  render(window.location.pathname + window.location.search);
+}
+
+init();
 
 // Différentes pages
-function render(path: string): void {
-  switch (path) {
+function render(pathWithQuery: string): void {
+  const url = new URL(window.location.origin + pathWithQuery);
+  const basePath = url.pathname;
+  const params = url.searchParams;
+
+  switch (basePath) {
     case '/': renderHome(); break;
-    case '/profil': renderProfil(); break;
     case '/chat': renderChat(); break;
     case '/auth': renderAuth(); break;
+
+    case '/profil':
+      {
+        const player = params.get('player');
+        if (player)
+          renderProfil(player);
+        else
+          renderProfil();
+        break;
+      }
+
     default:
-      document.getElementById("app")!.innerHTML = `<h1>Page non trouvée</h1>`;
-    }
+      document.getElementById("app")!.innerHTML = `<h1 class="text-center text-5xl p-10">Page non trouvée</h1>`;
+  }
 }
 
 // Intercepter les clics sur les liens
@@ -35,15 +53,12 @@ document.addEventListener('click', (e) => {
 })
 
 // SPA
-function navigate(path: string): void {
-  window.history.pushState({}, '', path);
-  render(path);
+function navigate(pathWithQuery: string): void {
+  window.history.pushState({}, '', pathWithQuery);
+  render(pathWithQuery);
 }
 
 // Gérer les retours en arrière du navigateur
 window.addEventListener('popstate', () => {
-  render(window.location.pathname);
+  render(window.location.pathname + window.location.search);
 });
-
-// Initialisation
-render(window.location.pathname);

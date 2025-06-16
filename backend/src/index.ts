@@ -3,8 +3,9 @@ import formbody from '@fastify/formbody';
 import registerRoutes from './routes/register';
 import loginRoutes from './routes/login';
 import logoutRoutes from './routes/logout';
-import apiRoutes from './routes/api';
-import meRoute from './routes/me';
+import apiRoutes from './api/api';
+import meRoute from './api/me';
+import userIdByName from './api/userIdByName';
 import session from './plugins/session';
 import fastifyStatic from '@fastify/static';
 import path from 'path';
@@ -22,6 +23,7 @@ async function start() {
   await app.register(loginRoutes);
   await app.register(logoutRoutes);
   await app.register(apiRoutes);
+  await app.register(userIdByName);
   await app.register(meRoute);
 
   app.register(fastifyStatic, {
@@ -43,4 +45,8 @@ async function start() {
   }
 }
 
+
 start();
+
+
+

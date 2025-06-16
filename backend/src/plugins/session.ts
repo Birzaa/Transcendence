@@ -12,6 +12,7 @@ export default fp(async (fastify) => {
     cookie: {
       secure: false, // true si HTTPS
       maxAge: 1000 * 60 * 60 * 24, // durée 1 jour
+      sameSite: 'lax' // ✅ Ajoute cette ligne
     },
     saveUninitialized: false,
   });
