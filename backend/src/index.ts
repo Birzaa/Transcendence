@@ -13,23 +13,35 @@ import session from './plugins/session';
 import fastifyStatic from '@fastify/static';
 import path from 'path';
 import 'dotenv/config';
+import multipart from '@fastify/multipart';
+import updateAvatar from './api/udapteAvatar';
+import updateSettings from './api/updateSettings';
+import deleteUserRoute from './routes/deleteUser';
 
 const app = Fastify({ logger: true });
 
 async function start() {
   app.register(formbody);
   app.register(session);
+  app.register(multipart, {
+    limits: {
+      fileSize: 5 * 1024 * 1024, // 5MB max
+    },
+  });
 
   // Routes
   await app.register(registerRoutes);
   await app.register(loginRoutes);
   await app.register(logoutRoutes);
+  await app.register(deleteUserRoute);
   await app.register(apiRoutes);
   await app.register(userIdByName);
   await app.register(meRoute);
   await app.register(friendList);
   await app.register(addFriend);
   await app.register(removeFriend);
+  await app.register(updateAvatar);
+  await app.register(updateSettings);
 
   app.register(fastifyStatic, {
     root: '/app/public', // attention ici : vérifie si ce chemin est correct dans ton conteneur

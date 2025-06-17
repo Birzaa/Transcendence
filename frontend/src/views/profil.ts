@@ -4,12 +4,14 @@ import { fetchData } from "../tools/fetchData.js";
 export async function renderProfil(playerName?: string): Promise<void> {
 	let userId: string | undefined;
 	let invalidUser = false;
+	let avatarUrl: string | undefined;
 
 	if (playerName) {
 		const res = await fetch(`/api/userIdByName?name=${encodeURIComponent(playerName)}`);
 		if (res.ok) {
 			const player = await res.json();
 			userId = player.id;
+			avatarUrl = player.avatar;
 		} else {
 			invalidUser = true;
 		}
@@ -22,6 +24,7 @@ export async function renderProfil(playerName?: string): Promise<void> {
 		}
 		const user = await res.json();
 		userId = user.id;
+		avatarUrl = user.avatar;
 	}
 
 	const app = document.getElementById('app')!;
@@ -52,8 +55,8 @@ export async function renderProfil(playerName?: string): Promise<void> {
 					</div>
 				</div>
 				<div class="flex flex-col gap-4">
-					<button class="text-xl p-2 bg-purple-600 rounded-lg shadow-md hover:bg-purple-800">Settings</button>
-					<button class="text-xl p-2 bg-red-600 rounded-lg shadow-md hover:bg-red-800">Delete my account</button>
+					<button id="btn-settings" class="text-xl p-2 bg-purple-600 rounded-lg shadow-md hover:bg-purple-800">Settings</button>
+					<button id="btn-deleteUser" class="text-xl p-2 bg-red-600 rounded-lg shadow-md hover:bg-red-800">Delete my account</button>
 				</div>
 			</div>
 
@@ -170,7 +173,6 @@ export async function renderProfil(playerName?: string): Promise<void> {
 	gamesDiv.className = 'flex flex-col gap-4';
 	historyContainer.appendChild(gamesDiv);
 
-	// Charger l’historique
 	if (!invalidUser) {
 		try {
 			const gamesData = await fetchData('gamesHistory', userId);
@@ -180,43 +182,98 @@ export async function renderProfil(playerName?: string): Promise<void> {
 				div.textContent = 'No games found...';
 				gamesDiv.appendChild(div);
 			} else {
-				let i = 0;
 				for (const game of gamesData) {
 					const gameDiv = document.createElement('div');
-					gameDiv.className = i === 0
-						? 'p-4 rounded bg-green-700 text-white shadow-md'
-						: 'p-4 rounded bg-red-700 text-white shadow-md';
+					gameDiv.className = `
+						p-6 rounded-2xl shadow-xl transition-transform transform hover:scale-105
+						bg-gradient-to-br from-pink-500 via-purple-500 to-blue-500 text-white
+					`;
 
 					const minutes = Math.floor(game.duration / 60);
 					const seconds = game.duration % 60;
-					const durationStr = `${minutes}m${seconds.toString().padStart(2, '0')}s`;
+					const durationStr = game.duration
+						? `${minutes}m${seconds.toString().padStart(2, '0')}s`
+						: 'Not played';
+
+					// Récupérer les deux joueurs
+					const player1 = await fetchData('userNameById', game.player1_id);
+					const player2 = await fetchData('userNameById', game.player2_id);
+
+					// Fallback si joueur supprimé
+					const player1Name = player1?.name || `#${game.player1_id} (Inconnu)`;
+					const player1Avatar = player1?.avatar || '/avatar/default.png';
+					console.log(player1Name, player1Avatar);
+
+					const player2Name = player2?.name || `#${game.player2_id} (Inconnu)`;
+					const player2Avatar = player2?.avatar || '/avatar/default.png';
+
+					// Couleur et texte résultat pour joueur connecté
+					let resultText = 'Pending';
+					let scoreClass = 'text-yellow-300';
+					if (game.winner_id) {
+						if (game.winner_id === me.id) {
+							resultText = 'Victoire';
+							scoreClass = 'text-green-400';
+						} else if (game.winner_id === null) {
+							resultText = 'Nulle';
+							scoreClass = 'text-yellow-300';
+						} else {
+							resultText = 'Défaite';
+							scoreClass = 'text-red-500';
+						}
+					}
 
 					gameDiv.innerHTML = `
-						<h2 class="text-xl font-bold mb-2">Game #${game.id}</h2>
-						<p>Player 1 (ID ${game.player1_id}) score: ${game.player1_score}</p>
-						<p>Player 2 (ID ${game.player2_id}) score: ${game.player2_score}</p>
-						<p>Winner: Player with ID ${game.winner_id}</p>
-						<p>Duration: ${durationStr}</p>
+						<div class="flex items-center gap-6 justify-center">
+							<div class="flex flex-col items-center">
+								<img src="${player1Avatar}" alt="Avatar joueur 1" class="w-20 h-20 rounded-full border-4 border-white shadow-lg" />
+								<span class="text-white mt-2">${player1Name}</span>
+							</div>
+
+							<div class="flex flex-col items-center text-3xl font-bold ${scoreClass}">
+								${game.player1_score} - ${game.player2_score}
+								<span class="text-sm font-normal mt-1">${resultText}</span>
+							</div>
+
+							<div class="flex flex-col items-center">
+								<img src="${player2Avatar}" alt="Avatar joueur 2" class="w-20 h-20 rounded-full border-4 border-white shadow-lg" />
+								<span class="text-white mt-2">${player2Name}</span>
+							</div>
+						</div>
+
+						<p class="text-sm mt-3 text-center">
+							Jouée le : <span class="font-semibold">${new Date(game.created_at).toLocaleString()}</span><br/>
+							Durée : <span class="font-semibold">${durationStr}</span>
+						</p>
 					`;
+
 					gamesDiv.appendChild(gameDiv);
-					i++;
 				}
 			}
 		} catch (err) {
-			console.error('Erreur lors du chargement des parties :', err);
-			const div = document.createElement('div');
-			div.className = 'p-4 rounded text-white shadow-md text-2xl';
-			div.textContent = 'Error loading games...';
-			gamesDiv.appendChild(div);
+			console.error('Erreur chargement parties:', err);
+			const errorDiv = document.createElement('div');
+			errorDiv.className = 'text-white';
+			errorDiv.textContent = 'Error loading game history.';
+			gamesDiv.appendChild(errorDiv);
 		}
 	}
-
-	// Recherche joueur (input)
-	const input = document.getElementById('playerName') as HTMLInputElement;
-	input.value = playerName || '';
-	input.addEventListener('keypress', (e) => {
-		if (e.key === 'Enter') {
-			navigate(`/profil?player=${encodeURIComponent(input.value.trim())}`);
+	
+	// Gérer bouton Settings
+	document.getElementById('btn-settings')!.onclick = () => navigate('/settings');
+	
+	// Gérer bouton supprimer compte
+	document.getElementById('btn-deleteUser')!.onclick = async () => {
+		if (confirm('Are you sure you want to delete your account? This action is irreversible.')) {
+			const res = await fetch('/api/deleteUser', {
+				method: 'DELETE',
+				credentials: 'include',
+			});
+			if (res.ok) {
+				navigate('/auth');
+			} else {
+				alert('Error deleting account');
+			}
 		}
-	});
+	};
 }

@@ -3,6 +3,7 @@ import { renderProfil } from "./views/profil.js";
 import { renderChat } from "./views/chat.js";
 import { renderAuth } from "./views/auth.js";
 import { navBar } from "./components/navbar.js";
+import { renderSettings } from "./views/settings.js";
 async function renderNav() {
     const existingNav = document.querySelector('nav');
     if (existingNav)
@@ -29,6 +30,9 @@ function render(pathWithQuery) {
             break;
         case '/auth':
             renderAuth();
+            break;
+        case '/settings':
+            renderSettings();
             break;
         case '/profil':
             {

@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
     name TEXT UNIQUE NOT NULL,
     email TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
+    avatar TEXT NOT NULL DEFAULT '/avatar/default.png',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 `);
@@ -28,11 +29,9 @@ CREATE TABLE IF NOT EXISTS games (
     winner_id INTEGER,
     duration INTEGER,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    tournament_id INTEGER,
     FOREIGN KEY (player1_id) REFERENCES users(id),
     FOREIGN KEY (player2_id) REFERENCES users(id),
-    FOREIGN KEY (winner_id) REFERENCES users(id),
-    FOREIGN KEY (tournament_id) REFERENCES tournaments(id)
+    FOREIGN KEY (winner_id) REFERENCES users(id)
 );
 `);
 
