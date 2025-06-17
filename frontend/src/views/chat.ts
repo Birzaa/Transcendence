@@ -74,7 +74,7 @@ function sendMessage() {
     alert(`Vous avez bloqué ${currentChannelId}. Débloquez-le pour lui envoyer un message.`);
     return;
   }
-  
+
   if (currentChannelId === 'global') {
     socket.send(JSON.stringify({ type: 'message', content }));
   } else {
@@ -144,6 +144,7 @@ async function initChatWebSocket(): Promise<void> {
 
 function renderUserList(users: string[], currentUsername: string) {
   const usersContainer = document.getElementById('users')!;
+  if (!usersContainer) return
   usersContainer.innerHTML = '';
 
   users.forEach(user => {

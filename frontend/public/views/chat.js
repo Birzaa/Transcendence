@@ -115,6 +115,8 @@ async function initChatWebSocket() {
 }
 function renderUserList(users, currentUsername) {
     const usersContainer = document.getElementById('users');
+    if (!usersContainer)
+        return;
     usersContainer.innerHTML = '';
     users.forEach(user => {
         if (user === currentUsername)
