@@ -1,3 +1,4 @@
+import { navigate } from "../main.js";
 export async function renderAuth() {
     const app = document.getElementById('app');
     if (!app)
@@ -82,6 +83,7 @@ export async function renderAuth() {
                     throw new Error(data.error || 'Erreur lors de la connexion');
                 message.style.color = 'green';
                 message.textContent = 'Connecté avec succès !';
+                navigate('/');
                 // Ici tu peux rediriger ou appeler une fonction pour afficher la page profil, etc.
             }
             catch (err) {

@@ -4,12 +4,18 @@ import { renderChat } from "./views/chat.js";
 import { renderAuth } from "./views/auth.js";
 import { navBar } from "./components/navbar.js";
 
-async function init() {
+async function renderNav() {
+  const existingNav = document.querySelector('nav');
+  if (existingNav) existingNav.remove();
+
   const nav = await navBar();
   document.body.prepend(nav);
-  render(window.location.pathname + window.location.search);
 }
 
+async function init() {
+  await renderNav(); // initial load
+  render(window.location.pathname + window.location.search);
+}
 init();
 
 // Différentes pages
@@ -17,7 +23,7 @@ function render(pathWithQuery: string): void {
   const url = new URL(window.location.origin + pathWithQuery);
   const basePath = url.pathname;
   const params = url.searchParams;
-
+  
   switch (basePath) {
     case '/': renderHome(); break;
     case '/chat': renderChat(); break;
@@ -53,7 +59,7 @@ document.addEventListener('click', (e) => {
 })
 
 // SPA
-function navigate(pathWithQuery: string): void {
+export function navigate(pathWithQuery: string): void {
   window.history.pushState({}, '', pathWithQuery);
   render(pathWithQuery);
 }
