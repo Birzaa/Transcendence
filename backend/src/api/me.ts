@@ -10,6 +10,7 @@ export default async function meRoute(app: FastifyInstance) {
       id: req.session.user.id,
       name: req.session.user.name,
       email: req.session.user.email,
+      avatar: req.session.user.avatar,
     };
   });
 }

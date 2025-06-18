@@ -31,6 +31,7 @@ app.post('/login', async (request, reply) => {
     id: user.id,
     name: user.name,
     email: user.email,
+    avatar: user.avatar,
   };
 
   return reply.send({ success: true });

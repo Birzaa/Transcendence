@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import db from '../database';
+import db from '../database'; // 👈 ajoute cette ligne
 
 export default async function friendList(fastify: FastifyInstance) {
   fastify.get('/api/friends', async (request, reply) => {
