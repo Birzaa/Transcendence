@@ -3,6 +3,7 @@ import formbody from '@fastify/formbody';
 import registerRoutes from './routes/register';
 import loginRoutes from './routes/login';
 import logoutRoutes from './routes/logout';
+import twoFARoutes from './routes/twofa';
 import apiRoutes from './api/api';
 import meRoute from './api/me';
 import userIdByName from './api/userIdByName';
@@ -31,6 +32,7 @@ async function start() {
   await app.register(friendList);
   await app.register(addFriend);
   await app.register(removeFriend);
+  await app.register(twoFARoutes);
 
   app.register(fastifyStatic, {
     root: '/app/public', // attention ici : vérifie si ce chemin est correct dans ton conteneur

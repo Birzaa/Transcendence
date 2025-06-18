@@ -68,7 +68,7 @@ function sendMessage() {
     input.value = '';
 }
 async function initChatWebSocket() {
-    let username = 'WhoAreU?';
+    let username = 'Inconnu';
     try {
         const res = await fetch('/api/me');
         if (res.ok) {

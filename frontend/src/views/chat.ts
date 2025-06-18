@@ -92,7 +92,7 @@ function sendMessage() {
 }
 
 async function initChatWebSocket(): Promise<void> {
-  let username = 'WhoAreU?';
+  let username = 'Inconnu';
 
   try {
     const res = await fetch('/api/me');
