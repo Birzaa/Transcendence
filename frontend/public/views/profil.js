@@ -63,7 +63,7 @@ export async function renderProfil(playerName) {
 			</div>
 		</div>
 	`;
-    if (!userId) {
+    if (!userId && !invalidUser) {
         console.error('UserId is undefined');
         return;
     }
@@ -190,10 +190,10 @@ export async function renderProfil(playerName) {
                     const player1 = await fetchData('userNameById', game.player1_id);
                     const player2 = await fetchData('userNameById', game.player2_id);
                     // Fallback si joueur supprimé
-                    const player1Name = player1?.name || `#${game.player1_id} (Inconnu)`;
+                    const player1Name = player1?.name || `Account deleted`;
                     const player1Avatar = player1?.avatar || '/avatar/default.png';
                     console.log(player1Name, player1Avatar);
-                    const player2Name = player2?.name || `#${game.player2_id} (Inconnu)`;
+                    const player2Name = player2?.name || `Account deleted`;
                     const player2Avatar = player2?.avatar || '/avatar/default.png';
                     // Couleur et texte résultat pour joueur connecté
                     let resultText = 'Pending';
@@ -249,10 +249,20 @@ export async function renderProfil(playerName) {
     }
     // Gérer bouton Settings
     document.getElementById('btn-settings').onclick = () => navigate('/settings');
+    // Gérer la recherche de joueurs
+    const playerNameInput = document.getElementById('playerName');
+    playerNameInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const name = playerNameInput.value.trim();
+            if (name) {
+                navigate(`/profil?player=${encodeURIComponent(name)}`);
+            }
+        }
+    });
     // Gérer bouton supprimer compte
     document.getElementById('btn-deleteUser').onclick = async () => {
         if (confirm('Are you sure you want to delete your account? This action is irreversible.')) {
-            const res = await fetch('/api/deleteUser', {
+            const res = await fetch('/deleteUser', {
                 method: 'DELETE',
                 credentials: 'include',
             });

@@ -67,7 +67,7 @@ export async function renderProfil(playerName?: string): Promise<void> {
 		</div>
 	`;
 
-	if (!userId) {
+	if (!userId && !invalidUser) {
 		console.error('UserId is undefined');
 		return;
 	}
@@ -175,7 +175,7 @@ export async function renderProfil(playerName?: string): Promise<void> {
 
 	if (!invalidUser) {
 		try {
-			const gamesData = await fetchData('gamesHistory', userId);
+			const gamesData = await fetchData('gamesHistory', userId!);
 			if (!gamesData || gamesData.length === 0) {
 				const div = document.createElement('div');
 				div.className = 'p-4 rounded text-white shadow-md text-2xl';
@@ -200,11 +200,11 @@ export async function renderProfil(playerName?: string): Promise<void> {
 					const player2 = await fetchData('userNameById', game.player2_id);
 
 					// Fallback si joueur supprimé
-					const player1Name = player1?.name || `#${game.player1_id} (Inconnu)`;
+					const player1Name = player1?.name || `Account deleted`;
 					const player1Avatar = player1?.avatar || '/avatar/default.png';
 					console.log(player1Name, player1Avatar);
 
-					const player2Name = player2?.name || `#${game.player2_id} (Inconnu)`;
+					const player2Name = player2?.name || `Account deleted`;
 					const player2Avatar = player2?.avatar || '/avatar/default.png';
 
 					// Couleur et texte résultat pour joueur connecté
@@ -261,11 +261,23 @@ export async function renderProfil(playerName?: string): Promise<void> {
 	
 	// Gérer bouton Settings
 	document.getElementById('btn-settings')!.onclick = () => navigate('/settings');
+
+	// Gérer la recherche de joueurs
+	const playerNameInput = document.getElementById('playerName') as HTMLInputElement;
+	playerNameInput.addEventListener('keydown', (e) => {
+	if (e.key === 'Enter') {
+		const name = playerNameInput.value.trim();
+		if (name) {
+		navigate(`/profil?player=${encodeURIComponent(name)}`);
+		}
+	}
+	});
+
 	
 	// Gérer bouton supprimer compte
 	document.getElementById('btn-deleteUser')!.onclick = async () => {
 		if (confirm('Are you sure you want to delete your account? This action is irreversible.')) {
-			const res = await fetch('/api/deleteUser', {
+			const res = await fetch('/deleteUser', {
 				method: 'DELETE',
 				credentials: 'include',
 			});
