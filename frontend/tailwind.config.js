@@ -6,7 +6,11 @@ module.exports = {
     "./src/**/*.{js,ts,jsx,tsx}", // Pour tes fichiers TypeScript où tu utilises les classes
   ],
   theme: {
-    extend: {},
+    extend: {
+      backgroundImage: {
+        'custom-bg': "url('/images/background.png')",
+      } 
+    },
   },
   plugins: [],
 }

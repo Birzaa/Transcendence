@@ -9,7 +9,7 @@ export async function navBar() {
     nav.innerHTML = `
 		<nav class="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-6 py-4 bg-pink-400/90 backdrop-blur-sm shadow-md text-white text-2xl">
 			<div>
-				<a href="/" class="font-medium rounded-lg px-3 py-3 hover:bg-gray-700">LOGO</a>
+				<a href="/" class="font-medium rounded-lg px-3 py-3 hover:bg-gray-700"> <img src="/images/logo.png" alt="Logo" class="h-12 w-auto"></a>
 			</div>
 			<div class="flex space-x-10 m-10">
 				<a href="/" class="font-medium rounded-lg px-3 py-3 hover:bg-gray-700">Home</a>
