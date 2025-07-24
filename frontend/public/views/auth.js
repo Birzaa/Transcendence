@@ -26,7 +26,7 @@ export async function renderAuth() {
             </button>
           </div>
 
-          <div id="message" class="mt-4 text-center text-red-600"></div>
+          <div id="message" class="mt-4 text-center text-pink-500"></div>
         </div>
       </div>
     </div>

@@ -8,7 +8,7 @@ export async function navBar(): Promise<HTMLElement> {
 
     const nav = document.createElement('nav');
     nav.innerHTML = `
-        <nav class="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-6 py-4 bg-pink-200/90 backdrop-blur-sm shadow-md">
+        <nav class="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-6 py-4 bg-pink-200 shadow-md">
             <!-- Logo géant -->
             <div class="-my-4">
                 <a href="/" class="block">
