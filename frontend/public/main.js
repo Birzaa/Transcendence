@@ -4,6 +4,7 @@ import { renderChat } from "./views/chat.js";
 import { renderAuth } from "./views/auth.js";
 import { navBar } from "./components/navbar.js";
 import { renderSettings } from "./views/settings.js";
+import { renderSoloGame } from "./views/solo.js";
 async function renderNav() {
     const existingNav = document.querySelector('nav');
     if (existingNav)
@@ -11,12 +12,6 @@ async function renderNav() {
     const nav = await navBar();
     document.body.prepend(nav);
 }
-async function init() {
-    await renderNav(); // initial load
-    render(window.location.pathname + window.location.search);
-}
-init();
-// Différentes pages
 function render(pathWithQuery) {
     const url = new URL(window.location.origin + pathWithQuery);
     const basePath = url.pathname;
@@ -43,28 +38,55 @@ function render(pathWithQuery) {
                     renderProfil();
                 break;
             }
+        case '/game': {
+            const mode = url.searchParams.get('mode');
+            if (mode === 'solo') {
+                renderSoloGame(); // 👍 c’est bien ça
+            }
+            else {
+                document.getElementById("app").innerHTML = `<h1 class="text-center mt-10">Mode "${mode}" non supporté.</h1>`;
+            }
+            break;
+        }
         default:
             document.getElementById("app").innerHTML = `<h1 class="text-center text-5xl p-10">Page non trouvée</h1>`;
+        // Dans le switch case de votre main.ts, ajoutez :
+        case '/game': {
+            const mode = url.searchParams.get('mode');
+            if (mode === 'solo') {
+                renderSoloGame(); // Ajoutez cette importation en haut du fichier
+            }
+            // Ajoutez ici les autres modes (multiplayer, tournament) plus tard
+            break;
+        }
     }
 }
-// Intercepter les clics sur les liens
+// Exposez les fonctions pour qu'elles soient accessibles depuis le HTML
+//(window as any).handleSoloGame = handleSoloGame;
+window.navigate = navigate;
+// Navigation SPA
+export function navigate(pathWithQuery) {
+    window.history.pushState({}, '', pathWithQuery);
+    render(pathWithQuery);
+}
+// Intercepter les clics <a>
 document.addEventListener('click', (e) => {
     const target = e.target;
     if (target.tagName === 'A') {
         const anchor = target;
         const href = anchor.getAttribute('href');
         if (href && href.startsWith('/')) {
-            e.preventDefault(); // stop le rechargement
-            navigate(href); // navigation SPA
+            e.preventDefault();
+            navigate(href);
         }
     }
 });
-// SPA
-export function navigate(pathWithQuery) {
-    window.history.pushState({}, '', pathWithQuery);
-    render(pathWithQuery);
-}
-// Gérer les retours en arrière du navigateur
 window.addEventListener('popstate', () => {
     render(window.location.pathname + window.location.search);
 });
+// Initialisation
+async function init() {
+    await renderNav();
+    render(window.location.pathname + window.location.search);
+}
+init();
