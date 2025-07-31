@@ -32,7 +32,12 @@ export default async function apiRoutes(fastify: FastifyInstance){
 					return reply.status(400).send({ error: 'Missing userId' });
 				}
 				const user = db.prepare('SELECT name AS name, avatar FROM users WHERE id = ?').get(query.userId);
-				if (!user) return reply.status(404).send({ error: 'User not found' });
+				if (!user)
+				{
+					return{
+					name: 'Deleted user',
+					};
+				}
 				return user;
 
 			default:

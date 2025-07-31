@@ -52,6 +52,7 @@ export async function renderProfil(playerName) {
 					</div>
 				</div>
 				<div class="flex flex-col gap-4">
+					<button id="btn-performance" class="text-xl p-2 bg-purple-300 text-purple-900 rounded-xl shadow hover:bg-purple-400 hover:text-white transition">📈 Perfomances</button>
 					<button id="btn-settings" class="text-xl p-2 bg-purple-300 text-purple-900 rounded-xl shadow hover:bg-purple-400 hover:text-white transition">⚙️ Settings</button>
 					<button id="btn-deleteUser" class="text-xl p-2 bg-red-300 text-red-800 rounded-xl shadow hover:bg-red-500 hover:text-white transition">🗑️ Delete my account</button>
 				</div>
@@ -184,7 +185,11 @@ export async function renderProfil(playerName) {
                         resultText = '🌸 Victoire';
                         scoreClass = 'text-green-600';
                     }
-                    else if (game.winner_id === null) {
+                    else if (game.player1_score === game.player2_score) {
+                        resultText = '⚖️ Egalité';
+                        scoreClass = 'text-yellow-600';
+                    }
+                    else {
                         resultText = '💔 Défaite';
                         scoreClass = 'text-red-600';
                     }
@@ -224,6 +229,7 @@ export async function renderProfil(playerName) {
         }
     }
     document.getElementById('btn-settings').onclick = () => navigate('/settings');
+    document.getElementById('btn-performance').onclick = () => navigate('/performances');
     const playerNameInput = document.getElementById('playerName');
     playerNameInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {

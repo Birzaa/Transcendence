@@ -4,6 +4,7 @@ import { renderChat } from "./views/chat.js";
 import { renderAuth } from "./views/auth.js";
 import { navBar } from "./components/navbar.js";
 import { renderSettings } from "./views/settings.js";
+import { renderPerformances } from "./views/performance.js"
 
 
 async function renderNav() {
@@ -20,6 +21,21 @@ async function init() {
 }
 init();
 
+const socket = new WebSocket(`ws://${window.location.hostname}:3001/ws`);
+socket.onopen = () => {
+  console.log('✅ Connecté au WebSocket');
+  socket.send('ping');
+};
+
+socket.onmessage = (event) => {
+  console.log('📨 Message du serveur :', event.data);
+};
+
+socket.onclose = () => {
+  console.log('❌ Déconnecté du WebSocket');
+};
+
+
 // Différentes pages
 function render(pathWithQuery: string): void {
   const url = new URL(window.location.origin + pathWithQuery);
@@ -31,6 +47,7 @@ function render(pathWithQuery: string): void {
     case '/chat': renderChat(); break;
     case '/auth': renderAuth(); break;
     case '/settings': renderSettings(); break;
+    case '/performances': renderPerformances(); break;
 
     case '/profil':
       {
