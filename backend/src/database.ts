@@ -19,6 +19,15 @@ CREATE TABLE IF NOT EXISTS users (
 );
 `);
 
+type TableInfoColumn = { name: string };
+
+const userColumns = db.prepare(`PRAGMA table_info(users)`).all() as TableInfoColumn[];
+const hasTwoFASecret = userColumns.some(col => col.name === 'twofa_secret');
+
+if (!hasTwoFASecret) {
+  db.exec(`ALTER TABLE users ADD COLUMN twofa_secret TEXT`);
+}
+
 // Table games
 db.exec(`
 CREATE TABLE IF NOT EXISTS games (

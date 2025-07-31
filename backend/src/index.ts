@@ -18,16 +18,12 @@ import updateAvatar from './api/udapteAvatar';
 import updateSettings from './api/updateSettings';
 import deleteUserRoute from './routes/deleteUser';
 import myStats from './api/myStats';
-import websocket from '@fastify/websocket';
-import websocketRoutes from './routes/ws'
+import setupWebSocket from './routes/ws';
 
-// Juste après avoir créé app
 const app = Fastify({ logger: true });
 
 async function start() {
-  await app.register(websocket);
-
-  await app.register(websocketRoutes);
+  await app.register(setupWebSocket);
 
   app.register(formbody);
   app.register(session);
