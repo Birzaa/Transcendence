@@ -6,6 +6,8 @@ import { navBar } from "./components/navbar.js";
 import { renderSettings } from "./views/settings.js";
 import { renderGameMenu } from "./views/gamemenu.js";
 import { renderSoloGame } from "./views/solo.js";
+import { render1vs1 } from "./views/1vs1.js";
+
 
 async function renderNav() {
   const existingNav = document.querySelector('nav');
@@ -42,15 +44,18 @@ function render(pathWithQuery: string): void {
           renderProfil();
         break;
       }
-      case '/game': {
-        const mode = url.searchParams.get('mode');
-        if (mode === 'solo') {
-          renderSoloGame(); // 👍 c’est bien ça
-        } else {
-          document.getElementById("app")!.innerHTML = `<h1 class="text-center mt-10">Mode "${mode}" non supporté.</h1>`;
-        }
-        break;
-      }
+      // Modifie le switch case pour ajouter le mode 1vs1 :
+    case '/game': {
+    const mode = url.searchParams.get('mode');
+    if (mode === 'solo') {
+        renderSoloGame();
+    } else if (mode === '1v1') {  // Nouveau cas pour le 1vs1
+        render1vs1();
+    } else {
+        document.getElementById("app")!.innerHTML = `<h1 class="text-center mt-10">Mode "${mode}" non supporté.</h1>`;
+    }
+    break;
+}
       
     default:
       document.getElementById("app")!.innerHTML = `<h1 class="text-center text-5xl p-10">Page non trouvée</h1>`;

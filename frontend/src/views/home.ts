@@ -21,7 +21,7 @@ export function renderHome(): void {
           <button id="play-button"
             class="relative px-8 py-3 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400 
               text-purple-800 font-bold shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
-              hover:bg-purple-300 active:shadow-none active:translate-y-[2px] active:border-purple-300
+              active:shadow-none active:translate-y-[2px] active:border-purple-300
               transition-all duration-100 w-full">
             Lancer une partie
           </button>
@@ -51,7 +51,7 @@ export function renderHome(): void {
             <button id="leaderboard-button"
               class="relative px-6 py-2 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400 
                 text-purple-800 font-bold shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
-                hover:bg-purple-300 active:shadow-none active:translate-y-[2px] active:border-purple-300
+                active:shadow-none active:translate-y-[2px] active:border-purple-300
                 transition-all duration-100 w-full">
               ٩(◕‿◕｡)۶ Top 10
             </button>
