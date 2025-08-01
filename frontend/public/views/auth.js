@@ -10,7 +10,7 @@ export async function renderAuth() {
     <div class="min-h-screen flex items-center justify-center">
       <div class="max-w-md w-full bg-pink-50 bg-opacity-90 shadow-lg border-2 border-purple-300">
         <!-- Barre violette avec titre -->
-        <div class="bg-purple-600 text-white p-3">
+        <div class="bg-purple-600 text-pink-100 p-3">
           <h1 class="text-xl font-bold text-center">Connexion</h1>
         </div>
 
@@ -26,7 +26,7 @@ export async function renderAuth() {
             </button>
           </div>
 
-          <div id="message" class="mt-4 text-center text-red-600"></div>
+          <div id="message" class="mt-4 text-center text-pink-500"></div>
         </div>
       </div>
     </div>

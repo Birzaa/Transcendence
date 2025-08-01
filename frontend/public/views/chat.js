@@ -8,18 +8,52 @@ export function renderChat() {
     if (!app)
         return;
     app.innerHTML = `
-    <div class="flex h-[80vh] max-w-4xl mx-auto mt-[168px] bg-white rounded shadow overflow-hidden">
-      <div class="w-1/4 bg-gray-100 p-4 overflow-y-auto" id="user-list">
-        <h3 class="font-bold mb-2">Utilisateurs connectés</h3>
-        <ul id="users" class="space-y-2 text-sm"></ul>
-      </div>
+    <div class="min-h-screen bg-[url('/images/background.png')] bg-cover bg-center bg-no-repeat bg-fixed p-4 pt-[110px]">
+      <div class="min-h-screen flex items-center justify-center">
+        <div class="max-w-6xl w-full bg-pink-50 bg-opacity-90 shadow-lg border-2 border-purple-300">
+          <!-- Barre violette avec titre -->
+          <div class="bg-purple-600 text-pink-100 p-3">
+            <h1 class="text-xl font-bold text-center">Chat (=^･ω･^=)</h1>
+          </div>
 
-      <div class="flex-1 flex flex-col p-4">
-        <div id="channels-tabs" class="flex space-x-2 mb-2 border-b"></div>
-        <div id="messages" class="flex-1 overflow-y-auto border rounded p-2 mb-2 space-y-1 bg-gray-50"></div>
-        <div class="flex mt-2">
-          <textarea id="input" placeholder="Votre message..." class="flex-1 border rounded p-2 mr-2 resize-none" rows="3"></textarea>
-          <button id="send" class="bg-blue-500 text-white px-4 py-2 rounded">Envoyer</button>
+          <div class="flex h-[70vh]">
+            <!-- Liste des utilisateurs -->
+            <div class="w-1/4 bg-purple-100 p-4 overflow-y-auto border-r-2 border-purple-300">
+              <h3 class="font-bold mb-2 text-purple-800">Utilisateurs connectés</h3>
+              <ul id="users" class="space-y-2 text-sm"></ul>
+            </div>
+
+            <!-- Zone de chat principale -->
+            <div class="flex-1 flex flex-col">
+              <!-- Onglets des canaux -->
+              <div id="channels-tabs" class="flex space-x-2 p-2 bg-purple-200 border-b-2 border-purple-300"></div>
+              
+              <!-- Messages -->
+              <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-2 bg-violet-100"></div>
+            
+              <!-- Zone de saisie -->
+              <div class="p-4 border-t-2 border-purple-300 bg-purple-50">
+                <div class="flex">
+                  <textarea 
+                    id="input" 
+                    placeholder="Votre message..." 
+                    class="flex-1 border-2 border-purple-300 px-3 py-2 rounded-none bg-violet-100 focus:border-purple-400 resize-none" 
+                    rows="3"
+                  ></textarea>
+                  <button 
+                    id="send" 
+                    class="ml-2 relative px-6 py-2 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400 
+                          text-purple-800 font-bold
+                          shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
+                          active:shadow-none active:translate-y-[2px] active:border-purple-300
+                          transition-all duration-100"
+                  >
+                    Envoyer
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -123,38 +157,32 @@ function renderUserList(users, currentUsername) {
             return;
         const isBlocked = blockedUsers.has(user);
         const li = document.createElement('li');
-        li.className = 'flex justify-between items-center';
+        li.className = 'flex justify-between items-center p-2 hover:bg-purple-200 rounded';
         const userSpan = document.createElement('span');
         userSpan.textContent = user;
-        userSpan.className = 'text-blue-600 hover:underline cursor-pointer';
+        userSpan.className = 'text-purple-600 hover:underline cursor-pointer';
         userSpan.onclick = () => renderProfil(user);
-        const btnInvite = document.createElement('button');
-        btnInvite.textContent = 'Inviter';
-        btnInvite.className = 'text-blue-500 hover:underline';
-        btnInvite.onclick = () => invite(user);
         const btnDM = document.createElement('button');
         btnDM.textContent = 'DM';
-        btnDM.className = 'text-purple-500 hover:underline cursor-pointer';
-        btnDM.onclick = () => openDM(user);
+        btnDM.className = 'text-purple-800 hover:text-white hover:bg-purple-600 px-2 py-1 rounded border border-purple-400';
+        btnDM.onclick = (e) => {
+            e.stopPropagation();
+            openDM(user);
+        };
         const btnBlock = document.createElement('button');
         btnBlock.textContent = isBlocked ? 'Débloquer' : 'Bloquer';
         btnBlock.className = isBlocked
-            ? 'text-green-500 hover:underline cursor-pointer'
-            : 'text-red-500 hover:underline cursor-pointer';
-        btnBlock.onclick = () => window.block(user);
+            ? 'bg-green-100 text-green-800 hover:bg-green-200 px-2 py-1 rounded border border-green-400'
+            : 'bg-pink-100 text-pink-800 hover:bg-pink-200 px-2 py-1 rounded border border-pink-400';
+        btnBlock.onclick = (e) => {
+            e.stopPropagation();
+            window.block(user);
+        };
         li.appendChild(userSpan);
-        li.appendChild(btnInvite);
         li.appendChild(btnDM);
         li.appendChild(btnBlock);
         usersContainer.appendChild(li);
     });
-}
-function invite(target) {
-    if (!socket)
-        return;
-    if (confirm(`Voulez-vous inviter ${target} ?`)) {
-        socket.send(JSON.stringify({ type: 'invite', to: target }));
-    }
 }
 function addMessageToChannel(message) {
     const channelId = message.type === 'message' ? 'global' : (message.from === 'Moi' ? message.to : message.from);
@@ -169,7 +197,10 @@ function renderChannelsTabs() {
     channels.forEach((channel, id) => {
         const tab = document.createElement('div');
         tab.textContent = channel.title;
-        tab.className = 'cursor-pointer px-3 py-1 rounded ' + (id === currentChannelId ? 'bg-blue-600 text-white' : 'bg-gray-200');
+        tab.className = 'cursor-pointer px-3 py-1 rounded ' +
+            (id === currentChannelId
+                ? 'bg-purple-600 text-white'
+                : 'bg-purple-100 text-purple-800 hover:bg-purple-300');
         const unread = channel.messages.some(msg => msg.from !== 'Moi' && id !== currentChannelId);
         if (unread) {
             const notif = document.createElement('span');
@@ -192,13 +223,41 @@ function renderMessages() {
     if (!channel)
         return;
     channel.messages.forEach(msg => {
-        const div = document.createElement('div');
-        div.className = 'p-1 rounded ' + (msg.from === 'Moi' ? 'bg-blue-100 self-end' : 'bg-gray-200');
+        const messageDiv = document.createElement('div');
+        // Message du serveur
+        if (msg.from === 'Server') {
+            messageDiv.className = 'flex justify-center my-2';
+            const serverMsg = document.createElement('div');
+            serverMsg.className = 'bg-baby-pink border-l-4 border-baby-pink-dark text-purple-800 p-3 rounded-none';
+            serverMsg.innerHTML = `
+        <div class="font-bold">
+          <span class="text-purple-300">☆</span> ${msg.from}
+        </div>
+        <div class="italic">${msg.content}</div>
+      `;
+            messageDiv.appendChild(serverMsg);
+            messagesContainer.appendChild(messageDiv);
+            return;
+        }
+        // Messages normaux
+        messageDiv.className = 'flex ' + (msg.from === 'Moi' ? 'justify-end' : 'justify-start') + ' my-2';
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'max-w-[80%] p-3 rounded-lg ' +
+            (msg.from === 'Moi'
+                ? 'bg-baby-pink border-l-4 border-baby-pink-dark text-purple-700 p-3 rounded-none'
+                : 'bg-baby-blue border-l-4 border-darkest-blue text-purple-700 p-3 rounded-none');
         let fromText = msg.from;
         if (msg.from === 'Moi')
             fromText = 'Vous';
-        div.textContent = `[${fromText}] ${msg.content}`;
-        messagesContainer.appendChild(div);
+        const fromSpan = document.createElement('span');
+        fromSpan.className = 'font-bold text-purple-600';
+        fromSpan.textContent = fromText;
+        const textSpan = document.createElement('span');
+        textSpan.textContent = ': ' + msg.content;
+        contentDiv.appendChild(fromSpan);
+        contentDiv.appendChild(textSpan);
+        messageDiv.appendChild(contentDiv);
+        messagesContainer.appendChild(messageDiv);
     });
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
@@ -209,9 +268,9 @@ function openDM(username) {
     }
     if (!channels.has(username)) {
         channels.set(username, { id: username, title: username, messages: [] });
+        renderChannelsTabs();
     }
     currentChannelId = username;
-    renderChannelsTabs();
     renderMessages();
 }
 function updateBlockButton(username, blocked) {
@@ -220,14 +279,14 @@ function updateBlockButton(username, blocked) {
         return;
     const listItems = usersContainer.querySelectorAll('li');
     listItems.forEach(li => {
-        const userSpan = li.querySelector('span.text-blue-600');
+        const userSpan = li.querySelector('span.text-purple-600');
         if (userSpan && userSpan.textContent === username) {
-            const btn = li.querySelector('button.text-red-500, button.text-green-500');
+            const btn = li.querySelector('button.bg-red-100, button.bg-green-100');
             if (btn) {
                 btn.textContent = blocked ? 'Débloquer' : 'Bloquer';
                 btn.className = blocked
-                    ? 'text-green-500 hover:underline cursor-pointer'
-                    : 'text-red-500 hover:underline cursor-pointer';
+                    ? 'bg-green-100 text-green-800 hover:bg-green-200 px-2 py-1 rounded border border-green-400'
+                    : 'bg-red-100 text-red-800 hover:bg-red-200 px-2 py-1 rounded border border-red-400';
             }
         }
     });

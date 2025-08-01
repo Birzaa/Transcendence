@@ -13,25 +13,28 @@ import friendList from './api/friendList';
 import session from './plugins/session';
 import fastifyStatic from '@fastify/static';
 import path from 'path';
-import setupWebSocket from './ws';
 import 'dotenv/config';
 import multipart from '@fastify/multipart';
 import updateAvatar from './api/udapteAvatar';
 import updateSettings from './api/updateSettings';
 import deleteUserRoute from './routes/deleteUser';
+import myStats from './api/myStats';
+import setupWebSocket from './routes/ws';
 
 const app = Fastify({ logger: true });
 
 async function start() {
+  await app.register(setupWebSocket);
+
   app.register(formbody);
   app.register(session);
   app.register(multipart, {
     limits: {
-      fileSize: 5 * 1024 * 1024, // 5MB max
+      fileSize: 5 * 1024 * 1024,
     },
   });
 
-  // Routes
+  // Autres routes...
   await app.register(registerRoutes);
   await app.register(loginRoutes);
   await app.register(logoutRoutes);
@@ -45,20 +48,21 @@ async function start() {
   await app.register(twoFARoutes);
   await app.register(updateAvatar);
   await app.register(updateSettings);
+  await app.register(myStats);
 
+  // Statics
   app.register(fastifyStatic, {
-    root: '/app/public', // attention ici : vérifie si ce chemin est correct dans ton conteneur
+    root: '/app/public',
     prefix: '/',
     wildcard: true
   });
 
   app.setNotFoundHandler((req, reply) => {
-    reply.type('text/html').sendFile('index.html'); // SPA
+    reply.type('text/html').sendFile('index.html');
   });
 
   try {
     await app.listen({ port: 3001, host: '0.0.0.0' });
-    await setupWebSocket(app);
     console.log('Server running on http://localhost:3001');
   } catch (err) {
     app.log.error(err);
@@ -67,6 +71,3 @@ async function start() {
 
 
 start();
-
-
-
