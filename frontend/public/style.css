@@ -727,6 +727,10 @@ video {
   display: block;
 }
 
+.inline-block {
+  display: inline-block;
+}
+
 .flex {
   display: flex;
 }
@@ -785,6 +789,10 @@ video {
 
 .h-full {
   height: 100%;
+}
+
+.h-3 {
+  height: 0.75rem;
 }
 
 .max-h-48 {

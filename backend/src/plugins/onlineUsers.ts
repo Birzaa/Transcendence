@@ -1,17 +1,9 @@
-const onlineUsers = new Set<string>();
+export let onlineUsers = [];
 
-export function markUserOnline(userId: string) {
-	onlineUsers.add(userId);
+export function setOnlineUsers(users) {
+	onlineUsers = users;
 }
 
-export function markUserOffline(userId: string) {
-	onlineUsers.delete(userId);
-}
-
-export function isUserOnline(userId: string): boolean {
-	return onlineUsers.has(userId);
-}
-
-export function getOnlineUsers(): Set<string> {
-	return onlineUsers;
+export function isUserOnline(username) {
+	return onlineUsers.includes(username);
 }
