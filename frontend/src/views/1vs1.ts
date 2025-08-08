@@ -54,18 +54,18 @@ export function render1vs1(): void {
                 style="height: 400px;">
                 
                 <!-- Raquette Joueur 1 (gauche) -->
-                <div id="paddle1" class="absolute w-3 h-20 bg-purple-400 left-4 top-1/2 transform -translate-y-1/2"></div>
+                <div id="paddle1" class="absolute w-3 h-20 bg-purple-400 left-4"></div>
                 
                 <!-- Raquette Joueur 2 (droite) -->
-                <div id="paddle2" class="absolute w-3 h-20 bg-pink-400 right-4 top-1/2 transform -translate-y-1/2"></div>
+                <div id="paddle2" class="absolute w-3 h-20 bg-pink-400 right-4"></div>
                 
                 <!-- Balle -->
-                <div id="ball" class="absolute w-5 h-5 bg-yellow-300 rounded-full"></div>
+                <div id="ball" class="absolute w-5 h-5 bg-yellow-300"></div>
                 
                 <!-- Filet -->
                 <div class="absolute left-1/2 top-0 bottom-0 w-1 bg-purple-300 transform -translate-x-1/2 
                             flex flex-col items-center justify-between py-2">
-                    ${Array(8).fill('<div class="h-6 w-full bg-purple-400"></div>').join('')}
+                    ''${Array(8).fill('<div class="h-6 w-full bg-purple-400"></div>').join('')}
                 </div>
             </div>
         </div>
@@ -139,9 +139,9 @@ function init1vs1Game() {
 
         // Mouvement des raquettes
         if (keys['w'] && paddle1Y > 0) paddle1Y -= paddleSpeed;
-        if (keys['s'] && paddle1Y < gameHeight - paddleHeight) paddle1Y += paddleSpeed;
+        if (keys['s'] && paddle1Y < gameHeight - paddleHeight - 10) paddle1Y += paddleSpeed;
         if (keys['ArrowUp'] && paddle2Y > 0) paddle2Y -= paddleSpeed;
-        if (keys['ArrowDown'] && paddle2Y < gameHeight - paddleHeight) paddle2Y += paddleSpeed;
+        if (keys['ArrowDown'] && paddle2Y < gameHeight - paddleHeight - 10) paddle2Y += paddleSpeed;
 
         // Mouvement balle
         ballX += ballSpeedX;
