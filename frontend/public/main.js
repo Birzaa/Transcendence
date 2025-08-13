@@ -6,6 +6,7 @@ import { navBar } from "./components/navbar.js";
 import { renderSettings } from "./views/settings.js";
 import { renderSoloGame } from "./views/solo.js";
 import { render1vs1 } from "./views/1vs1.js";
+import { renderRemote } from "./views/remote.js";
 async function renderNav() {
     const existingNav = document.querySelector('nav');
     if (existingNav)
@@ -47,6 +48,9 @@ function render(pathWithQuery) {
             }
             else if (mode === '1v1') { // Nouveau cas pour le 1vs1
                 render1vs1();
+            }
+            else if (mode === 'remote') {
+                renderRemote();
             }
             else {
                 document.getElementById("app").innerHTML = `<h1 class="text-center mt-10">Mode "${mode}" non supporté.</h1>`;
