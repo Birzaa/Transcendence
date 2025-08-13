@@ -126,7 +126,11 @@ async function initChatWebSocket() {
         if (data.type === 'message') {
             if (data.from !== username && blockedUsers.has(data.from))
                 return;
-            addMessageToChannel({ type: 'message', from: data.from, content: data.content });
+            addMessageToChannel({
+                type: 'message',
+                from: data.from === username ? 'Moi' : data.from,
+                content: data.content
+            });
             if (currentChannelId === 'global')
                 renderMessages();
             else
@@ -139,7 +143,12 @@ async function initChatWebSocket() {
                 channels.set(data.from, { id: data.from, title: data.from, messages: [] });
                 renderChannelsTabs();
             }
-            addMessageToChannel({ type: 'private_message', from: data.from, content: data.content, to: username });
+            addMessageToChannel({
+                type: 'private_message',
+                from: data.from === username ? 'Moi' : data.from,
+                content: data.content,
+                to: username
+            });
             if (currentChannelId === data.from)
                 renderMessages();
             else
