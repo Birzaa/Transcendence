@@ -6,7 +6,8 @@ import { navBar } from "./components/navbar.js";
 import { renderSettings } from "./views/settings.js";
 import { renderSoloGame } from "./views/solo.js";
 import { render1vs1 } from "./views/1vs1.js";
-import { renderRemote } from "./views/remote.js";
+import { renderRemoteRoom } from "./views/remoteRoom.js";
+import { renderRemoteGame } from "./views/remoteGame.js";
 async function renderNav() {
     const existingNav = document.querySelector('nav');
     if (existingNav)
@@ -50,7 +51,13 @@ function render(pathWithQuery) {
                 render1vs1();
             }
             else if (mode === 'remote') {
-                renderRemote();
+                // Si on a un roomId, on affiche le jeu, sinon la salle
+                if (params.has('roomId')) {
+                    renderRemoteGame();
+                }
+                else {
+                    renderRemoteRoom();
+                }
             }
             else {
                 document.getElementById("app").innerHTML = `<h1 class="text-center mt-10">Mode "${mode}" non supporté.</h1>`;

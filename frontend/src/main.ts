@@ -7,7 +7,8 @@ import { renderSettings } from "./views/settings.js";
 import { renderGameMenu } from "./views/gamemenu.js";
 import { renderSoloGame } from "./views/solo.js";
 import { render1vs1 } from "./views/1vs1.js";
-import { renderRemote } from "./views/remote.js";
+import { renderRemoteRoom } from "./views/remoteRoom.js";
+import { renderRemoteGame } from "./views/remoteGame.js";
 
 
 async function renderNav() {
@@ -56,9 +57,13 @@ function render(pathWithQuery: string): void {
     {  // Nouveau cas pour le 1vs1
         render1vs1();
     } 
-    else if (mode === 'remote')
-    {
-      renderRemote();
+    else if (mode === 'remote') {
+      // Si on a un roomId, on affiche le jeu, sinon la salle
+      if (params.has('roomId')) {
+        renderRemoteGame();
+      } else {
+        renderRemoteRoom();
+      }
     }
     else
     {
