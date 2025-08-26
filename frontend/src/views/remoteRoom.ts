@@ -1,4 +1,5 @@
 import { navigate } from "../main.js";
+import { renderRemoteGame } from "./remoteGame.js";
 
 export function renderRemoteRoom(): void {
     // Supprimer le menu existant
@@ -131,20 +132,29 @@ export function renderRemoteRoom(): void {
             }
             
             if (msg.type === 'room_joined') {
-                // Le guest a bien rejoint la salle
+                // ✅ Fix: on enregistrait pas currentRoomId
+                currentRoomId = msg.roomId;
                 role = 'guest';
                 showRoomInfo();
                 roomStatus.textContent = "Connecté à la salle ! Attente du lancement...";
             }
             
             if (msg.type === 'game_start') {
-                // Rediriger vers le jeu pour les DEUX joueurs
+                // ✅ Lancer le jeu DIRECTEMENT (sans navigate / sans refresh)
                 const u = new URL(window.location.href);
                 u.searchParams.set('mode', 'remote');
                 u.searchParams.set('roomId', currentRoomId);
                 u.searchParams.set('role', role);
                 u.searchParams.set('host', msg.host);
-                navigate(u.toString());
+
+                // Mettre à jour l'URL sans re-render global
+                window.history.pushState({}, '', u.toString());
+
+                // Fermer le WS de la salle pour éviter les doublons d'événements
+                try { ws.close(); } catch (_) {}
+
+                // Démarrer le jeu tout de suite
+                renderRemoteGame();
             }
             
             if (msg.type === 'error') {

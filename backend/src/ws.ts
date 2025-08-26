@@ -198,9 +198,11 @@ export default async function setupWebSocket(fastify: FastifyInstance) {
         }
 
         if (data.type === 'game_state' && currentRoomId) {
-          broadcastGame(currentRoomId, { type: 'game_state', from: username, state: data.state });
+          // relais de l’état vers tous les joueurs
+          broadcastGame(currentRoomId, { type: 'game_state', state: data.state });
           return;
         }
+        
 
       } catch (err) {
         console.error('Invalid message format', err);
