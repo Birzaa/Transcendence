@@ -4,12 +4,13 @@ import { renderChat } from "./views/chat.js";
 import { renderAuth } from "./views/auth.js";
 import { navBar } from "./components/navbar.js";
 import { renderSettings } from "./views/settings.js";
-import { renderPerformances } from "./views/performance.js"
 import { renderGameMenu } from "./views/gamemenu.js";
 import { renderSoloGame } from "./views/solo.js";
 import { render1vs1 } from "./views/1vs1.js";
+import { renderRemoteRoom } from "./views/remoteRoom.js";
+import { renderRemoteGame } from "./views/remoteGame.js";
 
-// Barre de navigation
+
 async function renderNav() {
   const existingNav = document.querySelector('nav');
   if (existingNav) existingNav.remove();
@@ -18,42 +19,24 @@ async function renderNav() {
   document.body.prepend(nav);
 }
 
-async function init() {
-  await renderNav(); // initial load
-  render(window.location.pathname + window.location.search);
-}
-init();
-
-
-// Initialisation des Websocket
-const socket = new WebSocket(`ws://${window.location.hostname}:3001/ws`);
-socket.onopen = () => {
-  console.log('✅ Connecté au WebSocket');
-  socket.send('ping');
-};
-
-socket.onmessage = (event) => {
-  console.log('📨 Message du serveur :', event.data);
-};
-
-socket.onclose = () => {
-  console.log('❌ Déconnecté du WebSocket');
-};
-
-
-// Différentes pages
 function render(pathWithQuery: string): void {
   const url = new URL(window.location.origin + pathWithQuery);
   const basePath = url.pathname;
   const params = url.searchParams;
-  
-  switch (basePath) {
-    case '/': renderHome(); break;
-    case '/chat': renderChat(); break;
-    case '/auth': renderAuth(); break;
-    case '/settings': renderSettings(); break;
-    case '/performances': renderPerformances(); break;
 
+  switch (basePath) {
+    case '/':
+      renderHome();
+      break;
+    case '/chat':
+      renderChat();
+      break;
+    case '/auth':
+      renderAuth();
+      break;
+    case '/settings':
+      renderSettings();
+      break;
     case '/profil':
       {
         const player = params.get('player');
@@ -63,49 +46,77 @@ function render(pathWithQuery: string): void {
           renderProfil();
         break;
       }
-    
+      // Modifie le switch case pour ajouter le mode 1vs1 :
     case '/game': {
-      const mode = url.searchParams.get('mode');
-      if (mode === 'solo') {
-          renderSoloGame();
-      } else if (mode === '1v1') {  // Nouveau cas pour le 1vs1
-          render1vs1();
-      } else {
-          document.getElementById("app")!.innerHTML = `<h1 class="text-center mt-10">Mode "${mode}" non supporté.</h1>`;
-      }
-      break;
+    const mode = url.searchParams.get('mode');
+    if (mode === 'solo') 
+    {
+        renderSoloGame();
     }
-
+    else if (mode === '1v1')
+    {  // Nouveau cas pour le 1vs1
+        render1vs1();
+    } 
+    else if (mode === 'remote') {
+      // Si on a un roomId, on affiche le jeu, sinon la salle
+      if (params.has('roomId')) {
+        renderRemoteGame();
+      } else {
+        renderRemoteRoom();
+      }
+    }
+    else
+    {
+        document.getElementById("app")!.innerHTML = `<h1 class="text-center mt-10">Mode "${mode}" non supporté.</h1>`;
+    }
+    break;
+}
+      
     default:
       document.getElementById("app")!.innerHTML = `<h1 class="text-center text-5xl p-10">Page non trouvée</h1>`;
+
+    // Dans le switch case de votre main.ts, ajoutez :
+  case '/game': {
+    const mode = url.searchParams.get('mode');
+    if (mode === 'solo') {
+        renderSoloGame(); // Ajoutez cette importation en haut du fichier
+    }
+    // Ajoutez ici les autres modes (multiplayer, tournament) plus tard
+    break;
+  }
   }
 }
 
-// A corriger intégrer directement la fonction navigate() dans home.ts pour l'utiliser
+// Exposez les fonctions pour qu'elles soient accessibles depuis le HTML
+//(window as any).handleSoloGame = handleSoloGame;
 (window as any).navigate = navigate;
 
-
-// Intercepter les clics sur les liens
-document.addEventListener('click', (e) => {
-  const target = e.target as HTMLElement;
-  if (target.tagName === 'A')
-  {
-    const anchor = target as HTMLAnchorElement;
-    const href = anchor.getAttribute('href');
-    if (href && href.startsWith('/')) {
-      e.preventDefault(); // stop le rechargement
-      navigate(href);     // navigation SPA
-    }
-  }
-})
-
-// SPA
+// Navigation SPA
 export function navigate(pathWithQuery: string): void {
   window.history.pushState({}, '', pathWithQuery);
   render(pathWithQuery);
 }
 
-// Gérer les retours en arrière du navigateur
+// Intercepter les clics <a>
+document.addEventListener('click', (e) => {
+  const target = e.target as HTMLElement;
+  if (target.tagName === 'A') {
+    const anchor = target as HTMLAnchorElement;
+    const href = anchor.getAttribute('href');
+    if (href && href.startsWith('/')) {
+      e.preventDefault();
+      navigate(href);
+    }
+  }
+});
+
 window.addEventListener('popstate', () => {
   render(window.location.pathname + window.location.search);
 });
+
+// Initialisation
+async function init() {
+  await renderNav();
+  render(window.location.pathname + window.location.search);
+}
+init();

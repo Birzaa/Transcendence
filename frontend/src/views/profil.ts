@@ -2,268 +2,330 @@ import { navigate } from "../main.js";
 import { fetchData } from "../tools/fetchData.js";
 
 export async function renderProfil(playerName?: string): Promise<void> {
-	let userId: string | undefined;
-	let invalidUser = false;
-	let avatarUrl: string | undefined;
+    let userId: string | undefined;
+    let invalidUser = false;
+    let avatarUrl: string | undefined;
 
-	if (playerName) {
-		const res = await fetch(`/api/userIdByName?name=${encodeURIComponent(playerName)}`);
-		if (res.ok) {
-			const player = await res.json();
-			userId = player.id;
-			avatarUrl = player.avatar;
-		} else {
-			invalidUser = true;
-		}
-	} else {
-		const res = await fetch('/api/me', { credentials: 'include' });
+    if (playerName) {
+        const res = await fetch(`/api/userIdByName?name=${encodeURIComponent(playerName)}`);
+        if (res.ok) {
+            const player = await res.json();
+            userId = player.id;
+            avatarUrl = player.avatar;
+        } else {
+            invalidUser = true;
+        }
+    } else {
+        const res = await fetch('/api/me', { credentials: 'include' });
 
-		if (res.status === 401) {
-			navigate('/auth');
-			return;
-		}
-		const user = await res.json();
-		userId = user.id;
-		avatarUrl = user.avatar;
-	}
+        if (res.status === 401) {
+            navigate('/auth');
+            return;
+        }
+        const user = await res.json();
+        userId = user.id;
+        avatarUrl = user.avatar;
+    }
 
-	const app = document.getElementById('app')!;
-	const title = invalidUser
-		? `${playerName} not found`
-		: playerName
-		? `${playerName}'s game history`
-		: `My game history`;
+    const app = document.getElementById('app')!;
+    const title = invalidUser
+        ? `${playerName} not found (´；ω；｀)`
+        : playerName
+        ? `${playerName}'s game history ☆`
+        : `My game history ☆`;
 
-	app.innerHTML = `
-		<div class="flex pt-[168px] bg-gradient-to-br from-pink-200 via-purple-100 to-blue-200 min-h-screen">
-			<!-- Sidebar -->
-			<div class="w-1/6 h-[calc(100vh-168px)] fixed left-0 p-4 bg-pink-100 border-r border-pink-300 flex flex-col justify-between pt-[100px] shadow-lg">
-				<div>
-					<label for="playerName" class="block text-pink-800 mb-2 text-lg font-semibold">Find a player :</label>
-					<input
-						id="playerName"
-						type="text"
-						placeholder="Name's player..."
-						class="w-full p-2 rounded-xl bg-white text-pink-800 border border-pink-300 focus:outline-none focus:ring-2 focus:ring-pink-400 placeholder-pink-300"
-					/>
-					<!-- Liste des amis -->
-					<div class="mt-6">
-						<h2 class="text-pink-700 text-lg font-bold mb-2">My Friends</h2>
-						<div id="friendsList" class="max-h-48 overflow-y-auto bg-white p-2 rounded-lg shadow-inner space-y-1">
-							<!-- Amis chargés dynamiquement -->
-						</div>
-					</div>
-				</div>
-				<div class="flex flex-col gap-4">
-					<button id="btn-performance" class="text-xl p-2 bg-purple-300 text-purple-900 rounded-xl shadow hover:bg-purple-400 hover:text-white transition">📈 Perfomances</button>
-					<button id="btn-settings" class="text-xl p-2 bg-purple-300 text-purple-900 rounded-xl shadow hover:bg-purple-400 hover:text-white transition">⚙️ Settings</button>
-					<button id="btn-deleteUser" class="text-xl p-2 bg-red-300 text-red-800 rounded-xl shadow hover:bg-red-500 hover:text-white transition">🗑️ Delete my account</button>
-				</div>
-			</div>
+    app.innerHTML = `
+        <div class="min-h-screen bg-[url('/images/background.png')] bg-cover bg-center bg-no-repeat bg-fixed p-4 pt-[168px]">
+            <div class="flex">
+                <!-- Sidebar - Style kawaii -->
+                <div class="w-1/5 h-[calc(100vh-168px)] fixed left-0 p-4 bg-pink-50 bg-opacity-90 border-r-2 border-purple-300 shadow-lg flex flex-col space-y-6">
+                    <!-- Recherche de joueur -->
+                    <div class="bg-purple-100 p-4 border-2 border-purple-300 rounded-lg">
+                        <label for="playerName" class="block text-purple-800 mb-2 font-bold flex items-center">
+                            <span class="text-purple-300 mr-2">✧</span> Find a player
+                        </label>
+                        <div class="flex">
+                            <input
+                                id="playerName"
+                                type="text"
+                                placeholder="Name..."
+                                class="flex-1 border-2 border-purple-300 px-3 py-2 rounded-none bg-violet-100 focus:border-purple-400"
+                            />
+                            <button class="ml-2 px-3 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400 text-purple-800">
+                                🔍
+                            </button>
+                        </div>
+                    </div>
 
-			<!-- History -->
-			<div id="historyContainer" class="ml-[16.6667%] w-5/6 px-10 py-8">
-				<h1 class="text-5xl font-bold text-center text-pink-800 pb-4 border-b-4 border-pink-300 mb-8">${title}</h1>
-			</div>
-		</div>
-	`;
+                    <!-- Liste d'amis -->
+                    <div class="bg-purple-100 p-4 border-2 border-purple-300 rounded-lg flex-1">
+                        <h2 class="text-purple-800 font-bold mb-3 flex items-center">
+                            <span class="text-purple-300 mr-2">☆</span> My Friends
+                        </h2>
+                        <div id="friendsList" class="bg-violet-100 p-2 h-[200px] overflow-y-auto space-y-2 border-2 border-purple-300">
+                            <!-- Amis chargés dynamiquement -->
+                        </div>
+                    </div>
 
-	if (!userId && !invalidUser) {
-		console.error('UserId is undefined');
-		return;
-	}
+                    <!-- Boutons -->
+                    <div class="space-y-3">
+                        <button id="btn-settings" class="w-full relative px-4 py-2 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400 
+                            text-purple-800 font-bold
+                            shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
+                            hover:bg-purple-300
+                            active:shadow-none active:translate-y-[2px] active:border-purple-300
+                            transition-all duration-100">
+                            ⚙️ Settings
+                        </button>
+                        <button id="btn-deleteUser" class="w-full relative px-4 py-2 bg-pink-200 border-2 border-t-white border-l-white border-r-pink-400 border-b-pink-400 
+                            text-pink-800 font-bold
+                            shadow-[2px_2px_0px_0px_rgba(219,39,119,0.3)]
+                            hover:bg-pink-300
+                            active:shadow-none active:translate-y-[2px] active:border-pink-300
+                            transition-all duration-100">
+                            🗑️ Delete Account
+                        </button>
+                    </div>
+                </div>
 
-	const historyContainer = document.getElementById('historyContainer')!;
-	const friendsList = document.getElementById('friendsList')!;
-	let alreadyFriend = false;
+                <!-- Main Content -->
+                <div class="ml-[20%] w-4/5 p-6">
+                    <!-- Titre -->
+                    <div class="bg-purple-600 text-pink-100 p-3 mb-8 rounded-lg">
+                        <h1 class="text-2xl font-bold text-center">${title}</h1>
+                    </div>
 
-	const meRes = await fetch('/api/me', { credentials: 'include' });
-	if (meRes.status === 401) {
-		navigate('/auth');
-		return;
-	}
-	const me = await meRes.json();
+                    <!-- Bouton Add Friend conditionnel -->
+                    <div id="addFriendContainer"></div>
 
-	try {
-		const res = await fetch(`/api/friends?userId=${me.id}`, { credentials: 'include' });
-		if (res.ok) {
-			const friends = await res.json();
-			if (friends.length === 0) {
-				friendsList.innerHTML = `<p class="text-pink-500 text-sm">No friends yet.</p>`;
-			} else {
-				friendsList.innerHTML = '';
-				for (const friend of friends) {
-					const friendEl = document.createElement('div');
-					friendEl.className = 'flex justify-between items-center text-pink-800 px-3 py-1 rounded-xl bg-pink-100 hover:bg-pink-200 cursor-pointer transition';
+                    <!-- Historique des parties -->
+                    <div id="gamesHistory" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        ${invalidUser ? `
+                            <div class="col-span-2 bg-baby-pink border-l-4 border-baby-pink-dark text-purple-800 p-6 text-center rounded-lg">
+                                <p class="text-xl">Player not found (´；ω；｀)</p>
+                            </div>
+                        ` : '<div class="col-span-2 text-center text-purple-500">Loading game history... ☆</div>'}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
 
-					const nameSpan = document.createElement('span');
-					nameSpan.textContent = friend.name;
-					nameSpan.style.flexGrow = '1';
-					nameSpan.onclick = () => navigate(`/profil?player=${encodeURIComponent(friend.name)}`);
-					friendEl.appendChild(nameSpan);
+    if (!userId && !invalidUser) {
+        console.error('UserId is undefined');
+        return;
+    }
 
-					const deleteBtn = document.createElement('span');
-					deleteBtn.textContent = '❌';
-					deleteBtn.title = `Remove ${friend.name}`;
-					deleteBtn.style.cursor = 'pointer';
-					deleteBtn.onclick = async (e) => {
-						e.stopPropagation();
-						if (confirm(`Remove ${friend.name} from your friends?`)) {
-							const res = await fetch('/api/removeFriend', {
-								method: 'DELETE',
-								headers: { 'Content-Type': 'application/json' },
-								body: JSON.stringify({ friendName: friend.name }),
-								credentials: 'include',
-							});
-							if (res.ok) friendEl.remove();
-							else alert('Error removing friend');
-						}
-					};
-					friendEl.appendChild(deleteBtn);
+    const historyContainer = document.getElementById('gamesHistory')!;
+    const friendsList = document.getElementById('friendsList')!;
+    const addFriendContainer = document.getElementById('addFriendContainer')!;
+    let alreadyFriend = false;
 
-					friendsList.appendChild(friendEl);
+    const meRes = await fetch('/api/me', { credentials: 'include' });
+    if (meRes.status === 401) {
+        navigate('/auth');
+        return;
+    }
+    const me = await meRes.json();
 
-					if (playerName && friend.name === playerName) {
-						alreadyFriend = true;
-					}
-				}
-			}
-		} else {
-			friendsList.innerHTML = `<p class="text-red-400 text-sm">Error loading friends.</p>`;
-		}
-	} catch (err) {
-		console.error('Erreur lors du chargement des amis:', err);
-		friendsList.innerHTML = `<p class="text-red-400 text-sm">Error loading friends.</p>`;
-	}
+    try {
+        const res = await fetch(`/api/friends?userId=${me.id}`, { credentials: 'include' });
+        if (res.ok) {
+            const friends = await res.json();
+            if (friends.length === 0) {
+                friendsList.innerHTML = `<p class="text-purple-500 text-center italic">No friends yet. (´• ω •｀)</p>`;
+            } else {
+                friendsList.innerHTML = '';
+                for (const friend of friends) {
+                    const friendEl = document.createElement('div');
+                    friendEl.className = 'flex justify-between items-center p-2 bg-pink-50 hover:bg-purple-100 border border-purple-200 rounded-lg transition';
 
-	if (playerName && !invalidUser && me.name !== playerName && !alreadyFriend) {
-		const addFriendBtn = document.createElement('button');
-		addFriendBtn.textContent = '➕ Add Friend';
-		addFriendBtn.className = 'bg-blue-300 text-blue-900 px-6 py-2 rounded-xl shadow hover:bg-blue-400 hover:text-white transition block mx-auto mb-6';
-		addFriendBtn.onclick = async () => {
-			const res = await fetch('/api/addFriend', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ friendName: playerName }),
-				credentials: 'include'
-			});
-			if (!res.ok) alert('Error adding friend');
-			renderProfil(playerName);
-		};
-		const h1 = historyContainer.querySelector('h1');
-		if (h1) h1.after(addFriendBtn);
-	}
+                    const nameSpan = document.createElement('span');
+                    nameSpan.className = 'text-purple-700 cursor-pointer hover:underline flex items-center';
+                    nameSpan.innerHTML = `
+                        <span class="text-purple-300 mr-2">✧</span>
+                        ${friend.name}
+                    `;
+                    nameSpan.onclick = () => navigate(`/profil?player=${encodeURIComponent(friend.name)}`);
+                    friendEl.appendChild(nameSpan);
 
-	const gamesDiv = document.createElement('div');
-	gamesDiv.id = 'gamesHistory';
-	gamesDiv.className = 'flex flex-col gap-6';
-	historyContainer.appendChild(gamesDiv);
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'text-pink-500 hover:text-red-500 p-1 transition';
+                    deleteBtn.innerHTML = '✕';
+                    deleteBtn.title = `Remove ${friend.name}`;
+                    deleteBtn.onclick = async (e) => {
+                        e.stopPropagation();
+                        if (confirm(`Remove ${friend.name} from your friends?`)) {
+                            const res = await fetch('/api/removeFriend', {
+                                method: 'DELETE',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ friendName: friend.name }),
+                                credentials: 'include',
+                            });
+                            if (res.ok) friendEl.remove();
+                            else alert('Error removing friend');
+                        }
+                    };
+                    friendEl.appendChild(deleteBtn);
 
-	if (!invalidUser) {
-		try {
-			const gamesData = await fetchData('gamesHistory', userId!);
-			if (!gamesData || gamesData.length === 0) {
-				const div = document.createElement('div');
-				div.className = 'p-4 rounded-xl text-pink-700 shadow text-2xl bg-white text-center';
-				div.textContent = 'No games found...';
-				gamesDiv.appendChild(div);
-			} else {
-				for (const game of gamesData) {
-					const gameDiv = document.createElement('div');
-					gameDiv.className = `
-						p-6 rounded-2xl shadow-xl hover:scale-105 transform transition
-						bg-gradient-to-br from-pink-300 via-purple-300 to-blue-300 text-pink-900
-					`;
+                    friendsList.appendChild(friendEl);
 
-					const minutes = Math.floor(game.duration / 60);
-					const seconds = game.duration % 60;
-					const durationStr = game.duration
-						? `${minutes}m${seconds.toString().padStart(2, '0')}s`
-						: 'Not played';
-					
-						
-					const player1 = await fetchData('userNameById', game.player1_id);
-					const player2 = await fetchData('userNameById', game.player2_id);
+                    if (playerName && friend.name === playerName) {
+                        alreadyFriend = true;
+                    }
+                }
+            }
+        } else {
+            friendsList.innerHTML = `<p class="text-red-400 text-center">Error loading friends (´；д；｀)</p>`;
+        }
+    } catch (err) {
+        console.error('Error loading friends:', err);
+        friendsList.innerHTML = `<p class="text-red-400 text-center">Error loading friends (´；д；｀)</p>`;
+    }
 
-					const player1Name = player1?.name || `Deleted account`;
-					const player1Avatar = player1?.avatar || '/avatar/default.png';
+    if (playerName && !invalidUser && me.name !== playerName && !alreadyFriend) {
+        addFriendContainer.innerHTML = `
+            <button id="addFriendBtn" class="relative px-6 py-2 bg-baby-blue border-2 border-t-white border-l-white border-r-blue-400 border-b-blue-400 
+                text-blue-800 font-bold mb-6 mx-auto block
+                shadow-[2px_2px_0px_0px_rgba(59,130,246,0.3)]
+                hover:bg-blue-300
+                active:shadow-none active:translate-y-[2px] active:border-blue-300
+                transition-all duration-100">
+                ✨ Add Friend
+            </button>
+        `;
 
-					const player2Name = player2?.name || `Deleted account`;
-					const player2Avatar = player2?.avatar || '/avatar/default.png';
+        document.getElementById('addFriendBtn')?.addEventListener('click', async () => {
+            const res = await fetch('/api/addFriend', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ friendName: playerName }),
+                credentials: 'include'
+            });
+            if (!res.ok) {
+                alert('Error adding friend');
+            } else {
+                renderProfil(playerName);
+            }
+        });
+    }
 
-					let resultText!: string;
-					let scoreClass!: string;
+    if (!invalidUser) {
+        try {
+            const gamesData = await fetchData('gamesHistory', userId!);
+            historyContainer.innerHTML = '';
 
-					if (game.winner_id === me.id) {
-						resultText = '🌸 Victoire';
-						scoreClass = 'text-green-600';
-					} else if (game.player1_score === game.player2_score) {
-						resultText = '⚖️ Egalité';
-						scoreClass = 'text-yellow-600';
-					}
-					else
-					{
-						resultText = '💔 Défaite';
-						scoreClass = 'text-red-600';
-					}
+            if (!gamesData || gamesData.length === 0) {
+                const div = document.createElement('div');
+                div.className = 'col-span-2 bg-white bg-opacity-80 p-6 rounded-xl text-purple-700 shadow text-center border-2 border-purple-200';
+                div.innerHTML = `
+                    <p class="text-xl">No games found yet... (´• ω •｀)</p>
+                    <p class="mt-2 text-sm">Play your first game!</p>
+                `;
+                historyContainer.appendChild(div);
+            } else {
+                for (const game of gamesData) {
+                    const minutes = Math.floor(game.duration / 60);
+                    const seconds = game.duration % 60;
+                    const durationStr = game.duration
+                        ? `${minutes}m${seconds.toString().padStart(2, '0')}s`
+                        : 'Not finished';
 
-					gameDiv.innerHTML = `
-						<div class="flex items-center gap-6 justify-center">
-							<div class="flex flex-col items-center">
-								<img src="${player1Avatar}" alt="Avatar 1" class="w-20 h-20 rounded-full border-4 border-white shadow-lg" />
-								<span class="mt-2 font-semibold">${player1Name}</span>
-							</div>
+                    const player1 = await fetchData('userNameById', game.player1_id);
+                    const player2 = await fetchData('userNameById', game.player2_id);
 
-							<div class="flex flex-col items-center text-3xl font-bold ${scoreClass}">
-								${game.player1_score} - ${game.player2_score}
-								<span class="text-sm font-normal mt-1">${resultText}</span>
-							</div>
+                    const player1Name = player1?.name || `Deleted account`;
+                    const player1Avatar = player1?.avatar || '/images/default-avatar.png';
+                    const player2Name = player2?.name || `Deleted account`;
+                    const player2Avatar = player2?.avatar || '/images/default-avatar.png';
 
-							<div class="flex flex-col items-center">
-								<img src="${player2Avatar}" alt="Avatar 2" class="w-20 h-20 rounded-full border-4 border-white shadow-lg" />
-								<span class="mt-2 font-semibold">${player2Name}</span>
-							</div>
-						</div>
+                    const isWinner = game.winner_id === me.id;
+                    const isDraw = game.winner_id === null;
 
-						<p class="text-sm mt-4 text-center text-purple-800">
-							Jouée le : <span class="font-semibold">${new Date(game.created_at).toLocaleString()}</span><br/>
-							Durée : <span class="font-semibold">${durationStr}</span>
-						</p>
-					`;
-					gamesDiv.appendChild(gameDiv);
-				}
-			}
-		} catch (err) {
-			console.error('Erreur chargement parties:', err);
-			const errorDiv = document.createElement('div');
-			errorDiv.className = 'text-red-500 text-center';
-			errorDiv.textContent = 'Error loading game history.';
-			gamesDiv.appendChild(errorDiv);
-		}
-	}
+                    const gameDiv = document.createElement('div');
+                    gameDiv.className = `bg-pink-50 bg-opacity-90 border-2 ${
+                        isWinner ? 'border-green-300' : isDraw ? 'border-yellow-300' : 'border-purple-300'
+                    } p-4 rounded-lg shadow-md hover:shadow-lg transition-all`;
 
-	document.getElementById('btn-settings')!.onclick = () => navigate('/settings');
-	document.getElementById('btn-performance')!.onclick = () => navigate('/performances');
+                    gameDiv.innerHTML = `
+                        <div class="flex items-center justify-around mb-4">
+                            <div class="text-center">
+                                <img src="${player1Avatar}" 
+                                     class="w-16 h-16 rounded-full border-2 ${
+                                        game.player1_id === me.id ? 'border-purple-400' : 'border-purple-200'
+                                     } shadow-md">
+                                <p class="mt-2 font-semibold ${
+                                    game.winner_id === game.player1_id ? 'text-green-600' : 'text-purple-700'
+                                }">
+                                    ${player1Name} ${game.player1_id === me.id ? '(You)' : ''}
+                                </p>
+                            </div>
+                            
+                            <div class="text-2xl font-bold mx-4 px-4 py-2 bg-purple-100 rounded-lg border-2 ${
+                                isWinner ? 'border-green-300 bg-green-50' : 
+                                isDraw ? 'border-yellow-300 bg-yellow-50' : 'border-purple-300'
+                            }">
+                                ${game.player1_score} - ${game.player2_score}
+                                ${isWinner ? '<div class="text-xs text-green-600">Victory! ☆</div>' : 
+                                  isDraw ? '<div class="text-xs text-yellow-600">Draw</div>' : 
+                                  '<div class="text-xs text-red-500">Defeat</div>'}
+                            </div>
+                            
+                            <div class="text-center">
+                                <img src="${player2Avatar}" 
+                                     class="w-16 h-16 rounded-full border-2 ${
+                                        game.player2_id === me.id ? 'border-purple-400' : 'border-purple-200'
+                                     } shadow-md">
+                                <p class="mt-2 font-semibold ${
+                                    game.winner_id === game.player2_id ? 'text-green-600' : 'text-purple-700'
+                                }">
+                                    ${player2Name} ${game.player2_id === me.id ? '(You)' : ''}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center text-sm text-purple-700 bg-purple-100 p-2 rounded-lg">
+                            <p>Played on: <span class="font-semibold">${new Date(game.created_at).toLocaleString()}</span></p>
+                            <p class="mt-1">Duration: <span class="font-semibold">${durationStr}</span></p>
+                        </div>
+                    `;
+                    historyContainer.appendChild(gameDiv);
+                }
+            }
+        } catch (err) {
+            console.error('Error loading game history:', err);
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'col-span-2 text-red-500 text-center bg-red-50 p-4 rounded-lg border-2 border-red-200';
+            errorDiv.innerHTML = `
+                <p>Error loading game history (´；д；｀)</p>
+                <p class="text-sm mt-2">Please try again later</p>
+            `;
+            historyContainer.appendChild(errorDiv);
+        }
+    }
 
-	const playerNameInput = document.getElementById('playerName') as HTMLInputElement;
-	playerNameInput.addEventListener('keydown', (e) => {
-		if (e.key === 'Enter') {
-			const name = playerNameInput.value.trim();
-			if (name) navigate(`/profil?player=${encodeURIComponent(name)}`);
-		}
-	});
+    // Gestion des événements
+    document.getElementById('btn-settings')?.addEventListener('click', () => navigate('/settings'));
 
-	document.getElementById('btn-deleteUser')!.onclick = async () => {
-		if (confirm('Are you sure you want to delete your account? This action is irreversible.')) {
-			const res = await fetch('/deleteUser', {
-				method: 'DELETE',
-				credentials: 'include',
-			});
-			if (res.ok) {
-				navigate('/auth');
-			} else {
-				alert('Error deleting account');
-			}
-		}
-	};
+    const playerNameInput = document.getElementById('playerName') as HTMLInputElement;
+    playerNameInput?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const name = playerNameInput.value.trim();
+            if (name) navigate(`/profil?player=${encodeURIComponent(name)}`);
+        }
+    });
+
+    document.getElementById('btn-deleteUser')?.addEventListener('click', async () => {
+        if (confirm('Are you sure you want to delete your account? This action is irreversible.')) {
+            const res = await fetch('/deleteUser', {
+                method: 'DELETE',
+                credentials: 'include',
+            });
+            if (res.ok) {
+                navigate('/auth');
+            } else {
+                alert('Error deleting account');
+            }
+        }
+    });
 }

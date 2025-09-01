@@ -1,10 +1,9 @@
 export function renderSoloGame() {
-    // Supprime le menu existant
     document.getElementById('game-menu-container')?.remove();
     const app = document.getElementById('app');
     if (!app)
         return;
-    // Charge la police pixel si absente
+    // Charge police pixel si absente
     if (!document.querySelector('link[href*="Press+Start+2P"]')) {
         const fontLink = document.createElement('link');
         fontLink.href = 'https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap';
@@ -14,7 +13,6 @@ export function renderSoloGame() {
     // HTML principal
     app.innerHTML = `
     <div class="min-h-screen bg-[url('/images/background.png')] bg-cover bg-fixed pt-[190px] pb-4">
-        <!-- Conteneur principal -->
         <div class="flex flex-col items-center mx-auto px-4" style="max-width: 800px;">
             <!-- Barre de contrôle -->
             <div class="flex justify-between items-center w-full mb-3 gap-2">
@@ -26,11 +24,17 @@ export function renderSoloGame() {
                     ← Retour
                 </button>
 
-                <!-- Scores (inchangé) -->
-                <div class="flex-1 flex justify-center items-center gap-2 pixel-font text-yellow-300 text-shadow-pixel" style="font-size: 1.25rem;">
-                    <span id="player-score">00</span>
+                <!-- Scores -->
+                <div class="flex-1 flex justify-center items-center gap-4 pixel-font" style="font-size: 1.25rem;">
+                    <div class="text-center">
+                        <div class="text-purple-300 text-xs">JOUEUR</div>
+                        <span id="player-score" class="text-yellow-300">00</span>
+                    </div>
                     <span class="text-white">:</span>
-                    <span id="ai-score">00</span>
+                    <div class="text-center">
+                        <div class="text-pink-300 text-xs">BOT</div>
+                        <span id="ai-score" class="text-yellow-300">00</span>
+                    </div>
                 </div>
 
                 <button id="pause-btn" 
@@ -42,27 +46,28 @@ export function renderSoloGame() {
                 </button>
             </div>
 
-            <!-- Terrain de jeu -->
+            <!-- Terrain -->
             <div class="relative w-full bg-purple-100 bg-opacity-30 border-2 border-purple-300" 
                 id="game-container" 
                 style="height: 400px;">
                 
-                <!-- Raquettes -->
-                <div id="paddle" class="absolute w-3 h-20 bg-purple-400 left-4 top-1/2 transform -translate-y-1/2"></div>
-                <div id="ai-paddle" class="absolute w-3 h-20 bg-pink-400 right-4 top-1/2 transform -translate-y-1/2"></div>
-                
-                <!-- Balle -->
-                <div id="ball" class="absolute w-5 h-5 bg-yellow-300 rounded-full"></div>
-                
+                <div id="paddle" class="absolute w-3 h-20 bg-purple-400 left-4"></div>
+                <div id="ai-paddle" class="absolute w-3 h-20 bg-pink-400 right-4"></div>
+                <div id="ball" class="absolute w-5 h-5 bg-yellow-300 rounded-sm shadow-md"></div>
+
                 <!-- Filet -->
                 <div class="absolute left-1/2 top-0 bottom-0 w-1 bg-purple-300 transform -translate-x-1/2 
                             flex flex-col items-center justify-between py-2">
                     ${Array(8).fill('<div class="h-6 w-full bg-purple-400"></div>').join('')}
                 </div>
             </div>
+
+            <!-- Instructions clavier -->
+            <div class="mt-4 text-center text-white text-sm pixel-font">
+                Flèches ↑ et ↓ pour déplacer votre raquette
+            </div>
         </div>
 
-        <!-- Chat décoratif -->
         <img src="/images/logo.png" 
             class="fixed left-4 bottom-4 w-14 h-14 animate-float"
             alt="Chat kawaii">
@@ -71,38 +76,21 @@ export function renderSoloGame() {
     // Styles dynamiques
     const style = document.createElement('style');
     style.textContent = `
-        .pixel-font {
-            font-family: 'Press Start 2P', cursive;
-            letter-spacing: 1px;
-        }
-        .text-shadow-pixel {
-            text-shadow: 2px 2px 0 #7e22ce;
-        }
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-8px); }
-        }
-        .animate-float {
-            animation: float 2s ease-in-out infinite;
-        }
+        .pixel-font { font-family: 'Press Start 2P', cursive; letter-spacing: 1px; }
+        @keyframes float { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-8px); } }
+        .animate-float { animation: float 2s ease-in-out infinite; }
     `;
     document.head.appendChild(style);
-    // Initialisation du jeu
     initSoloGame();
 }
 function initSoloGame() {
-    // Variables
+    // scores
     let playerScore = 0;
     let aiScore = 0;
-    let gameRunning = true;
-    let ballX = 400, ballY = 200;
-    let ballSpeedX = 4, ballSpeedY = 4;
-    let paddleY = 160;
-    let aiPaddleY = 160;
-    const paddleHeight = 80;
-    const gameWidth = 800;
-    const gameHeight = 400;
-    // Éléments DOM
+    // états du jeu
+    let gamePaused = false;
+    let waitingForServe = true;
+    // éléments DOM
     const ball = document.getElementById('ball');
     const paddle = document.getElementById('paddle');
     const aiPaddle = document.getElementById('ai-paddle');
@@ -110,63 +98,147 @@ function initSoloGame() {
     const aiScoreDisplay = document.getElementById('ai-score');
     const pauseBtn = document.getElementById('pause-btn');
     const gameContainer = document.getElementById('game-container');
-    // Contrôles
-    gameContainer.addEventListener('mousemove', (e) => {
-        if (!gameRunning)
-            return;
-        const rect = gameContainer.getBoundingClientRect();
-        paddleY = Math.min(Math.max(e.clientY - rect.top - paddleHeight / 2, 0), gameHeight - paddleHeight);
-        updatePaddles();
-    });
-    pauseBtn.addEventListener('click', () => {
-        gameRunning = !gameRunning;
-        pauseBtn.textContent = gameRunning ? 'Pause' : 'Reprendre';
-    });
-    // Boucle de jeu
-    function gameLoop() {
-        if (!gameRunning)
-            return requestAnimationFrame(gameLoop);
-        // Mouvement balle
-        ballX += ballSpeedX;
-        ballY += ballSpeedY;
-        // Collisions
-        if (ballY <= 0 || ballY >= gameHeight - 5)
-            ballSpeedY = -ballSpeedY;
-        if (ballX <= 30 && ballY > paddleY && ballY < paddleY + paddleHeight) {
-            ballSpeedX = -ballSpeedX * 1.05;
-            playerScore++;
-            playerScoreDisplay.textContent = String(playerScore).padStart(2, '0');
-        }
-        if (ballX >= gameWidth - 30 - 5 && ballY > aiPaddleY && ballY < aiPaddleY + paddleHeight) {
-            ballSpeedX = -ballSpeedX;
-        }
-        // Scores
-        if (ballX < 0 || ballX > gameWidth) {
-            if (ballX < 0)
-                aiScore++;
-            else
-                playerScore++;
-            playerScoreDisplay.textContent = String(playerScore).padStart(2, '0');
-            aiScoreDisplay.textContent = String(aiScore).padStart(2, '0');
-            resetBall();
-        }
-        // IA
-        aiPaddleY += (ballY - (aiPaddleY + paddleHeight / 2)) * 0.07;
-        // Mise à jour
-        ball.style.left = `${ballX * (gameContainer.offsetWidth / gameWidth)}px`;
-        ball.style.top = `${ballY}px`;
-        updatePaddles();
-        requestAnimationFrame(gameLoop);
+    // dimensions dynamiques
+    let gameWidth = gameContainer.clientWidth;
+    let gameHeight = gameContainer.clientHeight;
+    let paddleHeight = paddle.offsetHeight;
+    let ballSize = ball.offsetWidth;
+    // positions
+    let paddleY = (gameHeight - paddleHeight) / 2;
+    let aiPaddleY = (gameHeight - paddleHeight) / 2;
+    let ballX = (gameWidth - ballSize) / 2;
+    let ballY = (gameHeight - ballSize) / 2;
+    // vitesses
+    let paddleSpeed = Math.max(6, gameHeight * 0.02);
+    let ballSpeedX = 0;
+    let ballSpeedY = 0;
+    const baseBallSpeed = 4;
+    // états des touches
+    let upKeyPressed = false;
+    let downKeyPressed = false;
+    // mise à jour des dimensions (resize + init)
+    function updateDimensions() {
+        gameWidth = gameContainer.clientWidth;
+        gameHeight = gameContainer.clientHeight;
+        paddleHeight = paddle.offsetHeight || 80;
+        ballSize = ball.offsetWidth || 5;
+        paddleSpeed = Math.max(6, gameHeight * 0.02);
     }
     function resetBall() {
-        ballX = gameWidth / 2;
-        ballY = gameHeight / 2;
-        ballSpeedX = (ballSpeedX > 0 ? -4 : 4);
-        ballSpeedY = (Math.random() * 6) - 3;
+        updateDimensions();
+        ballX = (gameWidth - ballSize) / 2;
+        ballY = (gameHeight - ballSize) / 2;
+        ballSpeedX = 0;
+        ballSpeedY = 0;
+        waitingForServe = true;
+        drawPositions();
     }
-    function updatePaddles() {
+    function serveBall() {
+        const dir = Math.random() < 0.5 ? -1 : 1;
+        ballSpeedX = baseBallSpeed * dir;
+        ballSpeedY = (Math.random() * baseBallSpeed) - (baseBallSpeed / 2);
+        waitingForServe = false;
+    }
+    function drawPositions() {
         paddle.style.top = `${paddleY}px`;
         aiPaddle.style.top = `${aiPaddleY}px`;
+        ball.style.left = `${Math.round(ballX)}px`;
+        ball.style.top = `${Math.round(ballY)}px`;
     }
-    gameLoop();
+    function gameLoop() {
+        if (!gamePaused) {
+            // paddle joueur → contrôlé par clavier
+            if (upKeyPressed) {
+                paddleY = Math.max(paddleY - paddleSpeed, 0);
+            }
+            if (downKeyPressed) {
+                paddleY = Math.min(paddleY + paddleSpeed, gameHeight - paddleHeight);
+            }
+            // paddle IA → suit la balle avec limites
+            const targetY = ballY - (paddleHeight / 2) + ballSize / 2;
+            aiPaddleY += (targetY - aiPaddleY) * 0.07;
+            // Limites pour l'IA (comme le joueur)
+            aiPaddleY = Math.max(0, Math.min(aiPaddleY, gameHeight - paddleHeight));
+        }
+        if (!waitingForServe && !gamePaused) {
+            ballX += ballSpeedX;
+            ballY += ballSpeedY;
+            // collisions mur haut/bas
+            if (ballY <= 0 || ballY + ballSize >= gameHeight) {
+                ballSpeedY = -ballSpeedY;
+                // Ajustement pour éviter que la balle reste coincée
+                if (ballY <= 0)
+                    ballY = 0;
+                if (ballY + ballSize >= gameHeight)
+                    ballY = gameHeight - ballSize;
+            }
+            // collisions raquette joueur
+            if (ballX <= paddle.offsetLeft + paddle.offsetWidth &&
+                ballY + ballSize >= paddleY &&
+                ballY <= paddleY + paddleHeight) {
+                ballX = paddle.offsetLeft + paddle.offsetWidth;
+                ballSpeedX = Math.abs(ballSpeedX) * 1.05;
+                const hit = ((ballY + ballSize / 2) - (paddleY + paddleHeight / 2)) / (paddleHeight / 2);
+                ballSpeedY = hit * Math.max(3, Math.abs(ballSpeedX));
+            }
+            // collisions raquette IA
+            if (ballX + ballSize >= aiPaddle.offsetLeft &&
+                ballY + ballSize >= aiPaddleY &&
+                ballY <= aiPaddleY + paddleHeight) {
+                ballX = aiPaddle.offsetLeft - ballSize;
+                ballSpeedX = -Math.abs(ballSpeedX) * 1.05;
+                const hit = ((ballY + ballSize / 2) - (aiPaddleY + paddleHeight / 2)) / (paddleHeight / 2);
+                ballSpeedY = hit * Math.max(3, Math.abs(ballSpeedX));
+            }
+            // score
+            if (ballX < 0) {
+                aiScore++;
+                aiScoreDisplay.textContent = String(aiScore).padStart(2, '0');
+                resetBall();
+            }
+            else if (ballX > gameWidth) {
+                playerScore++;
+                playerScoreDisplay.textContent = String(playerScore).padStart(2, '0');
+                resetBall();
+            }
+        }
+        drawPositions();
+        requestAnimationFrame(gameLoop);
+    }
+    // gestion des événements clavier
+    function handleKeyDown(e) {
+        if (e.key === 'ArrowUp')
+            upKeyPressed = true;
+        if (e.key === 'ArrowDown')
+            downKeyPressed = true;
+    }
+    function handleKeyUp(e) {
+        if (e.key === 'ArrowUp')
+            upKeyPressed = false;
+        if (e.key === 'ArrowDown')
+            downKeyPressed = false;
+    }
+    // événements
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
+    gameContainer.addEventListener('click', () => {
+        if (waitingForServe)
+            serveBall();
+    });
+    pauseBtn.addEventListener('click', () => {
+        gamePaused = !gamePaused;
+        pauseBtn.textContent = gamePaused ? 'Resume' : 'Pause';
+    });
+    window.addEventListener('resize', () => {
+        updateDimensions();
+        if (waitingForServe)
+            resetBall();
+        drawPositions();
+    });
+    // init
+    updateDimensions();
+    resetBall();
+    playerScoreDisplay.textContent = '00';
+    aiScoreDisplay.textContent = '00';
+    requestAnimationFrame(gameLoop);
 }

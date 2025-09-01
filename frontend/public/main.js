@@ -4,10 +4,10 @@ import { renderChat } from "./views/chat.js";
 import { renderAuth } from "./views/auth.js";
 import { navBar } from "./components/navbar.js";
 import { renderSettings } from "./views/settings.js";
-import { renderPerformances } from "./views/performance.js";
 import { renderSoloGame } from "./views/solo.js";
 import { render1vs1 } from "./views/1vs1.js";
-// Barre de navigation
+import { renderRemoteRoom } from "./views/remoteRoom.js";
+import { renderRemoteGame } from "./views/remoteGame.js";
 async function renderNav() {
     const existingNav = document.querySelector('nav');
     if (existingNav)
@@ -15,24 +15,6 @@ async function renderNav() {
     const nav = await navBar();
     document.body.prepend(nav);
 }
-async function init() {
-    await renderNav(); // initial load
-    render(window.location.pathname + window.location.search);
-}
-init();
-// Initialisation des Websocket
-const socket = new WebSocket(`ws://${window.location.hostname}:3001/ws`);
-socket.onopen = () => {
-    console.log('✅ Connecté au WebSocket');
-    socket.send('ping');
-};
-socket.onmessage = (event) => {
-    console.log('📨 Message du serveur :', event.data);
-};
-socket.onclose = () => {
-    console.log('❌ Déconnecté du WebSocket');
-};
-// Différentes pages
 function render(pathWithQuery) {
     const url = new URL(window.location.origin + pathWithQuery);
     const basePath = url.pathname;
@@ -50,9 +32,6 @@ function render(pathWithQuery) {
         case '/settings':
             renderSettings();
             break;
-        case '/performances':
-            renderPerformances();
-            break;
         case '/profil':
             {
                 const player = params.get('player');
@@ -62,6 +41,7 @@ function render(pathWithQuery) {
                     renderProfil();
                 break;
             }
+        // Modifie le switch case pour ajouter le mode 1vs1 :
         case '/game': {
             const mode = url.searchParams.get('mode');
             if (mode === 'solo') {
@@ -70,6 +50,15 @@ function render(pathWithQuery) {
             else if (mode === '1v1') { // Nouveau cas pour le 1vs1
                 render1vs1();
             }
+            else if (mode === 'remote') {
+                // Si on a un roomId, on affiche le jeu, sinon la salle
+                if (params.has('roomId')) {
+                    renderRemoteGame();
+                }
+                else {
+                    renderRemoteRoom();
+                }
+            }
             else {
                 document.getElementById("app").innerHTML = `<h1 class="text-center mt-10">Mode "${mode}" non supporté.</h1>`;
             }
@@ -77,28 +66,43 @@ function render(pathWithQuery) {
         }
         default:
             document.getElementById("app").innerHTML = `<h1 class="text-center text-5xl p-10">Page non trouvée</h1>`;
+        // Dans le switch case de votre main.ts, ajoutez :
+        case '/game': {
+            const mode = url.searchParams.get('mode');
+            if (mode === 'solo') {
+                renderSoloGame(); // Ajoutez cette importation en haut du fichier
+            }
+            // Ajoutez ici les autres modes (multiplayer, tournament) plus tard
+            break;
+        }
     }
 }
-// A corriger intégrer directement la fonction navigate() dans home.ts pour l'utiliser
+// Exposez les fonctions pour qu'elles soient accessibles depuis le HTML
+//(window as any).handleSoloGame = handleSoloGame;
 window.navigate = navigate;
-// Intercepter les clics sur les liens
+// Navigation SPA
+export function navigate(pathWithQuery) {
+    window.history.pushState({}, '', pathWithQuery);
+    render(pathWithQuery);
+}
+// Intercepter les clics <a>
 document.addEventListener('click', (e) => {
     const target = e.target;
     if (target.tagName === 'A') {
         const anchor = target;
         const href = anchor.getAttribute('href');
         if (href && href.startsWith('/')) {
-            e.preventDefault(); // stop le rechargement
-            navigate(href); // navigation SPA
+            e.preventDefault();
+            navigate(href);
         }
     }
 });
-// SPA
-export function navigate(pathWithQuery) {
-    window.history.pushState({}, '', pathWithQuery);
-    render(pathWithQuery);
-}
-// Gérer les retours en arrière du navigateur
 window.addEventListener('popstate', () => {
     render(window.location.pathname + window.location.search);
 });
+// Initialisation
+async function init() {
+    await renderNav();
+    render(window.location.pathname + window.location.search);
+}
+init();

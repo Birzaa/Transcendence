@@ -49,8 +49,8 @@ export function renderGameMenu(): string {
                         <span class="ml-auto text-xl">🎮</span>
                     </button>
 
-                    <!-- Multijoueur -->
-                    <button onclick="window.navigate('/game?mode=multiplayer')"
+                    <!-- Remote -->
+                    <button onclick="window.navigate('/game?mode=remote')"
                         class="w-full flex items-center px-6 py-3 bg-purple-200 
                                border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400
                                text-purple-800 font-bold
@@ -58,8 +58,8 @@ export function renderGameMenu(): string {
                                active:shadow-none active:translate-y-[2px] active:border-purple-300
                                transition-all duration-100">
                         <span class="text-purple-300 mx-1 text-lg">☆</span>
-                        <span>Multijoueur</span>
-                        <span class="ml-auto text-xl">👥</span>
+                        <span>Remote</span>
+                        <span class="ml-auto text-xl">🌐</span>
                     </button>
 
                     <!-- Tournoi -->
