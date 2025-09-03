@@ -10,9 +10,8 @@ import { render1vs1 } from "./views/1vs1.js";
 import { renderRemoteRoom } from "./views/remoteRoom.js";
 import { renderRemoteGame } from "./views/remoteGame.js";
 
-
 async function renderNav() {
-  const existingNav = document.querySelector('nav');
+  const existingNav = document.querySelector("nav");
   if (existingNav) existingNav.remove();
 
   const nav = await navBar();
@@ -25,92 +24,81 @@ function render(pathWithQuery: string): void {
   const params = url.searchParams;
 
   switch (basePath) {
-    case '/':
+    case "/":
       renderHome();
       break;
-    case '/chat':
+
+    case "/chat":
       renderChat();
       break;
-    case '/auth':
+
+    case "/auth":
       renderAuth();
       break;
-    case '/settings':
+
+    case "/settings":
       renderSettings();
       break;
-    case '/profil':
-      {
-        const player = params.get('player');
-        if (player)
-          renderProfil(player);
-        else
-          renderProfil();
-        break;
-      }
-      // Modifie le switch case pour ajouter le mode 1vs1 :
-    case '/game': {
-    const mode = url.searchParams.get('mode');
-    if (mode === 'solo') 
-    {
+
+    case "/profil": {
+      const player = params.get("player");
+      if (player) renderProfil(player);
+      else renderProfil();
+      break;
+    }
+
+    case "/game": {
+      const mode = url.searchParams.get("mode");
+
+      if (mode === "solo") {
         renderSoloGame();
-    }
-    else if (mode === '1v1')
-    {  // Nouveau cas pour le 1vs1
+      } else if (mode === "1v1") {
         render1vs1();
-    } 
-    else if (mode === 'remote') {
-      // Si on a un roomId, on affiche le jeu, sinon la salle
-      if (params.has('roomId')) {
-        renderRemoteGame();
+      } else if (mode === "remote") {
+        const roomId = params.get("roomId");
+
+        if (roomId) {
+          // On rejoint la partie existante → rôle = "guest"
+          const ws = new WebSocket("ws://localhost:3000");
+          renderRemoteGame(ws, "guest", roomId);
+        } else {
+          // On crée ou rejoint une salle
+          renderRemoteRoom();
+        }
       } else {
-        renderRemoteRoom();
-      }
-    }
-    else
-    {
         document.getElementById("app")!.innerHTML = `<h1 class="text-center mt-10">Mode "${mode}" non supporté.</h1>`;
+      }
+      break;
     }
-    break;
-}
-      
+
     default:
-      document.getElementById("app")!.innerHTML = `<h1 class="text-center text-5xl p-10">Page non trouvée</h1>`;
-
-    // Dans le switch case de votre main.ts, ajoutez :
-  case '/game': {
-    const mode = url.searchParams.get('mode');
-    if (mode === 'solo') {
-        renderSoloGame(); // Ajoutez cette importation en haut du fichier
-    }
-    // Ajoutez ici les autres modes (multiplayer, tournament) plus tard
-    break;
-  }
+      document.getElementById("app")!.innerHTML =
+        `<h1 class="text-center text-5xl p-10">Page non trouvée</h1>`;
   }
 }
-
-// Exposez les fonctions pour qu'elles soient accessibles depuis le HTML
-//(window as any).handleSoloGame = handleSoloGame;
-(window as any).navigate = navigate;
 
 // Navigation SPA
+(window as any).navigate = navigate;
+
 export function navigate(pathWithQuery: string): void {
-  window.history.pushState({}, '', pathWithQuery);
+  window.history.pushState({}, "", pathWithQuery);
   render(pathWithQuery);
 }
 
 // Intercepter les clics <a>
-document.addEventListener('click', (e) => {
+document.addEventListener("click", (e) => {
   const target = e.target as HTMLElement;
-  if (target.tagName === 'A') {
+  if (target.tagName === "A") {
     const anchor = target as HTMLAnchorElement;
-    const href = anchor.getAttribute('href');
-    if (href && href.startsWith('/')) {
+    const href = anchor.getAttribute("href");
+    if (href && href.startsWith("/")) {
       e.preventDefault();
       navigate(href);
     }
   }
 });
 
-window.addEventListener('popstate', () => {
+window.addEventListener("popstate", () => {
   render(window.location.pathname + window.location.search);
 });
 

@@ -42,15 +42,6 @@ export default async function setupWebSocket(fastify: FastifyInstance) {
   // ------------------- JEU -------------------
   const gameRooms = new Map<string, GameRoom>();
 
-  function sendToPlayer(username: string, data: any) {
-    for (const room of gameRooms.values()) {
-      const player = room.players.find(p => p.username === username);
-      if (player && player.socket.readyState === WebSocket.OPEN) {
-        player.socket.send(JSON.stringify(data));
-      }
-    }
-  }
-
   function broadcastGame(roomId: string, data: any) {
     const room = gameRooms.get(roomId);
     if (!room) return;
@@ -65,7 +56,7 @@ export default async function setupWebSocket(fastify: FastifyInstance) {
   wss.on('connection', (socket) => {
     socket.send(JSON.stringify({ type: 'message', from: 'Server', content: 'Bienvenue !' }));
 
-    let username: string;
+    let username = '';
     let currentRoomId: string | null = null;
 
     socket.on('message', (message) => {
@@ -138,33 +129,36 @@ export default async function setupWebSocket(fastify: FastifyInstance) {
           return;
         }
 
-        // Dans le handler join_room
         if (data.type === 'join_room' && username) {
           const room = gameRooms.get(data.roomId);
           if (!room) {
-              socket.send(JSON.stringify({ 
-                  type: 'error', 
-                  content: 'Salle introuvable' 
-              }));
-              return;
+            socket.send(JSON.stringify({ type: 'error', content: 'Salle introuvable' }));
+            return;
           }
 
           // Empêcher un joueur de rejoindre deux fois
           if (room.players.some(p => p.username === username)) {
-              socket.send(JSON.stringify({
-                  type: 'game_start',
-                  host: room.host,
-                  players: room.players.map(p => p.username)
-              }));
-              return;
+            // Déjà dans la salle : simplement renvoyer l'état de salle
+            socket.send(JSON.stringify({
+              type: 'room_joined',
+              roomId: room.id,
+              host: room.host
+            }));
+            // Si la salle est complète on (re)notifie le start
+            if (room.players.length === 2) {
+              broadcastGame(room.id, {
+                type: 'game_start',
+                host: room.host,
+                players: room.players.map(p => p.username)
+              });
+            }
+            currentRoomId = room.id;
+            return;
           }
 
           if (room.players.length >= 2) {
-              socket.send(JSON.stringify({ 
-                  type: 'error', 
-                  content: 'La salle est pleine' 
-              }));
-              return;
+            socket.send(JSON.stringify({ type: 'error', content: 'La salle est pleine' }));
+            return;
           }
 
           room.players.push({ socket, username });
@@ -172,37 +166,46 @@ export default async function setupWebSocket(fastify: FastifyInstance) {
 
           // Réponse immédiate au joueur qui rejoint
           socket.send(JSON.stringify({
-              type: 'room_joined',
-              roomId: room.id,
-              host: room.host
+            type: 'room_joined',
+            roomId: room.id,
+            host: room.host
           }));
 
-          // Si la salle est maintenant complète
+          // Si la salle est maintenant complète → démarrer
           if (room.players.length === 2) {
-              // Notifier TOUS les joueurs
-              broadcastGame(room.id, {
-                  type: 'game_start',
-                  host: room.host,
-                  players: room.players.map(p => p.username)
-              });
+            broadcastGame(room.id, {
+              type: 'game_start',
+              host: room.host,
+              players: room.players.map(p => p.username)
+            });
           } else {
-              // Notifier seulement l'hôte
-              const hostPlayer = room.players.find(p => p.username === room.host);
-              if (hostPlayer) {
-                  hostPlayer.socket.send(JSON.stringify({
-                      type: 'player_joined',
-                      username
-                  }));
-              }
+            // Notifier seulement l'hôte qu'un joueur a rejoint
+            const hostPlayer = room.players.find(p => p.username === room.host);
+            if (hostPlayer) {
+              hostPlayer.socket.send(JSON.stringify({
+                type: 'player_joined',
+                username
+              }));
+            }
           }
-        }
-
-        if (data.type === 'game_state' && currentRoomId) {
-          // relais de l’état vers tous les joueurs
-          broadcastGame(currentRoomId, { type: 'game_state', state: data.state });
           return;
         }
-        
+
+        // Host envoie l'état de jeu (obligatoirement avec roomId)
+        if (data.type === 'game_state') {
+          const roomId = data.roomId || currentRoomId;
+          if (!roomId || roomId !== currentRoomId) return;
+          broadcastGame(roomId, { type: 'game_state', roomId, state: data.state });
+          return;
+        }
+
+        // Guest (ou host) peut envoyer un déplacement de paddle
+        if (data.type === 'paddle_move') {
+          const roomId = data.roomId || currentRoomId;
+          if (!roomId || roomId !== currentRoomId) return;
+          broadcastGame(roomId, { type: 'paddle_move', roomId, player: data.player, y: data.y });
+          return;
+        }
 
       } catch (err) {
         console.error('Invalid message format', err);
