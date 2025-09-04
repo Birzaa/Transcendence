@@ -203,7 +203,14 @@ export default async function setupWebSocket(fastify: FastifyInstance) {
         if (data.type === 'paddle_move') {
           const roomId = data.roomId || currentRoomId;
           if (!roomId || roomId !== currentRoomId) return;
-          broadcastGame(roomId, { type: 'paddle_move', roomId, player: data.player, y: data.y });
+
+          // On rebroadcast à tous (host et guest)
+          broadcastGame(roomId, {
+            type: 'paddle_move',
+            roomId,
+            player: data.player,
+            y: data.y
+          });
           return;
         }
 

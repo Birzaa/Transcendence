@@ -41,7 +41,7 @@ export function renderRemoteGame(ws, role, roomId) {
           <div id="paddle2" class="absolute w-3 h-20 bg-pink-400 right-4"></div>
           <div id="ball" class="absolute w-5 h-5 bg-yellow-300 rounded-sm shadow-md"></div>
 
-          <div class="absolute left-1/2 top-0 bottom-0 w-1 bg-purple-300 transform -translate-x-1/2 
+          <div id="net" class="absolute left-1/2 top-0 bottom-0 w-1 bg-purple-300 transform -translate-x-1/2 
                       flex flex-col items-center justify-between py-2">
             ${Array(8).fill('<div class="h-6 w-full bg-purple-400"></div>').join('')}
           </div>
@@ -56,12 +56,16 @@ export function renderRemoteGame(ws, role, roomId) {
     .pixel-font { font-family: 'Press Start 2P', cursive; letter-spacing: 1px; }
     @keyframes float { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-8px); } }
     .animate-float { animation: float 2s ease-in-out infinite; }
+
+    /* ✅ Ajustements filet/balle */
+    #ball { z-index: 10; }
+    #net { z-index: 1; }
   `;
     document.head.appendChild(style);
     initRemoteGame(ws, role, roomId);
 }
 function initRemoteGame(ws, role, roomId) {
-    // DOM elements
+    // DOM
     const gameContainer = document.getElementById('game-container');
     const paddle1 = document.getElementById('paddle1');
     const paddle2 = document.getElementById('paddle2');
@@ -87,23 +91,35 @@ function initRemoteGame(ws, role, roomId) {
     const keys = {};
     document.addEventListener('keydown', e => keys[e.key] = true);
     document.addEventListener('keyup', e => keys[e.key] = false);
-    // réutiliser le WS existant (AUCUNE nouvelle connexion ici)
+    // Nouveau système pour l'envoi des données du paddle guest
+    let lastSentP2Y = p2Y;
+    const PADDLE_MOVE_THRESHOLD = 2; // Seuil de mouvement pour éviter les micro-ajustements
+    // 📡 Réception messages WS
     ws.onmessage = (event) => {
-        const msg = JSON.parse(event.data);
-        if (msg.type === 'game_state') {
-            if (role === 'guest') {
-                // le guest suit l'état envoyé par le host
-                ({ ballX, ballY, p1Y, p2Y, s1, s2, waitingForServe } = msg.state);
-                updatePositions();
+        try {
+            const msg = JSON.parse(event.data);
+            if (msg.type === 'game_state') {
+                if (role === 'guest') {
+                    // Interpolation pour un mouvement plus fluide
+                    const previousBallX = ballX;
+                    const previousBallY = ballY;
+                    ({ s1, s2, waitingForServe } = msg.state);
+                    // Interpolation progressive des positions pour éviter les saccades
+                    ballX = ballX + (msg.state.ballX - ballX) * 0.4;
+                    ballY = ballY + (msg.state.ballY - ballY) * 0.4;
+                    p1Y = p1Y + (msg.state.p1Y - p1Y) * 0.6;
+                    updatePositions();
+                }
+            }
+            if (msg.type === 'paddle_move') {
+                if (role === 'host' && msg.player === 'guest') {
+                    // Utilisation d'une interpolation pour un mouvement plus fluide côté host
+                    p2Y = p2Y + (clampY(msg.y) - p2Y) * 0.7;
+                }
             }
         }
-        if (msg.type === 'paddle_move') {
-            // le host récupère la position du paddle du guest
-            if (role === 'host' && msg.player === 'guest') {
-                p2Y = clampY(msg.y);
-            }
-            // (optionnel) le guest peut appliquer la position du host si on l'envoyait, mais
-            // le host renvoie déjà un game_state complet.
+        catch (e) {
+            console.error('Error parsing WS message:', e);
         }
     };
     ws.onerror = (err) => console.error('WS error', err);
@@ -134,20 +150,22 @@ function initRemoteGame(ws, role, roomId) {
             ws.send(JSON.stringify(payload));
         }
     }
-    // petit throttle pour ne pas spammer les updates de paddle guest
-    let lastGuestSend = 0;
     function sendGuestPaddleIfNeeded() {
         if (role !== 'guest' || ws.readyState !== WebSocket.OPEN)
             return;
-        const now = performance.now();
-        if (now - lastGuestSend < 16)
-            return; // ~60fps max
-        lastGuestSend = now;
-        const msg = { type: 'paddle_move', roomId, player: 'guest', y: p2Y };
-        ws.send(JSON.stringify(msg));
+        // Envoi seulement si le changement dépasse le seuil
+        if (Math.abs(p2Y - lastSentP2Y) > PADDLE_MOVE_THRESHOLD) {
+            const msg = {
+                type: 'paddle_move',
+                roomId,
+                player: 'guest',
+                y: p2Y
+            };
+            ws.send(JSON.stringify(msg));
+            lastSentP2Y = p2Y;
+        }
     }
     function handleCollisions() {
-        // murs haut/bas
         if (ballY <= 0 || ballY + ballSize >= gameHeight)
             ballVY *= -1;
         // paddle1
@@ -159,14 +177,13 @@ function initRemoteGame(ws, role, roomId) {
             ballVY = hit * Math.max(3, Math.abs(ballVX));
         }
         // paddle2
-        if (ballX + ballSize >= (gameWidth - paddle2.offsetWidth - 16) && // approx right-4
+        if (ballX + ballSize >= (gameWidth - paddle2.offsetWidth - 16) &&
             ballY + ballSize >= p2Y && ballY <= p2Y + paddleHeight) {
             ballX = gameWidth - paddle2.offsetWidth - 16 - ballSize;
             ballVX = -Math.abs(ballVX);
             const hit = ((ballY + ballSize / 2) - (p2Y + paddleHeight / 2)) / (paddleHeight / 2);
             ballVY = hit * Math.max(3, Math.abs(ballVX));
         }
-        // score
         if (ballX < 0) {
             s2++;
             resetBall();
@@ -186,32 +203,27 @@ function initRemoteGame(ws, role, roomId) {
     }
     function loop() {
         if (!gamePaused) {
-            // Contrôles
             if (role === 'host') {
-                // Host contrôle paddle1
                 if (keys['w'])
                     p1Y = clampY(p1Y - 6);
                 if (keys['s'])
                     p1Y = clampY(p1Y + 6);
-                // Serve
-                if (waitingForServe && (keys['w'] || keys['s'])) {
+                if (waitingForServe && (keys['w'] || keys['s']))
                     serveBall();
-                }
-                // Physique
                 if (!waitingForServe) {
                     ballX += ballVX;
                     ballY += ballVY;
                     handleCollisions();
                 }
-                // Envoi de l'état global
                 sendStateFromHost();
             }
             else {
-                // Guest contrôle paddle2 et envoie sa position
+                // Augmentation de la vitesse du paddle guest pour plus de réactivité
+                const moveSpeed = 10;
                 if (keys['ArrowUp'])
-                    p2Y = clampY(p2Y - 6);
+                    p2Y = clampY(p2Y - moveSpeed);
                 if (keys['ArrowDown'])
-                    p2Y = clampY(p2Y + 6);
+                    p2Y = clampY(p2Y + moveSpeed);
                 sendGuestPaddleIfNeeded();
             }
             updatePositions();
@@ -235,7 +247,6 @@ function initRemoteGame(ws, role, roomId) {
             resetBall();
         updatePositions();
     });
-    // démarrage immédiat host
     if (role === 'host')
         serveBall();
     updatePositions();
