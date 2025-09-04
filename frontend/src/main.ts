@@ -9,6 +9,7 @@ import { renderSoloGame } from "./views/solo.js";
 import { render1vs1 } from "./views/1vs1.js";
 import { renderRemoteRoom } from "./views/remoteRoom.js";
 import { renderRemoteGame } from "./views/remoteGame.js";
+import { t, setLanguage, getLanguage, updateUI } from "./utils/i18n.js";
 
 
 async function renderNav() {
@@ -118,5 +119,6 @@ window.addEventListener('popstate', () => {
 async function init() {
   await renderNav();
   render(window.location.pathname + window.location.search);
+   updateUI();
 }
 init();

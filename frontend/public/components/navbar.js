@@ -74,99 +74,104 @@ export async function navBar() {
     </div>
   </div>
 
-  <!-- Boutons + Sélecteur de langue -->
-  <div class="flex items-center space-x-6 mr-6">
-    <a href="/" 
-       class="relative px-4 py-2 bg-pink-200 border-2 border-t-white border-l-white border-r-pink-400 border-b-pink-400 
-             text-blue-300 font-bold
-             shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
-             active:shadow-none active:translate-y-[2px] active:border-pink-300
-             transition-all duration-100">
-      Home
-    </a>
-    <a href="/chat" 
-       class="relative px-4 py-2 bg-pink-200 border-2 border-t-white border-l-white border-r-pink-400 border-b-pink-400 
-             text-blue-300 font-bold
-             shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
-             active:shadow-none active:translate-y-[2px] active:border-pink-300
-             transition-all duration-100">
-      Chat
-    </a>
-    <a href="/profil" 
-       class="relative px-4 py-2 bg-pink-200 border-2 border-t-white border-l-white border-r-pink-400 border-b-pink-400 
-             text-blue-300 font-bold
-             shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
-             active:shadow-none active:translate-y-[2px] active:border-pink-300
-             transition-all duration-100">
-      Profile
-    </a>
-    ${isLogin
-        ? `<a href="/logout" id="logout-btn" 
+ <!-- Boutons + Sélecteur de langue -->
+<div class="flex items-center space-x-6 mr-6">
+  <a href="/" 
+     data-i18n="Home"
+     class="relative px-4 py-2 bg-pink-200 border-2 border-t-white border-l-white border-r-pink-400 border-b-pink-400 
+           text-blue-300 font-bold
+           shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
+           active:shadow-none active:translate-y-[2px] active:border-pink-300
+           transition-all duration-100">
+    Home
+  </a>
+  <a href="/chat" 
+     data-i18n="Chat"
+     class="relative px-4 py-2 bg-pink-200 border-2 border-t-white border-l-white border-r-pink-400 border-b-pink-400 
+           text-blue-300 font-bold
+           shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
+           active:shadow-none active:translate-y-[2px] active:border-pink-300
+           transition-all duration-100">
+    Chat
+  </a>
+  <a href="/profil" 
+     data-i18n="Profile"
+     class="relative px-4 py-2 bg-pink-200 border-2 border-t-white border-l-white border-r-pink-400 border-b-pink-400 
+           text-blue-300 font-bold
+           shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
+           active:shadow-none active:translate-y-[2px] active:border-pink-300
+           transition-all duration-100">
+    Profile
+  </a>
+  ${isLogin
+        ? `<a href="/logout" id="logout-btn"
+           data-i18n="Logout"
            class="relative px-4 py-2 bg-pink-200 border-2 border-t-white border-l-white border-r-pink-400 border-b-pink-400 
                  text-blue-300 font-bold
                  shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
                  active:shadow-none active:translate-y-[2px] active:border-pink-300
                  transition-all duration-100">
-            Logout
-         </a>`
-        : `<a href="/auth" 
+          Logout
+       </a>`
+        : `<a href="/auth"
+           data-i18n="Login"
            class="relative px-4 py-2 bg-pink-200 border-2 border-t-white border-l-white border-r-pink-400 border-b-pink-400 
                  text-blue-300 font-bold
                  shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
                  active:shadow-none active:translate-y-[2px] active:border-pink-300
                  transition-all duration-100">
-            Login
-         </a>`}
+          Login
+       </a>`}
 
-    <!-- Sélecteur de langue -->
-   <!-- Language Selector -->
-<div class="relative">
-  <select id="language-select" 
-          class="relative px-4 py-2 bg-pink-200 border-2 border-t-white border-l-white 
-                 border-r-pink-400 border-b-pink-400 text-blue-300 font-bold
-                 shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
-                 active:shadow-none active:translate-y-[2px] active:border-pink-300
-                 transition-all duration-100 appearance-none pr-8">
-    <option value="fr" selected>🇫🇷 Français</option>
-    <option value="en">🇬🇧 English</option>
-    <option value="es">🇪🇸 Español</option>
-  </select>
-  <!-- Little dropdown arrow -->
-  <span class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-blue-300">
-    ▼
-  </span>
-</div>
+  <!-- Sélecteur de langue -->
+  <div class="relative">
+    <select id="language-select" 
+            class="relative px-4 py-2 bg-pink-200 border-2 border-t-white border-l-white 
+                   border-r-pink-400 border-b-pink-400 text-blue-300 font-bold
+                   shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
+                   active:shadow-none active:translate-y-[2px] active:border-pink-300
+                   transition-all duration-100 appearance-none pr-8">
+      <option value="fr" selected>🇫🇷 Français</option>
+      <option value="en">🇬🇧 English</option>
+      <option value="es">🇪🇸 Español</option>
+    </select>
+    <!-- Little dropdown arrow -->
+    <span class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-blue-300">
+      ▼
+    </span>
   </div>
+</div>
 
-  <style>
-    /* Animations */
-    .ping-pong-ball {
-      animation: pingpong 3s linear infinite;
-      transform: translate(-50%, -50%);
-    }
-    @keyframes pingpong {
-      0% { left: 20%; top: 50%; }
-      25% { left: 50%; top: 30%; }
-      50% { left: 80%; top: 50%; }
-      75% { left: 50%; top: 70%; }
-      100% { left: 20%; top: 50%; }
-    }
-    .ping-pong-paddle-left {
-      animation: paddleLeft 3s ease-in-out infinite;
-    }
-    .ping-pong-paddle-right {
-      animation: paddleRight 3s ease-in-out infinite;
-    }
-    @keyframes paddleLeft {
-      0%, 100% { transform: translateY(-50%); }
-      25% { transform: translateY(-30%); }
-      75% { transform: translateY(-70%); }
-    }
-    @keyframes paddleRight {
-      0%, 100% { transform: translateY(-50%); }
-      50% { transform: translateY(-30%); }
-    }
-  </style>
+<style>
+  /* Animations */
+  .ping-pong-ball {
+    animation: pingpong 3s linear infinite;
+    transform: translate(-50%, -50%);
+  }
+  @keyframes pingpong {
+    0% { left: 20%; top: 50%; }
+    25% { left: 50%; top: 30%; }
+    50% { left: 80%; top: 50%; }
+    75% { left: 50%; top: 70%; }
+    100% { left: 20%; top: 50%; }
+  }
+  .ping-pong-paddle-left {
+    animation: paddleLeft 3s ease-in-out infinite;
+  }
+  .ping-pong-paddle-right {
+    animation: paddleRight 3s ease-in-out infinite;
+  }
+  @keyframes paddleLeft {
+    0%, 100% { transform: translateY(-50%); }
+    25% { transform: translateY(-30%); }
+    75% { transform: translateY(-70%); }
+  }
+  @keyframes paddleRight {
+    0%, 100% { transform: translateY(-50%); }
+    50% { transform: translateY(-30%); }
+  }
+</style>
+
 </nav>
     `;
     if (isLogin) {

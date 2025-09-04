@@ -1,15 +1,25 @@
+"use strict";
 // src/utils/translations.ts
-export const translations = {
-    fr: {
-        page_not_found: "Page non trouvée",
-        unsupported_mode: "Mode non supporté",
-    },
+const translations = {
     en: {
-        page_not_found: "Page not found",
-        unsupported_mode: "Unsupported mode",
+        "nav.home": "Home",
+        "nav.chat": "Chat",
+        "nav.profile": "Profile",
+        "nav.login": "Login",
+        "nav.logout": "Logout"
     },
     es: {
-        page_not_found: "Página no encontrada",
-        unsupported_mode: "Modo no soportado",
+        "nav.home": "Inicio",
+        "nav.chat": "Chat",
+        "nav.profile": "Perfil",
+        "nav.login": "Iniciar sesión",
+        "nav.logout": "Cerrar sesión"
     },
+    fr: {
+        "nav.home": "Accueil",
+        "nav.chat": "Discussion",
+        "nav.profile": "Profil",
+        "nav.login": "Connexion",
+        "nav.logout": "Déconnexion"
+    }
 };

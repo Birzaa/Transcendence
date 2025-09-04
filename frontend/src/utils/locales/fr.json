@@ -1,0 +1,26 @@
+{
+  "welcome": "Bienvenue sur Pong !",
+  "play": "Jouer",
+  "tournament": "Tournoi",
+  "chatendirect": "Chat en direct",
+  "JouerauPong": "Jouer au Pong",
+  "Lancerunepartie": "Lancer une partie",
+  "Classement": "Classement",
+  "Ouvrir": "Ouvrir",
+  "Top10": "Top 10",
+  "Home": "Accueil",
+  "Chat": "Chat",
+  "Profile": "Profil",
+  "Login": "Connexion",
+  "Logout": "Déconnexion",
+  "Utilisateursconnectes": "Utilisateurs connectés",
+  "Global": "Global",
+  "Serveur": "Serveur",
+  "Bienvenuedanslechat": "Bienvenue dans le chat !",
+  "Votremessage": "Votre message",
+  "Envoyer": "Envoyer",
+  "Email": "Email",
+  "Jen_aipasdecompte_jeveuxm_inscrire": "Je n'ai pas de compte, je veux m'inscrire",
+  "Motdepasse": "Mot de passe"
+}
+

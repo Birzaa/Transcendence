@@ -8,6 +8,7 @@ import { renderSoloGame } from "./views/solo.js";
 import { render1vs1 } from "./views/1vs1.js";
 import { renderRemoteRoom } from "./views/remoteRoom.js";
 import { renderRemoteGame } from "./views/remoteGame.js";
+import { updateUI } from "./utils/i18n.js";
 async function renderNav() {
     const existingNav = document.querySelector('nav');
     if (existingNav)
@@ -104,5 +105,6 @@ window.addEventListener('popstate', () => {
 async function init() {
     await renderNav();
     render(window.location.pathname + window.location.search);
+    updateUI();
 }
 init();
