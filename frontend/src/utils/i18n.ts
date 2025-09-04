@@ -1,20 +1,28 @@
-// src/utils/i18n.ts
-import { translations } from "./translations";
+// i18n.ts
+type Translations = { [key: string]: string };
 
-let currentLang: keyof typeof translations = "fr"; // langue par défaut
+let currentLang = localStorage.getItem("lang") || "fr";
+let translations: Translations = {};
+
+export async function loadLanguage(lang: string) {
+  const response = await fetch(`/locales/${lang}.json`);
+  translations = await response.json();
+  currentLang = lang;
+  localStorage.setItem("lang", lang);
+  updateUI();
+}
 
 export function t(key: string): string {
-  return translations[currentLang][key] || key;
+  return translations[key] || key;
 }
 
-export function setLanguage(lang: string) {
-  if (translations[lang]) {
-    currentLang = lang as keyof typeof translations;
-  } else {
-    console.warn(`Langue "${lang}" non supportée, utilisation de ${currentLang}`);
-  }
+function updateUI() {
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.getAttribute("data-i18n");
+    if (key) el.textContent = t(key);
+  });
 }
 
-export function getLanguage(): string {
-  return currentLang;
-}
+// Charger par défaut au lancement
+loadLanguage(currentLang);
+

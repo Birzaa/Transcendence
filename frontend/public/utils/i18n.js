@@ -1,17 +1,21 @@
-// src/utils/i18n.ts
-import { translations } from "./translations";
-let currentLang = "fr"; // langue par défaut
+let currentLang = localStorage.getItem("lang") || "fr";
+let translations = {};
+export async function loadLanguage(lang) {
+    const response = await fetch(`/locales/${lang}.json`);
+    translations = await response.json();
+    currentLang = lang;
+    localStorage.setItem("lang", lang);
+    updateUI();
+}
 export function t(key) {
-    return translations[currentLang][key] || key;
+    return translations[key] || key;
 }
-export function setLanguage(lang) {
-    if (translations[lang]) {
-        currentLang = lang;
-    }
-    else {
-        console.warn(`Langue "${lang}" non supportée, utilisation de ${currentLang}`);
-    }
+function updateUI() {
+    document.querySelectorAll("[data-i18n]").forEach(el => {
+        const key = el.getAttribute("data-i18n");
+        if (key)
+            el.textContent = t(key);
+    });
 }
-export function getLanguage() {
-    return currentLang;
-}
+// Charger par défaut au lancement
+loadLanguage(currentLang);

@@ -588,6 +588,10 @@ video {
   }
 }
 
+.pointer-events-none {
+  pointer-events: none;
+}
+
 .fixed {
   position: fixed;
 }
@@ -606,6 +610,11 @@ video {
 
 .inset-0 {
   inset: 0px;
+}
+
+.inset-y-0 {
+  top: 0px;
+  bottom: 0px;
 }
 
 .-bottom-4 {
@@ -658,6 +667,14 @@ video {
 
 .top-1\/2 {
   top: 50%;
+}
+
+.top-4 {
+  top: 1rem;
+}
+
+.right-2 {
+  right: 0.5rem;
 }
 
 .z-50 {
@@ -960,6 +977,12 @@ video {
 
 .resize {
   resize: both;
+}
+
+.appearance-none {
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
 }
 
 .grid-cols-1 {
@@ -1569,6 +1592,10 @@ video {
 
 .pt-\[190px\] {
   padding-top: 190px;
+}
+
+.pr-8 {
+  padding-right: 2rem;
 }
 
 .text-center {
