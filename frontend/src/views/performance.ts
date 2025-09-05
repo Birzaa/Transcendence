@@ -23,7 +23,7 @@ export async function renderPerformances(): Promise<void> {
   if (!app) return;
 
   app.innerHTML = `
-    <div class="mt-[164px] min-h-screen bg-[url('/images/background.png')] bg-cover bg-center bg-no-repeat bg-fixed p-4">
+    <div class="mt-[128px] min-h-screen bg-[url('/images/background.png')] bg-cover bg-center bg-no-repeat bg-fixed p-4">
       <div class="min-h-screen flex items-center justify-center">
         <div class="w-full max-w-5xl bg-pink-50 bg-opacity-90 shadow-lg border-2 border-purple-300 p-8 rounded-xl">
           <div class="bg-purple-600 text-pink-100 p-3 rounded-t-md mb-6 shadow-md">

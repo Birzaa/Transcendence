@@ -10,7 +10,7 @@ export async function navBar() {
     <nav class="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-6 py-4 bg-pink-200 shadow-md">
       <!-- Logo géant -->
       <div class="-my-4">
-          <a href="/" class="block">
+          <a href="/" class="block" data-spa-link>
               <img src="/images/logo.png" alt="Logo" class="h-32 w-auto">
           </a>
       </div>
@@ -72,7 +72,7 @@ export async function navBar() {
 
       <!-- Boutons -->
       <div class="flex space-x-6 mr-6">
-          <a href="/" 
+          <a href="/" data-spa-link
              class="relative px-4 py-2 bg-pink-200 border-2 border-t-white border-l-white border-r-pink-400 border-b-pink-400 
                    text-blue-300 font-bold
                    shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
@@ -80,7 +80,7 @@ export async function navBar() {
                    transition-all duration-100">
               Home
           </a>
-          <a href="/chat" 
+          <a href="/chat" data-spa-link
              class="relative px-4 py-2 bg-pink-200 border-2 border-t-white border-l-white border-r-pink-400 border-b-pink-400 
                    text-blue-300 font-bold
                    shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
@@ -88,7 +88,7 @@ export async function navBar() {
                    transition-all duration-100">
               Chat
           </a>
-          <a href="/profil" 
+          <a href="/profil" data-spa-link
              class="relative px-4 py-2 bg-pink-200 border-2 border-t-white border-l-white border-r-pink-400 border-b-pink-400 
                    text-blue-300 font-bold
                    shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
@@ -97,7 +97,7 @@ export async function navBar() {
               Profile
           </a>
           ${isLogin
-        ? `<a href="/logout" id="logout-btn" 
+        ? `<a href="#" id="logout-btn" data-spa-link
                  class="relative px-4 py-2 bg-pink-200 border-2 border-t-white border-l-white border-r-pink-400 border-b-pink-400 
                        text-blue-300 font-bold
                        shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
@@ -105,7 +105,7 @@ export async function navBar() {
                        transition-all duration-100">
                     Logout
                  </a>`
-        : `<a href="/auth" 
+        : `<a href="/auth" data-spa-link
                  class="relative px-4 py-2 bg-pink-200 border-2 border-t-white border-l-white border-r-pink-400 border-b-pink-400 
                        text-blue-300 font-bold
                        shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
@@ -145,6 +145,7 @@ export async function navBar() {
       </style>
     </nav>
   `;
+    // Gestion spécifique du logout
     if (isLogin) {
         const logoutBtn = nav.querySelector('#logout-btn');
         if (logoutBtn) {
@@ -156,9 +157,16 @@ export async function navBar() {
                 });
                 // Met à jour le state global
                 userState.currentUsername = 'anonymous';
+                // Dispatch l'événement pour notifier le changement
+                window.dispatchEvent(new CustomEvent('userStateChanged', {
+                    detail: { username: 'anonymous' }
+                }));
                 // Ferme la WS pour notifier la déconnexion
-                if (window.socket) {
-                    window.socket.close();
+                if (window.debugSocket && window.debugSocket.getSocket()) {
+                    const socket = window.debugSocket.getSocket();
+                    if (socket) {
+                        socket.close();
+                    }
                 }
                 // Reconnecte WS avec username 'anonymous'
                 await connectWebSocket(userState.currentUsername);
@@ -167,6 +175,18 @@ export async function navBar() {
             });
         }
     }
+    // Gestion générale des liens SPA
+    const spaLinks = nav.querySelectorAll('[data-spa-link]');
+    spaLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const href = link.getAttribute('href');
+            // Ne pas naviguer pour le logout (déjà géré)
+            if (href !== '#' && href) {
+                navigate(href);
+            }
+        });
+    });
     return nav;
 }
 /**

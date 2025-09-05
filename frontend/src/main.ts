@@ -22,7 +22,31 @@ export function getOnlineUsers() {
 }
 
 export function subscribeToStatusUpdates(cb: (msg: WSMessage) => void) {
-  statusListeners.push(cb);
+  if (!statusListeners.includes(cb)) {
+    statusListeners.push(cb);
+  }
+}
+
+function sendUsernameWhenReady(username: string) {
+  if (!socket) {
+    console.warn("WebSocket non initialisé");
+    return;
+  }
+
+  if (isUsernameSent) return;
+
+  if (socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({
+      type: 'set_username',
+      username,
+      timestamp: Date.now(),
+    }));
+    console.log('Username envoyé:', username);
+    isUsernameSent = true;
+  } else {
+    // Retente dans 200ms si socket pas encore ouvert
+    setTimeout(() => sendUsernameWhenReady(username), 200);
+  }
 }
 
 // Gestion du userState avec setter déclenchant un événement custom
@@ -47,59 +71,91 @@ let socket: WebSocket | null = null;
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
 let isUsernameSent = false;
+let hasLoggedConnection = false;
+let isConnecting = false; // Nouveau flag pour éviter les connexions multiples
 
 export async function connectWebSocket(username: string) {
+  // Éviter les connexions multiples
+  if (isConnecting) {
+    console.log('Connexion WebSocket déjà en cours...');
+    return;
+  }
+
   if (socket && socket.readyState === WebSocket.OPEN) {
     console.log('WebSocket déjà connecté');
     return;
   }
 
-  socket = new WebSocket(`ws://${window.location.hostname}:3001/ws`);
+  isConnecting = true;
 
-  socket.addEventListener('open', () => {
-    console.log('✅ Connecté au WebSocket');
-    reconnectAttempts = 0;
-    isUsernameSent = false;
+  // Fermer proprement la connexion existante
+  if (socket) {
+    socket.close();
+    socket = null;
+  }
 
-    if (socket && socket.readyState === WebSocket.OPEN && !isUsernameSent) {
-      socket.send(JSON.stringify({
-        type: 'set_username',
-        username: username,
-        timestamp: Date.now()
-      }));
-      isUsernameSent = true;
-      console.log('Username envoyé:', username);
-    }
-  });
+  await new Promise(resolve => setTimeout(resolve, 100)); // Réduit le délai
 
-  socket.addEventListener('message', (event) => {
-    try {
-      const msg: WSMessage = JSON.parse(event.data);
+  // Utiliser le bon protocole (ws ou wss) selon la page
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsUrl = `${protocol}//${window.location.hostname}:3001/ws`;
 
-      if (msg.type === "status_update" || msg.type === "online_users") {
-        statusListeners.forEach(cb => cb(msg));
-      } else if (msg.type === "user_list") {
-        onlineUsers = msg.users;
-        statusListeners.forEach(cb => cb(msg));
+  console.log('Tentative de connexion WebSocket à:', wsUrl);
+  
+  try {
+    socket = new WebSocket(wsUrl);
+
+    socket.addEventListener('open', () => {
+      isConnecting = false;
+      if (!hasLoggedConnection) {
+        console.log('✅ Connecté au WebSocket');
+        hasLoggedConnection = true;
+      } 
+      reconnectAttempts = 0;
+      isUsernameSent = false;
+
+      sendUsernameWhenReady(userState.currentUsername);
+    });
+
+    socket.addEventListener('message', (event) => {
+      try {
+        const msg: WSMessage = JSON.parse(event.data);
+        console.log('Message WebSocket reçu:', msg);
+
+        if (msg.type === "status_update" || msg.type === "online_users") {
+          statusListeners.forEach(cb => cb(msg));
+        } else if (msg.type === "user_list") {
+          onlineUsers = msg.users;
+          statusListeners.forEach(cb => cb(msg));
+        } else if (msg.type === "message" || msg.type === "private_message") {
+          // Transmettre les messages de chat aux listeners
+          statusListeners.forEach(cb => cb(msg));
+        }
+      } catch (err) {
+        console.warn("Message WebSocket invalide :", event.data);
       }
-    } catch (err) {
-      console.warn("Message WebSocket invalide :", event.data);
-    }
-  });
+    });
 
-  socket.addEventListener('close', () => {
-    console.log('❌ Déconnecté du WebSocket');
-    if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-      const delay = Math.min(5000, 1000 * Math.pow(2, reconnectAttempts));
-      console.log(`Tentative de reconnexion dans ${delay}ms...`);
-      setTimeout(() => connectWebSocket(userState.currentUsername), delay);
-      reconnectAttempts++;
-    }
-  });
+    socket.addEventListener('close', () => {
+      isConnecting = false;
+      console.log('❌ Déconnecté du WebSocket');
+      if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS && userState.currentUsername !== 'anonymous') {
+        const delay = Math.min(5000, 1000 * Math.pow(2, reconnectAttempts));
+        console.log(`Tentative de reconnexion dans ${delay}ms...`);
+        setTimeout(() => connectWebSocket(userState.currentUsername), delay);
+        reconnectAttempts++;
+      }
+    });
 
-  socket.addEventListener('error', (error) => {
-    console.error('Erreur WebSocket:', error);
-  });
+    socket.addEventListener('error', (error) => {
+      isConnecting = false;
+      console.error('Erreur WebSocket:', error);
+    });
+
+  } catch (error) {
+    isConnecting = false;
+    console.error('Erreur lors de la création du WebSocket:', error);
+  }
 }
 
 // Navigation SPA
@@ -160,6 +216,7 @@ window.addEventListener('userStateChanged', async (e: Event) => {
   if (socket) {
     socket.close();
     socket = null;
+    isUsernameSent = false;
   }
 
   // Si connecté, reconnecte WS avec le nouveau user
@@ -190,7 +247,21 @@ async function initializeApp() {
   }
 }
 
-initializeApp();
+// Événement beforeunload pour nettoyer
+window.addEventListener('beforeunload', () => {
+  if (socket) {
+    socket.close();
+    socket = null;
+  }
+});
+
+// Éviter l'initialisation multiple
+if (!window._appInitialized) {
+  window._appInitialized = true;
+  initializeApp();
+} else {
+  console.log('App déjà initialisée');
+}
 
 // Gestion des clics sur liens internes
 document.addEventListener('click', (e) => {
@@ -209,5 +280,16 @@ document.addEventListener('click', (e) => {
 (window as any).debugSocket = {
   getUsername: () => userState.currentUsername,
   getSocketStatus: () => socket?.readyState,
+  getSocket: () => socket,
   reconnect: () => connectWebSocket(userState.currentUsername)
 };
+
+// A corriger intégrer directement la fonction navigate() dans home.ts pour l'utiliser
+(window as any).navigate = navigate;
+
+// Déclaration pour TypeScript
+declare global {
+  interface Window {
+    _appInitialized?: boolean;
+  }
+}

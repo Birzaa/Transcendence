@@ -19,8 +19,14 @@ import updateSettings from './api/updateSettings';
 import deleteUserRoute from './routes/deleteUser';
 import myStats from './api/myStats';
 import setupWebSocket from './routes/ws';
+import fs from 'fs';
 
-const app = Fastify({ logger: true });
+const httpsOptions = {
+  key: fs.readFileSync(path.join(__dirname, '../certs/key.pem')),
+  cert: fs.readFileSync(path.join(__dirname, '../certs/cert.pem')),
+};
+
+const app = Fastify({ logger: true, https: httpsOptions, });
 
 async function start() {
   await app.register(setupWebSocket);
@@ -61,7 +67,7 @@ async function start() {
 
   try {
     await app.listen({ port: 3001, host: '0.0.0.0' });
-    console.log('Server running on http://localhost:3001');
+    console.log('Server running on https://localhost:3001');
   } catch (err) {
     app.log.error(err);
   }
