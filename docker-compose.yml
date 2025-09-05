@@ -5,7 +5,6 @@ services:
     volumes:
       - ./frontend:/app             # <-- TRÈS IMPORTANT : Monte tout le code source frontend
       - /app/node_modules           # Exclut node_modules
-    # ... autres configs comme les ports si tu as un serveur de dev frontend
 
   backend:
     build: ./backend
@@ -13,6 +12,7 @@ services:
     volumes:
       - ./backend:/app              # Monte le code source backend
       - /app/node_modules
+      - ./certs:/app/certs
       - ./frontend/public:/app/public # <-- TRÈS IMPORTANT : Le backend lit le public de l'hôte
     ports:
       - "3001:3001"
@@ -20,7 +20,3 @@ services:
       - DB_PATH=/app/transcendence.db
     env_file:
       - ./backend/.env
-
-# Assure-toi que la section 'volumes:' pour 'frontend-public' est commentée ou supprimée :
-# volumes:
-#   frontend-public:

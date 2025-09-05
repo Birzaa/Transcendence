@@ -1,4 +1,4 @@
-import { navigate } from "../main.js";
+import { navigate, connectWebSocket, userState } from "../main.js";
 export async function renderAuth() {
     const app = document.getElementById('app');
     if (!app)
@@ -128,6 +128,13 @@ export async function renderAuth() {
                     throw new Error(data.error || 'Erreur lors de la connexion');
                 message.style.color = 'green';
                 message.textContent = 'Connecté avec succès !';
+                const userRes = await fetch('/api/me', { credentials: 'include' });
+                if (!userRes.ok)
+                    throw new Error('Impossible de récupérer l’utilisateur');
+                const user = await userRes.json();
+                userState.currentUsername = user.name || 'anonymous';
+                // Maintenant on connecte la WS en donnant directement le nom d’utilisateur
+                await connectWebSocket(userState.currentUsername);
                 navigate('/');
                 // Ici tu peux rediriger ou appeler une fonction pour afficher la page profil, etc.
             }
