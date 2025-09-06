@@ -8,17 +8,20 @@
   "Classement": "Ranking",
   "Ouvrir": "Open",
   "Top10": "Top 10",
+
   "Home": "Home",
   "Chat": "Chat",
   "Profile": "Profile",
   "Login": "Login",
   "Logout": "Logout",
+
   "Utilisateursconnectes": "Connected users",
   "Global": "Global",
   "Serveur": "Server",
   "Bienvenuedanslechat": "Welcome to the chat!",
   "Votremessage": "Your message",
   "Envoyer": "Send",
+  
   "Email": "Email",
   "Jen_aipasdecompte_jeveuxm_inscrire": "I don’t have an account, I want to sign up",
   "Motdepasse": "Password"

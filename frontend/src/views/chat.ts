@@ -1,4 +1,10 @@
 import { renderProfil } from "../views/profil.js";
+import { t, setLanguage, getLanguage, updateUI,initI18n } from "../utils/i18n.js";
+
+
+(async () => {
+  await initI18n(); // C’est ici que loadTranslations() est appelé
+})();
 
 let socket: WebSocket | null = null;
 const blockedUsers = new Set<string>(JSON.parse(localStorage.getItem('blockedUsers') || '[]'));
@@ -35,7 +41,9 @@ export function renderChat(): void {
           <div class="flex h-[70vh]">
             <!-- Liste des utilisateurs -->
             <div class="w-1/4 bg-purple-100 p-4 overflow-y-auto border-r-2 border-purple-300">
-              <h3 class="font-bold mb-2 text-purple-800">Utilisateurs connectés</h3>
+              <h3 class="font-bold mb-2 text-purple-800" data-i18n="Utilisateursconnectes">
+  Utilisateurs connectés
+</h3>
               <ul id="users" class="space-y-2 text-sm"></ul>
             </div>
 
@@ -56,16 +64,18 @@ export function renderChat(): void {
                     class="flex-1 border-2 border-purple-300 px-3 py-2 rounded-none bg-violet-100 focus:border-purple-400 resize-none" 
                     rows="3"
                   ></textarea>
-                  <button 
-                    id="send" 
-                    class="ml-2 relative px-6 py-2 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400 
-                          text-purple-800 font-bold
-                          shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
-                          active:shadow-none active:translate-y-[2px] active:border-purple-300
-                          transition-all duration-100"
-                  >
-                    Envoyer
-                  </button>
+                 <button 
+  id="send" 
+  class="ml-2 relative px-6 py-2 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400 
+        text-purple-800 font-bold
+        shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
+        active:shadow-none active:translate-y-[2px] active:border-purple-300
+        transition-all duration-100"
+  data-i18n="Envoyer"
+>
+  Envoyer
+</button>
+
                 </div>
               </div>
             </div>
