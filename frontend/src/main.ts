@@ -9,7 +9,13 @@ import { renderSoloGame } from "./views/solo.js";
 import { render1vs1 } from "./views/1vs1.js";
 import { renderRemoteRoom } from "./views/remoteRoom.js";
 import { renderRemoteGame } from "./views/remoteGame.js";
-import { t, setLanguage, getLanguage, updateUI } from "./utils/i18n.js";
+import { t, setLanguage, getLanguage, updateUI,initI18n } from "./utils/i18n.js";
+
+
+(async () => {
+  await initI18n(); // C’est ici que loadTranslations() est appelé
+})();
+
 
 
 async function renderNav() {
@@ -18,7 +24,17 @@ async function renderNav() {
 
   const nav = await navBar();
   document.body.prepend(nav);
+
+  // ATTACHER LE LISTENER ICI, après que le navbar soit dans le DOM
+  const select = document.getElementById("language-select") as HTMLSelectElement;
+  if (select) {
+    select.addEventListener("change", (e) => {
+      const target = e.target as HTMLSelectElement;
+      setLanguage(target.value);
+    });
+  }
 }
+
 
 function render(pathWithQuery: string): void {
   const url = new URL(window.location.origin + pathWithQuery);
@@ -116,9 +132,12 @@ window.addEventListener('popstate', () => {
 });
 
 // Initialisation
+
 async function init() {
-  await renderNav();
+  console.log("===== init called================= ");
+  await initI18n(); // load translations
+  await renderNav(); // navbar + listener
   render(window.location.pathname + window.location.search);
-   updateUI();
+  updateUI(); // update les textes avec la langue courante
 }
 init();

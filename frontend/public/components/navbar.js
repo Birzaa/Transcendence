@@ -1,4 +1,8 @@
 import { navigate } from "../main.js";
+import { initI18n } from "../utils/i18n.js";
+(async () => {
+    await initI18n(); // C’est ici que loadTranslations() est appelé
+})();
 export async function navBar() {
     // Verification de connexion
     let isLogin = false;
