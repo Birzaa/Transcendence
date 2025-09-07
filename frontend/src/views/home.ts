@@ -33,7 +33,7 @@ export function renderHome(): void {
           text-purple-800 font-bold shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
           active:shadow-none active:translate-y-[2px] active:border-purple-300
           transition-all duration-100 w-full"
-        data-i18n="start_game">
+        data-i18n="Lancerunepartie">
         Lancer une partie
       </button>
     </div>
@@ -50,7 +50,7 @@ export function renderHome(): void {
             text-purple-800 font-bold shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
             active:shadow-none active:translate-y-[2px] active:border-baby-pink-dark
             transition-all duration-100 w-full"
-          data-i18n="open_chat">
+          data-i18n="Ouvrir">
           (=^･ω･^=) Ouvrir
         </button>
       </div>
