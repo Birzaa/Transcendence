@@ -48,14 +48,14 @@ export function renderHome() {
             text-purple-800 font-bold shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
             active:shadow-none active:translate-y-[2px] active:border-baby-pink-dark
             transition-all duration-100 w-full"
-          data-i18n="Ouvrir">
+          data-i18n="open_btn">
           (=^･ω･^=) Ouvrir
         </button>
       </div>
 
       <div class="bg-baby-blue bg-opacity-90 p-6 border-2 border-darkest-blue shadow-lg relative">
         <img src="/images/logo.png" class="absolute -top-4 -left-4 w-12 h-12 -rotate-12" alt="Petit chat">
-        <h3 class="font-bold text-purple-800 mb-4 flex justify-center items-center" data-i18n="leaderboard">
+        <h3 class="font-bold text-purple-800 mb-4 flex justify-center items-center" data-i18n="Classement">
           <span class="text-darkest-blue mr-2">☆</span> Classement
         </h3>
         <button id="leaderboard-button"

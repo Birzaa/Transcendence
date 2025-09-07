@@ -42,6 +42,7 @@ export function renderChat() {
                 <div class="flex">
                   <textarea 
                     id="input" 
+                    data-i18n="Votremessage"
                     placeholder="Votre message..." 
                     class="flex-1 border-2 border-purple-300 px-3 py-2 rounded-none bg-violet-100 focus:border-purple-400 resize-none" 
                     rows="3"
