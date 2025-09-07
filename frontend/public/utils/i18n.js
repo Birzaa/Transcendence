@@ -11,7 +11,7 @@ export async function loadTranslations() {
             fetch("/locales/es.json").then((res) => res.json()),
         ]);
         translations = { fr, en, es };
-        // Afficher le contenu des JSONs dans la console
+        // Debug JSON content
         console.log("=== French JSON ===");
         console.table(fr);
         console.log("=== English JSON ===");
@@ -35,8 +35,8 @@ export function t(key) {
 export function setLanguage(lang) {
     if (translations[lang]) {
         currentLanguage = lang;
-        console.log("===================== JSON =====================");
-        console.table(currentLanguage);
+        console.log("===================== SELECTED LANGUAGE =====================");
+        console.log(currentLanguage);
         localStorage.setItem("lang", lang);
         updateUI();
     }
@@ -54,7 +54,13 @@ export function updateUI() {
     document.querySelectorAll("[data-i18n]").forEach((el) => {
         const key = el.getAttribute("data-i18n");
         if (key && translations[currentLanguage][key]) {
-            el.textContent = translations[currentLanguage][key];
+            // Si c’est un champ de saisie → on met la traduction dans placeholder
+            if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+                el.placeholder = translations[currentLanguage][key];
+            }
+            else {
+                el.textContent = translations[currentLanguage][key];
+            }
         }
     });
     const select = document.getElementById("language-select");
@@ -67,7 +73,7 @@ export function updateUI() {
 export async function initI18n() {
     // Load translation files
     await loadTranslations();
-    console.log("===================== initI18n  =====================");
+    console.log("===================== initI18n =====================");
     // Set saved language from localStorage if exists
     const savedLang = localStorage.getItem("lang");
     if (savedLang && translations[savedLang]) {
@@ -78,7 +84,7 @@ export async function initI18n() {
     if (select) {
         select.addEventListener("change", (e) => {
             const target = e.target;
-            console.log("===================== SELECTED LANGUAGE =====================");
+            console.log("===================== LANGUAGE CHANGED =====================");
             console.log(target.value);
             setLanguage(target.value);
         });

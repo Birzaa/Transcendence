@@ -18,7 +18,7 @@ export async function loadTranslations() {
 
     translations = { fr, en, es };
 
-    // Afficher le contenu des JSONs dans la console
+    // Debug JSON content
     console.log("=== French JSON ===");
     console.table(fr);
 
@@ -46,8 +46,8 @@ export function t(key: string): string {
 export function setLanguage(lang: string) {
   if (translations[lang]) {
     currentLanguage = lang;
-    console.log("===================== JSON =====================");
-    console.table(currentLanguage);
+    console.log("===================== SELECTED LANGUAGE =====================");
+    console.log(currentLanguage);
     localStorage.setItem("lang", lang);
     updateUI();
   }
@@ -67,7 +67,12 @@ export function updateUI() {
   document.querySelectorAll<HTMLElement>("[data-i18n]").forEach((el) => {
     const key = el.getAttribute("data-i18n");
     if (key && translations[currentLanguage][key]) {
-      el.textContent = translations[currentLanguage][key];
+      // Si c’est un champ de saisie → on met la traduction dans placeholder
+      if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+        el.placeholder = translations[currentLanguage][key];
+      } else {
+        el.textContent = translations[currentLanguage][key];
+      }
     }
   });
 
@@ -81,7 +86,8 @@ export function updateUI() {
 export async function initI18n() {
   // Load translation files
   await loadTranslations();
-console.log("===================== initI18n  =====================");
+  console.log("===================== initI18n =====================");
+
   // Set saved language from localStorage if exists
   const savedLang = localStorage.getItem("lang");
   if (savedLang && translations[savedLang]) {
@@ -93,8 +99,8 @@ console.log("===================== initI18n  =====================");
   if (select) {
     select.addEventListener("change", (e) => {
       const target = e.target as HTMLSelectElement;
-       console.log("===================== SELECTED LANGUAGE =====================");
-       console.log(target.value);
+      console.log("===================== LANGUAGE CHANGED =====================");
+      console.log(target.value);
       setLanguage(target.value);
     });
   }
