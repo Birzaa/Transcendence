@@ -1,5 +1,5 @@
 import { renderProfil } from "../views/profil.js";
-import { initI18n } from "../utils/i18n.js";
+import { updateUI, initI18n } from "../utils/i18n.js";
 (async () => {
     await initI18n(); // C’est ici que loadTranslations() est appelé
 })();
@@ -244,6 +244,7 @@ function renderMessages() {
         return;
     channel.messages.forEach((msg) => {
         const messageDiv = document.createElement("div");
+        // --- MESSAGE SERVEUR ---
         if (msg.from === "Server" || msg.from === "Serveur") {
             messageDiv.className = "flex justify-center my-2";
             const serverMsg = document.createElement("div");
@@ -253,12 +254,14 @@ function renderMessages() {
         <div class="font-bold">
           <span class="text-purple-300">☆</span> <span data-i18n="Serveur">Serveur</span>
         </div>
-        <div class="italic">${msg.content}</div>
+        <div class="italic" data-i18n="Bienvenuedanslechat">${msg.content}</div>
       `;
             messageDiv.appendChild(serverMsg);
             messagesContainer.appendChild(messageDiv);
+            updateUI(); // <-- traduction forcée ici
             return;
         }
+        // --- MESSAGE NORMAL ---
         messageDiv.className =
             "flex " + (msg.from === "Moi" ? "justify-end" : "justify-start") + " my-2";
         const contentDiv = document.createElement("div");
