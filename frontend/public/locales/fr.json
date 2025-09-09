@@ -1,23 +1,24 @@
 {
-  "_comment_home": "Home page & game menu",
+  "_comment_home": "Page d'accueil & menu du jeu",
   "welcome": "Bienvenue sur Pong !",
   "play": "Jouer",
   "tournament": "Tournoi",
   "live_chat": "☆ Chat en direct",
-  "JouerauPong": "Jouer au Pong",
-  "play_pong": "☆ Lancer une partie",
+  "JouerauPong": "☆ Jouer au Pong",
+  "play_pong": " Lancer une partie",
   "Classement": "☆ Classement",
   "open_btn": "(=^･ω･^=) Ouvrir",
   "Top10": "Top 10",
 
-  "_comment_navbar": "Navigation bar",
+  "_comment_navbar": "Barre de navigation",
   "Home": "Accueil",
   "Chat": "Chat",
-  "Profile": "Profil",
+  "Chattitle": "Chat (=^･ω･^=)",
+  "Profile": "Profile",
   "Login": "Connexion",
   "Logout": "Déconnexion",
 
-  "_comment_chat": "chat page ",
+  "_comment_chat": "Page de chat",
   "Utilisateursconnectes": "Utilisateurs connectés",
   "Global": "Global",
   "Serveur": "Serveur",
@@ -25,9 +26,38 @@
   "Votremessage": "Votre message...",
   "Envoyer": "Envoyer",
 
-  "_comment_login_signup": "Authentification and signup",
+  "_comment_login_signup": "Connexion et inscription",
   "Email": "Email",
   "Jen_aipasdecompte_jeveuxm_inscrire": "Je n'ai pas de compte, je veux m'inscrire",
-  "Motdepasse": "Mot de passe"
+  "Motdepasse": "Mot de passe",
+
+  "_comment_profile": "Page profil & paramètres",
+  "Monprofil": "Mon profil",
+  "Mesamis": "Mes amis",
+  "Ajouterunami": "Ajouter un ami",
+  "Supprimerunami": "Supprimer un ami",
+  "Trouverunjoueur": "Trouver un joueur",
+  "Statistiques": "Statistiques",
+  "Parametres": "Paramètres",
+  "Modifierprofil": "Modifier le profil",
+  "ChangerMotdepasse": "Changer le mot de passe",
+  "Supprimercompte": "Supprimer le compte",
+  "Deconnexion": "Déconnexion",
+
+  "_comment_game": "Partie Pong",
+  "Start": "Démarrer",
+  "Pause": "Pause",
+  "Resume": "Reprendre",
+  "Quit": "Quitter",
+  "Victoire": "Victoire",
+  "Defaite": "Défaite",
+  "Egalite": "Égalité",
+
+  "_comment_ranking": "Classement",
+  "Classementgeneral": "Classement général",
+  "Points": "Points",
+  "Victoires": "Victoires",
+  "Defaites": "Défaites"
 }
+
 

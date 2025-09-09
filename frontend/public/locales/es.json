@@ -1,23 +1,24 @@
 {
-  "_comment_home": "Home page & game menu",
+  "_comment_home": "Página de inicio y menú del juego",
   "welcome": "¡Bienvenido a Pong!",
   "play": "Jugar",
   "tournament": "Torneo",
   "live_chat": "☆ Chat en vivo",
-  "JouerauPong": "Jugar Pong",
-  "play_pong": "☆ Iniciar una partida",
+  "JouerauPong": "☆ Jugar Pong",
+  "play_pong": " Iniciar un juego",
   "Classement": "☆ Clasificación",
   "open_btn": "(=^･ω･^=) Abrir",
   "Top10": "Top 10",
 
-  "_comment_navbar": "Navigation bar",
+  "_comment_navbar": "Barra de navegación",
   "Home": "Inicio",
   "Chat": "Chat",
+  "Chattitle": "Chat (=^･ω･^=)",
   "Profile": "Perfil",
   "Login": "Iniciar sesión",
   "Logout": "Cerrar sesión",
 
-  "_comment_chat": "chat page ",
+  "_comment_chat": "Página de chat",
   "Utilisateursconnectes": "Usuarios conectados",
   "Global": "Global",
   "Serveur": "Servidor",
@@ -25,9 +26,39 @@
   "Votremessage": "Tu mensaje...",
   "Envoyer": "Enviar",
 
-  "_comment_login_signup": "Authentification and signup",
+  "_comment_login_signup": "Inicio de sesión y registro",
   "Email": "Correo electrónico",
-  "Jen_aipasdecompte_jeveuxm_inscrire": "No tengo cuenta, quiero registrarme",
-  "Motdepasse": "Contraseña"
+  "Jen_aipasdecompte_jeveuxm_inscrire": "No tengo una cuenta, quiero registrarme",
+  "Motdepasse": "Contraseña",
+
+  "_comment_profile": "Página de perfil y configuración",
+  "Monprofil": "Mi perfil",
+  "Mesamis": "Mis amigos",
+  "Ajouterunami": "Agregar un amigo",
+  "Supprimerunami": "Eliminar un amigo",
+  "Trouverunjoueur": "Buscar un jugador",
+  "Statistiques": "Estadísticas",
+  "Parametres": "Configuración",
+  "Modifierprofil": "Editar perfil",
+  "ChangerMotdepasse": "Cambiar contraseña",
+  "Supprimercompte": "Eliminar cuenta",
+  "Deconnexion": "Cerrar sesión",
+
+  "_comment_game": "Juego de Pong",
+  "Start": "Iniciar",
+  "Pause": "Pausa",
+  "Resume": "Continuar",
+  "Quit": "Salir",
+  "Victoire": "Victoria",
+  "Defaite": "Derrota",
+  "Egalite": "Empate",
+
+  "_comment_ranking": "Clasificación",
+  "Classementgeneral": "Clasificación general",
+  "Points": "Puntos",
+  "Victoires": "Victorias",
+  "Defaites": "Derrotas"
 }
+
+
 

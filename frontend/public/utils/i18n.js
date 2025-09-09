@@ -35,9 +35,7 @@ export function t(key) {
 export function setLanguage(lang) {
     if (translations[lang]) {
         currentLanguage = lang;
-        console.log("===================== SELECTED LANGUAGE =====================");
-        console.log(currentLanguage);
-        localStorage.setItem("lang", lang);
+        localStorage.setItem("lang", lang); // sauvegarde dans le localStorage
         updateUI();
     }
 }
@@ -54,7 +52,6 @@ export function updateUI() {
     document.querySelectorAll("[data-i18n]").forEach((el) => {
         const key = el.getAttribute("data-i18n");
         if (key && translations[currentLanguage][key]) {
-            // Si c’est un champ de saisie → on met la traduction dans placeholder
             if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
                 el.placeholder = translations[currentLanguage][key];
             }
@@ -73,7 +70,6 @@ export function updateUI() {
 export async function initI18n() {
     // Load translation files
     await loadTranslations();
-    console.log("===================== initI18n =====================");
     // Set saved language from localStorage if exists
     const savedLang = localStorage.getItem("lang");
     if (savedLang && translations[savedLang]) {
@@ -82,10 +78,9 @@ export async function initI18n() {
     // Listen for select changes
     const select = document.getElementById("language-select");
     if (select) {
+        select.value = currentLanguage; // met à jour le select avec la langue courante
         select.addEventListener("change", (e) => {
             const target = e.target;
-            console.log("===================== LANGUAGE CHANGED =====================");
-            console.log(target.value);
             setLanguage(target.value);
         });
     }

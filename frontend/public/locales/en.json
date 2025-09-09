@@ -4,8 +4,8 @@
   "play": "Play",
   "tournament": "Tournament",
   "live_chat": "☆ Live Chat",
-  "JouerauPong": "Play Pong",
-  "play_pong": "☆ Start a game",
+  "JouerauPong": "☆ Play Pong",
+  "play_pong": " Start a game",
   "Classement": "☆ Ranking",
   "open_btn": "(=^･ω･^=) Open",
   "Top10": "Top 10",
@@ -13,22 +13,53 @@
   "_comment_navbar": "Navigation bar",
   "Home": "Home",
   "Chat": "Chat",
-  "Profile": "Profile",
+  "Chattitle": "Chat (=^･ω･^=)",
+  "Profile": "Profil",
   "Login": "Login",
   "Logout": "Logout",
 
-   "_comment_chat": "chat page ",
+  "_comment_chat": "Chat page",
   "Utilisateursconnectes": "Connected users",
   "Global": "Global",
   "Serveur": "Server",
   "Bienvenuedanslechat": "Welcome to the chat!",
   "Votremessage": "Your message...",
   "Envoyer": "Send",
-  
-   "_comment_login_signup": "Authentification and signup",
+
+  "_comment_login_signup": "Login and signup",
   "Email": "Email",
-  "Jen_aipasdecompte_jeveuxm_inscrire": "I don’t have an account, I want to sign up",
-  "Motdepasse": "Password"
+  "Jen_aipasdecompte_jeveuxm_inscrire": "I don't have an account, I want to sign up",
+  "Motdepasse": "Password",
+
+  "_comment_profile": "Profile & settings page",
+  "Monprofil": "My profile",
+  "Mesamis": "My friends",
+  "Ajouterunami": "Add a friend",
+  "Supprimerunami": "Remove a friend",
+  "Trouverunjoueur": "Find a player",
+  "Statistiques": "Statistics",
+  "Parametres": "Settings",
+  "Modifierprofil": "Edit profile",
+  "ChangerMotdepasse": "Change password",
+  "Supprimercompte": "Delete account",
+  "Deconnexion": "Logout",
+
+  "_comment_game": "Pong game",
+  "Start": "Start",
+  "Pause": "Pause",
+  "Resume": "Resume",
+  "Quit": "Quit",
+  "Victoire": "Victory",
+  "Defaite": "Defeat",
+  "Egalite": "Draw",
+
+  "_comment_ranking": "Ranking",
+  "Classementgeneral": "Overall ranking",
+  "Points": "Points",
+  "Victoires": "Wins",
+  "Defaites": "Losses"
 }
+
+
 
 

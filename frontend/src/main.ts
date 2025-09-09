@@ -9,14 +9,11 @@ import { renderSoloGame } from "./views/solo.js";
 import { render1vs1 } from "./views/1vs1.js";
 import { renderRemoteRoom } from "./views/remoteRoom.js";
 import { renderRemoteGame } from "./views/remoteGame.js";
-import { t, setLanguage, getLanguage, updateUI,initI18n } from "./utils/i18n.js";
-
+import { t, setLanguage, getLanguage, updateUI, initI18n } from "./utils/i18n.js";
 
 (async () => {
-  await initI18n(); // C’est ici que loadTranslations() est appelé
+  await initI18n(); // Chargement des traductions au démarrage
 })();
-
-
 
 async function renderNav() {
   const existingNav = document.querySelector('nav');
@@ -28,13 +25,13 @@ async function renderNav() {
   // ATTACHER LE LISTENER ICI, après que le navbar soit dans le DOM
   const select = document.getElementById("language-select") as HTMLSelectElement;
   if (select) {
+    select.value = getLanguage(); // Définit la valeur du select sur la langue courante
     select.addEventListener("change", (e) => {
       const target = e.target as HTMLSelectElement;
       setLanguage(target.value);
     });
   }
 }
-
 
 function render(pathWithQuery: string): void {
   const url = new URL(window.location.origin + pathWithQuery);
@@ -54,58 +51,38 @@ function render(pathWithQuery: string): void {
     case '/settings':
       renderSettings();
       break;
-    case '/profil':
-      {
-        const player = params.get('player');
-        if (player)
-          renderProfil(player);
-        else
-          renderProfil();
-        break;
-      }
-      // Modifie le switch case pour ajouter le mode 1vs1 :
+    case '/profil': {
+      const player = params.get('player');
+      if (player) renderProfil(player);
+      else renderProfil();
+      break;
+    }
     case '/game': {
-    const mode = url.searchParams.get('mode');
-    if (mode === 'solo') 
-    {
+      const mode = params.get('mode');
+      if (mode === 'solo') {
         renderSoloGame();
-    }
-    else if (mode === '1v1')
-    {  // Nouveau cas pour le 1vs1
+      } else if (mode === '1v1') {
         render1vs1();
-    } 
-    else if (mode === 'remote') {
-      // Si on a un roomId, on affiche le jeu, sinon la salle
-      if (params.has('roomId')) {
-        renderRemoteGame();
+      } else if (mode === 'remote') {
+        if (params.has('roomId')) {
+          renderRemoteGame();
+        } else {
+          renderRemoteRoom();
+        }
       } else {
-        renderRemoteRoom();
-      }
-    }
-    else
-    {
         document.getElementById("app")!.innerHTML = `<h1 class="text-center mt-10">Mode "${mode}" non supporté.</h1>`;
+      }
+      break;
     }
-    break;
-}
-      
     default:
       document.getElementById("app")!.innerHTML = `<h1 class="text-center text-5xl p-10">Page non trouvée</h1>`;
+  }
 
-    // Dans le switch case de votre main.ts, ajoutez :
-  case '/game': {
-    const mode = url.searchParams.get('mode');
-    if (mode === 'solo') {
-        renderSoloGame(); // Ajoutez cette importation en haut du fichier
-    }
-    // Ajoutez ici les autres modes (multiplayer, tournament) plus tard
-    break;
-  }
-  }
+  // Mettre à jour les textes avec la langue courante après chaque rendu
+  updateUI();
 }
 
-// Exposez les fonctions pour qu'elles soient accessibles depuis le HTML
-//(window as any).handleSoloGame = handleSoloGame;
+// Expose functions globally
 (window as any).navigate = navigate;
 
 // Navigation SPA
@@ -127,17 +104,16 @@ document.addEventListener('click', (e) => {
   }
 });
 
+// Gestion du bouton "retour" du navigateur
 window.addEventListener('popstate', () => {
   render(window.location.pathname + window.location.search);
 });
 
 // Initialisation
-
 async function init() {
-  console.log("===== init called================= ");
-  await initI18n(); // load translations
-  await renderNav(); // navbar + listener
-  render(window.location.pathname + window.location.search);
-  updateUI(); // update les textes avec la langue courante
+  console.log("===== init called ================= ");
+  await initI18n();       // Chargement des traductions
+  await renderNav();       // Navbar + listener
+  render(window.location.pathname + window.location.search); // Rendu de la page actuelle
 }
 init();

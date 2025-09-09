@@ -1,18 +1,17 @@
 import { renderProfil } from "../views/profil.js";
-import { t, setLanguage, getLanguage, updateUI,initI18n } from "../utils/i18n.js";
-
+import { t, setLanguage, getLanguage, updateUI, initI18n } from "../utils/i18n.js";
 
 (async () => {
   await initI18n(); // C’est ici que loadTranslations() est appelé
 })();
 
 let socket: WebSocket | null = null;
-const blockedUsers = new Set<string>(JSON.parse(localStorage.getItem('blockedUsers') || '[]'));
+const blockedUsers = new Set<string>(JSON.parse(localStorage.getItem("blockedUsers") || "[]"));
 
 interface Message {
   from: string;
   content: string;
-  type: 'message' | 'private_message';
+  type: "message" | "private_message";
   to?: string;
 }
 
@@ -23,10 +22,10 @@ interface Channel {
 }
 
 const channels = new Map<string, Channel>();
-let currentChannelId = 'global';
+let currentChannelId = "global";
 
 export function renderChat(): void {
-  const app = document.getElementById('app');
+  const app = document.getElementById("app");
   if (!app) return;
 
   app.innerHTML = `
@@ -35,15 +34,15 @@ export function renderChat(): void {
         <div class="max-w-6xl w-full bg-pink-50 bg-opacity-90 shadow-lg border-2 border-purple-300">
           <!-- Barre violette avec titre -->
           <div class="bg-purple-600 text-pink-100 p-3">
-            <h1 class="text-xl font-bold text-center">Chat (=^･ω･^=)</h1>
+            <h1 class="text-xl font-bold text-center" data-i18n="Chattitle">Chat (=^･ω･^=)</h1>
           </div>
 
           <div class="flex h-[70vh]">
             <!-- Liste des utilisateurs -->
             <div class="w-1/4 bg-purple-100 p-4 overflow-y-auto border-r-2 border-purple-300">
               <h3 class="font-bold mb-2 text-purple-800" data-i18n="Utilisateursconnectes">
-  Utilisateurs connectés
-</h3>
+                Utilisateurs connectés
+              </h3>
               <ul id="users" class="space-y-2 text-sm"></ul>
             </div>
 
@@ -65,18 +64,17 @@ export function renderChat(): void {
                     class="flex-1 border-2 border-purple-300 px-3 py-2 rounded-none bg-violet-100 focus:border-purple-400 resize-none" 
                     rows="3"
                   ></textarea>
-                 <button 
-  id="send" 
-  class="ml-2 relative px-6 py-2 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400 
-        text-purple-800 font-bold
-        shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
-        active:shadow-none active:translate-y-[2px] active:border-purple-300
-        transition-all duration-100"
-  data-i18n="Envoyer"
->
-  Envoyer
-</button>
-
+                  <button 
+                    id="send" 
+                    class="ml-2 relative px-6 py-2 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400 
+                          text-purple-800 font-bold
+                          shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
+                          active:shadow-none active:translate-y-[2px] active:border-purple-300
+                          transition-all duration-100"
+                    data-i18n="Envoyer"
+                  >
+                    Envoyer
+                  </button>
                 </div>
               </div>
             </div>
@@ -87,8 +85,8 @@ export function renderChat(): void {
   `;
 
   channels.clear();
-  channels.set('global', { id: 'global', title: 'Global', messages: [] });
-  currentChannelId = 'global';
+  channels.set("global", { id: "global", title: "Global", messages: [] });
+  currentChannelId = "global";
 
   initChatWebSocket();
   setupEventListeners();
@@ -97,13 +95,13 @@ export function renderChat(): void {
 }
 
 function setupEventListeners() {
-  const input = document.getElementById('input') as HTMLTextAreaElement;
-  const sendButton = document.getElementById('send')!;
+  const input = document.getElementById("input") as HTMLTextAreaElement;
+  const sendButton = document.getElementById("send")!;
 
   sendButton.onclick = () => sendMessage();
 
   input.onkeydown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
     }
@@ -111,36 +109,36 @@ function setupEventListeners() {
 }
 
 function sendMessage() {
-  const input = document.getElementById('input') as HTMLTextAreaElement;
+  const input = document.getElementById("input") as HTMLTextAreaElement;
   const content = input.value.trim();
   if (!content || !socket || socket.readyState !== WebSocket.OPEN) return;
 
-  if (currentChannelId !== 'global' && blockedUsers.has(currentChannelId)) {
+  if (currentChannelId !== "global" && blockedUsers.has(currentChannelId)) {
     alert(`Vous avez bloqué ${currentChannelId}. Débloquez-le pour lui envoyer un message.`);
     return;
   }
 
-  if (currentChannelId === 'global') {
-    socket.send(JSON.stringify({ type: 'message', content }));
+  if (currentChannelId === "global") {
+    socket.send(JSON.stringify({ type: "message", content }));
   } else {
-    socket.send(JSON.stringify({ type: 'private_message', to: currentChannelId, content }));
+    socket.send(JSON.stringify({ type: "private_message", to: currentChannelId, content }));
     addMessageToChannel({
-      type: 'private_message',
-      from: 'Moi',
+      type: "private_message",
+      from: "Moi",
       content,
       to: currentChannelId,
     });
     renderMessages();
   }
 
-  input.value = '';
+  input.value = "";
 }
 
 async function initChatWebSocket(): Promise<void> {
-  let username = 'Inconnu';
+  let username = "Inconnu";
 
   try {
-    const res = await fetch('/api/me');
+    const res = await fetch("/api/me");
     if (res.ok) {
       const data = await res.json();
       username = data.name;
@@ -151,32 +149,32 @@ async function initChatWebSocket(): Promise<void> {
     socket.close();
   }
 
-  socket = new WebSocket('ws://localhost:3001/ws');
+  socket = new WebSocket("ws://localhost:3001/ws");
 
   socket.onopen = () => {
-    socket!.send(JSON.stringify({ type: 'set_username', username }));
+    socket!.send(JSON.stringify({ type: "set_username", username }));
   };
 
   socket.onmessage = (event) => {
     const data = JSON.parse(event.data);
 
-    if (data.type === 'user_list') {
+    if (data.type === "user_list") {
       renderUserList(data.users, username);
     }
 
-    if (data.type === 'message') {
+    if (data.type === "message") {
       if (data.from !== username && blockedUsers.has(data.from)) return;
 
-      addMessageToChannel({ 
-        type: 'message', 
-        from: data.from === username ? 'Moi' : data.from, 
-        content: data.content 
+      addMessageToChannel({
+        type: "message",
+        from: data.from === username ? "Moi" : data.from,
+        content: data.content,
       });
-      if (currentChannelId === 'global') renderMessages();
+      if (currentChannelId === "global") renderMessages();
       else renderChannelsTabs();
     }
 
-    if (data.type === 'private_message') {
+    if (data.type === "private_message") {
       if (data.from !== username && blockedUsers.has(data.from)) return;
 
       if (!channels.has(data.from)) {
@@ -184,11 +182,11 @@ async function initChatWebSocket(): Promise<void> {
         renderChannelsTabs();
       }
 
-      addMessageToChannel({ 
-        type: 'private_message', 
-        from: data.from === username ? 'Moi' : data.from, 
-        content: data.content, 
-        to: username 
+      addMessageToChannel({
+        type: "private_message",
+        from: data.from === username ? "Moi" : data.from,
+        content: data.content,
+        to: username,
       });
       if (currentChannelId === data.from) renderMessages();
       else renderChannelsTabs();
@@ -197,36 +195,37 @@ async function initChatWebSocket(): Promise<void> {
 }
 
 function renderUserList(users: string[], currentUsername: string) {
-  const usersContainer = document.getElementById('users')!;
+  const usersContainer = document.getElementById("users")!;
   if (!usersContainer) return;
-  usersContainer.innerHTML = '';
+  usersContainer.innerHTML = "";
 
-  users.forEach(user => {
+  users.forEach((user) => {
     if (user === currentUsername) return;
 
     const isBlocked = blockedUsers.has(user);
 
-    const li = document.createElement('li');
-    li.className = 'flex justify-between items-center p-2 hover:bg-purple-200 rounded';
+    const li = document.createElement("li");
+    li.className = "flex justify-between items-center p-2 hover:bg-purple-200 rounded";
 
-    const userSpan = document.createElement('span');
+    const userSpan = document.createElement("span");
     userSpan.textContent = user;
-    userSpan.className = 'text-purple-600 hover:underline cursor-pointer';
+    userSpan.className = "text-purple-600 hover:underline cursor-pointer";
     userSpan.onclick = () => renderProfil(user);
 
-    const btnDM = document.createElement('button');
-    btnDM.textContent = 'DM';
-    btnDM.className = 'text-purple-800 hover:text-white hover:bg-purple-600 px-2 py-1 rounded border border-purple-400';
+    const btnDM = document.createElement("button");
+    btnDM.textContent = "DM";
+    btnDM.className =
+      "text-purple-800 hover:text-white hover:bg-purple-600 px-2 py-1 rounded border border-purple-400";
     btnDM.onclick = (e) => {
       e.stopPropagation();
       openDM(user);
     };
 
-    const btnBlock = document.createElement('button');
-    btnBlock.textContent = isBlocked ? 'Débloquer' : 'Bloquer';
+    const btnBlock = document.createElement("button");
+    btnBlock.textContent = isBlocked ? "Débloquer" : "Bloquer";
     btnBlock.className = isBlocked
-      ? 'bg-green-100 text-green-800 hover:bg-green-200 px-2 py-1 rounded border border-green-400'
-      : 'bg-pink-100 text-pink-800 hover:bg-pink-200 px-2 py-1 rounded border border-pink-400';
+      ? "bg-green-100 text-green-800 hover:bg-green-200 px-2 py-1 rounded border border-green-400"
+      : "bg-pink-100 text-pink-800 hover:bg-pink-200 px-2 py-1 rounded border border-pink-400";
     btnBlock.onclick = (e) => {
       e.stopPropagation();
       (window as any).block(user);
@@ -241,7 +240,8 @@ function renderUserList(users: string[], currentUsername: string) {
 }
 
 function addMessageToChannel(message: Message) {
-  const channelId = message.type === 'message' ? 'global' : (message.from === 'Moi' ? message.to! : message.from);
+  const channelId =
+    message.type === "message" ? "global" : message.from === "Moi" ? message.to! : message.from;
   if (!channels.has(channelId)) {
     channels.set(channelId, { id: channelId, title: channelId, messages: [] });
   }
@@ -249,23 +249,25 @@ function addMessageToChannel(message: Message) {
 }
 
 function renderChannelsTabs() {
-  const tabsContainer = document.getElementById('channels-tabs')!;
-  tabsContainer.innerHTML = '';
+  const tabsContainer = document.getElementById("channels-tabs")!;
+  tabsContainer.innerHTML = "";
 
   channels.forEach((channel, id) => {
-    const tab = document.createElement('div');
+    const tab = document.createElement("div");
     tab.textContent = channel.title;
+    tab.setAttribute("data-i18n", channel.title); // traduction auto
 
-    tab.className = 'cursor-pointer px-3 py-1 rounded ' + 
-      (id === currentChannelId 
-        ? 'bg-purple-600 text-white' 
-        : 'bg-purple-100 text-purple-800 hover:bg-purple-300');
+    tab.className =
+      "cursor-pointer px-3 py-1 rounded " +
+      (id === currentChannelId
+        ? "bg-purple-600 text-white"
+        : "bg-purple-100 text-purple-800 hover:bg-purple-300");
 
-    const unread = channel.messages.some(msg => msg.from !== 'Moi' && id !== currentChannelId);
+    const unread = channel.messages.some((msg) => msg.from !== "Moi" && id !== currentChannelId);
     if (unread) {
-      const notif = document.createElement('span');
-      notif.textContent = ' •';
-      notif.className = 'text-red-600 font-bold';
+      const notif = document.createElement("span");
+      notif.textContent = " •";
+      notif.className = "text-red-600 font-bold";
       tab.appendChild(notif);
     }
 
@@ -280,24 +282,24 @@ function renderChannelsTabs() {
 }
 
 function renderMessages() {
-  const messagesContainer = document.getElementById('messages')!;
-  messagesContainer.innerHTML = '';
+  const messagesContainer = document.getElementById("messages")!;
+  messagesContainer.innerHTML = "";
 
   const channel = channels.get(currentChannelId);
   if (!channel) return;
 
-  channel.messages.forEach(msg => {
-    const messageDiv = document.createElement('div');
+  channel.messages.forEach((msg) => {
+    const messageDiv = document.createElement("div");
 
-    // Message du serveur
-    if (msg.from === 'Server') {
-      messageDiv.className = 'flex justify-center my-2';
-      
-      const serverMsg = document.createElement('div');
-      serverMsg.className = 'bg-baby-pink border-l-4 border-baby-pink-dark text-purple-800 p-3 rounded-none';
+    if (msg.from === "Server" || msg.from === "Serveur") {
+      messageDiv.className = "flex justify-center my-2";
+
+      const serverMsg = document.createElement("div");
+      serverMsg.className =
+        "bg-baby-pink border-l-4 border-baby-pink-dark text-purple-800 p-3 rounded-none";
       serverMsg.innerHTML = `
         <div class="font-bold">
-          <span class="text-purple-300">☆</span> ${msg.from}
+          <span class="text-purple-300">☆</span> <span data-i18n="Serveur">Serveur</span>
         </div>
         <div class="italic">${msg.content}</div>
       `;
@@ -306,24 +308,25 @@ function renderMessages() {
       return;
     }
 
-    // Messages normaux
-    messageDiv.className = 'flex ' + (msg.from === 'Moi' ? 'justify-end' : 'justify-start') + ' my-2';
+    messageDiv.className =
+      "flex " + (msg.from === "Moi" ? "justify-end" : "justify-start") + " my-2";
 
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'max-w-[80%] p-3 rounded-lg ' + 
-      (msg.from === 'Moi' 
-        ? 'bg-baby-pink border-l-4 border-baby-pink-dark text-purple-700 p-3 rounded-none' 
-        : 'bg-baby-blue border-l-4 border-darkest-blue text-purple-700 p-3 rounded-none');
+    const contentDiv = document.createElement("div");
+    contentDiv.className =
+      "max-w-[80%] p-3 rounded-lg " +
+      (msg.from === "Moi"
+        ? "bg-baby-pink border-l-4 border-baby-pink-dark text-purple-700 p-3 rounded-none"
+        : "bg-baby-blue border-l-4 border-darkest-blue text-purple-700 p-3 rounded-none");
 
     let fromText = msg.from;
-    if (msg.from === 'Moi') fromText = 'Vous';
+    if (msg.from === "Moi") fromText = "Vous";
 
-    const fromSpan = document.createElement('span');
-    fromSpan.className = 'font-bold text-purple-600';
+    const fromSpan = document.createElement("span");
+    fromSpan.className = "font-bold text-purple-600";
     fromSpan.textContent = fromText;
 
-    const textSpan = document.createElement('span');
-    textSpan.textContent = ': ' + msg.content;
+    const textSpan = document.createElement("span");
+    textSpan.textContent = ": " + msg.content;
 
     contentDiv.appendChild(fromSpan);
     contentDiv.appendChild(textSpan);
@@ -350,19 +353,19 @@ function openDM(username: string) {
 }
 
 function updateBlockButton(username: string, blocked: boolean) {
-  const usersContainer = document.getElementById('users');
+  const usersContainer = document.getElementById("users");
   if (!usersContainer) return;
 
-  const listItems = usersContainer.querySelectorAll('li');
-  listItems.forEach(li => {
-    const userSpan = li.querySelector('span.text-purple-600');
+  const listItems = usersContainer.querySelectorAll("li");
+  listItems.forEach((li) => {
+    const userSpan = li.querySelector("span.text-purple-600");
     if (userSpan && userSpan.textContent === username) {
-      const btn = li.querySelector('button.bg-red-100, button.bg-green-100');
+      const btn = li.querySelector("button.bg-red-100, button.bg-green-100");
       if (btn) {
-        btn.textContent = blocked ? 'Débloquer' : 'Bloquer';
+        btn.textContent = blocked ? "Débloquer" : "Bloquer";
         btn.className = blocked
-          ? 'bg-green-100 text-green-800 hover:bg-green-200 px-2 py-1 rounded border border-green-400'
-          : 'bg-red-100 text-red-800 hover:bg-red-200 px-2 py-1 rounded border border-red-400';
+          ? "bg-green-100 text-green-800 hover:bg-green-200 px-2 py-1 rounded border border-green-400"
+          : "bg-red-100 text-red-800 hover:bg-red-200 px-2 py-1 rounded border border-red-400";
       }
     }
   });
@@ -372,15 +375,15 @@ function updateBlockButton(username: string, blocked: boolean) {
   if (blockedUsers.has(target)) {
     if (confirm(`Voulez-vous débloquer ${target} ?`)) {
       blockedUsers.delete(target);
-      localStorage.setItem('blockedUsers', JSON.stringify(Array.from(blockedUsers)));
-      socket!.send(JSON.stringify({ type: 'unblock', target }));
+      localStorage.setItem("blockedUsers", JSON.stringify(Array.from(blockedUsers)));
+      socket!.send(JSON.stringify({ type: "unblock", target }));
       updateBlockButton(target, false);
     }
   } else {
     if (confirm(`Voulez-vous bloquer ${target} ?`)) {
       blockedUsers.add(target);
-      localStorage.setItem('blockedUsers', JSON.stringify(Array.from(blockedUsers)));
-      socket!.send(JSON.stringify({ type: 'block', target }));
+      localStorage.setItem("blockedUsers", JSON.stringify(Array.from(blockedUsers)));
+      socket!.send(JSON.stringify({ type: "block", target }));
       updateBlockButton(target, true);
     }
   }
