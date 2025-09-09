@@ -41,6 +41,9 @@ function render(pathWithQuery) {
                 renderProfil();
             break;
         }
+        case "/tournament":
+            renderTournament();
+            break;
         case "/game": {
             const mode = url.searchParams.get("mode");
             if (mode === "solo") {
@@ -52,7 +55,6 @@ function render(pathWithQuery) {
             else if (mode === "remote") {
                 const roomId = params.get("roomId");
                 if (roomId) {
-                    // (si ton serveur WS écoute sur /ws, utilise "ws://localhost:3000/ws")
                     const ws = new WebSocket("ws://localhost:3000");
                     renderRemoteGame(ws, "guest", roomId);
                 }
@@ -61,7 +63,8 @@ function render(pathWithQuery) {
                 }
             }
             else if (mode === "tournament") {
-                renderTournament(); // ⬅️ new
+                // CORRECTION : Appeler renderTournament() pour afficher le formulaire
+                renderTournament();
             }
             else {
                 document.getElementById("app").innerHTML =

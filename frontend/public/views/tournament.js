@@ -3,6 +3,19 @@ export function renderTournament() {
     const app = document.getElementById("app");
     if (!app)
         return;
+    // Vérifier si on a des paramètres de joueurs dans l'URL (mode tournoi direct)
+    const url = new URL(window.location.href);
+    const player1 = url.searchParams.get("player1");
+    const player2 = url.searchParams.get("player2");
+    const mode = url.searchParams.get("mode");
+    // Si on a des joueurs spécifiés et qu'on est en mode tournament, afficher directement le jeu
+    if (mode === "tournament" && player1 && player2) {
+        // Importer et appeler render1vs1 pour afficher le jeu directement
+        import("./1vs1.js").then((module) => {
+            module.render1vs1();
+        });
+        return;
+    }
     app.innerHTML = `
     <!-- Conteneur principal avec l'image de fond -->
     <div class="min-h-screen bg-[url('/images/background.png')] bg-cover bg-center bg-no-repeat bg-fixed p-4">
