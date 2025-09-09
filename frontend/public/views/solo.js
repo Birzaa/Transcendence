@@ -51,9 +51,21 @@ export function renderSoloGame() {
                 id="game-container" 
                 style="height: 400px;">
                 
-                <div id="paddle" class="absolute w-3 h-20 bg-purple-400 left-4"></div>
-                <div id="ai-paddle" class="absolute w-3 h-20 bg-pink-400 right-4"></div>
-                <div id="ball" class="absolute w-5 h-5 bg-yellow-300 rounded-sm shadow-md"></div>
+                <img id="ball"
+                     src="/images/ball.png"
+                     class="absolute -translate-x-1/2 -translate-y-1/2"
+                     style="width: 30px; height: 30px;"
+                     alt="ball">
+                <img id="paddle"
+                     src="/images/raquette_bleu.png"
+                     class="absolute left-4"
+                     style="width: 22px; height: 96px;"
+                     alt="paddle1">
+                <img id="ai-paddle"
+                     src="/images/raquette_rose.png"
+                     class="absolute right-4"
+                     style="width: 22px; height: 96px;"
+                     alt="paddle2">
 
                 <!-- Filet -->
                 <div class="absolute left-1/2 top-0 bottom-0 w-1 bg-purple-300 transform -translate-x-1/2 

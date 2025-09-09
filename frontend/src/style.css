@@ -1,3 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+body {
+    cursor: url('/images/curseur.png') 16 16, auto;
+  }
+
+  *, button, a, input, textarea, select {
+    cursor: url('/images/curseur.png') 1 1, auto !important;
+  }

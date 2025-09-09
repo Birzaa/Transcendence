@@ -66,16 +66,10 @@ export async function navBar(): Promise<HTMLElement> {
                 </div>
                 
                 <!-- Balle pixelisée -->
-                <div class="absolute top-1/2 left-1/2 ping-pong-ball">
-                    <div style="
-                        width: 8px; height: 8px;
-                        background: #FECA57;
-                        box-shadow: 
-                            8px 0 0 #FECA57,
-                            0 8px 0 #FECA57,
-                            8px 8px 0 #FECA57;
-                    "></div>
-                </div>
+                <img src="/images/blue.png"
+                     alt="Ball"
+                     class="absolute top-1/2 left-1/2 ping-pong-ball"
+                     style="width: 20px; height: 20px;">
             </div>
 
             <!-- Vos boutons ORIGINAUX (copiés-collés de votre dernière version) -->

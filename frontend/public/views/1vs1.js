@@ -53,9 +53,22 @@ export function render1vs1() {
         </div>
 
         <div class="relative w-full bg-purple-100 bg-opacity-30 border-2 border-purple-300" id="game-container" style="height: 400px;">
-          <div id="paddle1" class="absolute w-3 h-20 bg-purple-400 left-4"></div>
-          <div id="paddle2" class="absolute w-3 h-20 bg-pink-400 right-4"></div>
-          <div id="ball" class="absolute w-5 h-5 bg-yellow-300 rounded-sm shadow-md"></div>
+
+          <img id="ball"
+               src="/images/ball.png"
+               class="absolute"
+               style="width: 30px; height: 30px;"
+               alt="ball">
+          <img id="paddle1"
+               src="/images/raquette_bleu.png"
+               class="absolute left-4"
+               style="width: 22px; height: 96px;"
+               alt="paddle1">
+          <img id="paddle2"
+               src="/images/raquette_rose.png"
+               class="absolute right-4"
+               style="width: 22px; height: 96px;"
+               alt="paddle2">
 
           <div class="absolute left-1/2 top-0 bottom-0 w-1 bg-purple-300 transform -translate-x-1/2 
                       flex flex-col items-center justify-between py-2">
@@ -213,12 +226,20 @@ function init1vs1Game(player1Name, player2Name, mode) {
                 ballSpeedX = Math.abs(ballSpeedX) * 1.05;
                 const hit = (ballY + ballSize / 2 - (paddle1Y + paddleHeight / 2)) / (paddleHeight / 2);
                 ballSpeedY = hit * Math.max(3, Math.abs(ballSpeedX));
+                ball.setAttribute("src", "/images/ball_hit.png");
+                setTimeout(() => {
+                    ball.setAttribute("src", "/images/ball.png");
+                }, 200);
             }
             if (ballX + ballSize >= p2Left && ballX <= p2Right && ballY + ballSize >= paddle2Y && ballY <= paddle2Y + paddleHeight) {
                 ballX = p2Left - ballSize;
                 ballSpeedX = -Math.abs(ballSpeedX) * 1.05;
                 const hit = (ballY + ballSize / 2 - (paddle2Y + paddleHeight / 2)) / (paddleHeight / 2);
                 ballSpeedY = hit * Math.max(3, Math.abs(ballSpeedX));
+                ball.setAttribute("src", "/images/ball_hit.png");
+                setTimeout(() => {
+                    ball.setAttribute("src", "/images/ball.png");
+                }, 200);
             }
             if (ballX < 0) {
                 player2Score++;
