@@ -9,6 +9,7 @@ import { renderSoloGame } from "./views/solo.js";
 import { render1vs1 } from "./views/1vs1.js";
 import { renderRemoteRoom } from "./views/remoteRoom.js";
 import { renderRemoteGame } from "./views/remoteGame.js";
+import { renderTournament } from "./views/tournament.js";
 
 async function renderNav() {
   const existingNav = document.querySelector("nav");
@@ -49,27 +50,29 @@ function render(pathWithQuery: string): void {
 
     case "/game": {
       const mode = url.searchParams.get("mode");
-
+    
       if (mode === "solo") {
         renderSoloGame();
       } else if (mode === "1v1") {
         render1vs1();
       } else if (mode === "remote") {
         const roomId = params.get("roomId");
-
+    
         if (roomId) {
-          // On rejoint la partie existante → rôle = "guest"
+          // (si ton serveur WS écoute sur /ws, utilise "ws://localhost:3000/ws")
           const ws = new WebSocket("ws://localhost:3000");
           renderRemoteGame(ws, "guest", roomId);
         } else {
-          // On crée ou rejoint une salle
           renderRemoteRoom();
         }
+      } else if (mode === "tournament") {
+        renderTournament();                 // ⬅️ new
       } else {
-        document.getElementById("app")!.innerHTML = `<h1 class="text-center mt-10">Mode "${mode}" non supporté.</h1>`;
+        document.getElementById("app")!.innerHTML =
+          `<h1 class="text-center mt-10">Mode "${mode}" non supporté.</h1>`;
       }
       break;
-    }
+    }    
 
     default:
       document.getElementById("app")!.innerHTML =

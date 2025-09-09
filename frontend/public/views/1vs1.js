@@ -3,6 +3,16 @@ export function render1vs1() {
     const app = document.getElementById('app');
     if (!app)
         return;
+    // Vérifier si nous sommes en mode tournoi via les paramètres d'URL
+    const url = new URL(window.location.href);
+    const mode = url.searchParams.get("mode");
+    let player1Name = url.searchParams.get("player1") || "Joueur 1";
+    let player2Name = url.searchParams.get("player2") || "Joueur 2";
+    // Si on est en mode tournoi, on utilise les noms des paramètres
+    if (mode === "tournament") {
+        player1Name = url.searchParams.get("player1") || "Joueur 1";
+        player2Name = url.searchParams.get("player2") || "Joueur 2";
+    }
     // Charge la police pixel si absente
     if (!document.querySelector('link[href*="Press+Start+2P"]')) {
         const fontLink = document.createElement('link');
@@ -27,12 +37,12 @@ export function render1vs1() {
                 <!-- Scores -->
                 <div class="flex-1 flex justify-center items-center gap-4 pixel-font" style="font-size: 1.25rem;">
                     <div class="text-center">
-                        <div class="text-purple-300 text-xs">JOUEUR 1 (W/S)</div>
+                        <div class="text-purple-300 text-xs">${player1Name} (W/S)</div>
                         <span id="player1-score" class="text-yellow-300">00</span>
                     </div>
                     <span class="text-white">:</span>
                     <div class="text-center">
-                        <div class="text-pink-300 text-xs">JOUEUR 2 (↑/↓)</div>
+                        <div class="text-pink-300 text-xs">${player2Name} (↑/↓)</div>
                         <span id="player2-score" class="text-yellow-300">00</span>
                     </div>
                 </div>

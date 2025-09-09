@@ -1,6 +1,6 @@
 export function renderGameMenu() {
     return `
-    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div id="game-menu-container" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div class="max-w-md w-full bg-pink-50 bg-opacity-90 shadow-lg border-2 border-purple-300">
             <!-- Barre violette avec titre et croix style bouton -->
             <div class="bg-purple-600 text-pink-100 p-3 flex justify-between items-center">
@@ -21,7 +21,7 @@ export function renderGameMenu() {
             <div class="p-6 space-y-6">
                 <div class="space-y-4">
                     <!-- Nouveau mode 1 vs 1 -->
-                    <button onclick="window.navigate('/game?mode=1v1')"
+                    <button onclick="window.navigate('/game?mode=1v1'); document.getElementById('game-menu-container')?.remove()"
                         class="w-full flex items-center px-6 py-3 bg-purple-200 
                                border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400
                                text-purple-800 font-bold
@@ -34,7 +34,7 @@ export function renderGameMenu() {
                     </button>
 
                     <!-- Mode Solo -->
-                    <button onclick="window.navigate('/game?mode=solo')"
+                    <button onclick="window.navigate('/game?mode=solo'); document.getElementById('game-menu-container')?.remove()"
                         class="w-full flex items-center px-6 py-3 bg-purple-200 
                                border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400
                                text-purple-800 font-bold
@@ -47,7 +47,7 @@ export function renderGameMenu() {
                     </button>
 
                     <!-- Remote -->
-                    <button onclick="window.navigate('/game?mode=remote')"
+                    <button onclick="window.navigate('/game?mode=remote'); document.getElementById('game-menu-container')?.remove()"
                         class="w-full flex items-center px-6 py-3 bg-purple-200 
                                border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400
                                text-purple-800 font-bold
@@ -60,7 +60,7 @@ export function renderGameMenu() {
                     </button>
 
                     <!-- Tournoi -->
-                    <button onclick="window.navigate('/game?mode=tournament')"
+                    <button onclick="window.navigate('/game?mode=tournament'); document.getElementById('game-menu-container')?.remove()"
                         class="w-full flex items-center px-6 py-3 bg-purple-200 
                                border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400
                                text-purple-800 font-bold
