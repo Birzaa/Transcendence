@@ -12,7 +12,7 @@ export async function renderAuth(): Promise<void> {
       <div class="max-w-md w-full bg-pink-50 bg-opacity-90 shadow-lg border-2 border-purple-300">
         <!-- Barre violette avec titre -->
         <div class="bg-purple-600 text-pink-100 p-3">
-          <h1 class="text-xl font-bold text-center">Connexion</h1>
+          <h1 class="text-xl font-bold text-center" id="authTitle" data-i18n="Connexion"></h1>
         </div>
 
         <!-- Contenu du formulaire -->
@@ -22,8 +22,9 @@ export async function renderAuth(): Promise<void> {
           </div>
 
           <div class="mt-4 text-center">
-            <button id="toggleBtn" class="text-purple-600 underline hover:text-purple-800 cursor-pointer">
-              Je n'ai pas de compte, je veux m'inscrire
+            <button id="toggleBtn" 
+                    class="text-purple-600 underline hover:text-purple-800 cursor-pointer"
+                    data-i18n="Jen_aipasdecompte_jeveuxm_inscrire">
             </button>
           </div>
 
@@ -37,77 +38,83 @@ export async function renderAuth(): Promise<void> {
   const formContainer = document.getElementById('formContainer')!;
   const toggleBtn = document.getElementById('toggleBtn')!;
   const message = document.getElementById('message')!;
+  const authTitle = document.getElementById('authTitle')!;
 
   let isLogin = true;
 
   function renderForm() {
     if (isLogin) {
+      authTitle.setAttribute("data-i18n", "Connexion");
       formContainer.innerHTML = `
-              <form id="authForm" class="space-y-4">
+        <form id="authForm" class="space-y-4">
           <div class="flex items-center">
-            <label for="email" class="whitespace-nowrap font-semibold mr-2 text-purple-600 w-32">Email</label>
+            <label for="email" data-i18n="Email"
+                   class="whitespace-nowrap font-semibold mr-2 text-purple-600 w-32"></label>
             <span class="text-purple-300 mx-1 text-lg">☆</span>
             <input type="email" id="email" required 
                   class="flex-1 border-3 border-purple-300 px-3 py-2 rounded-none bg-white focus:border-purple-400" />
           </div>
 
           <div class="flex items-center">
-            <label for="password" class="whitespace-nowrap font-semibold mr-2 text-purple-600 w-32">Mot de passe</label>
+            <label for="password" data-i18n="Motdepasse"
+                   class="whitespace-nowrap font-semibold mr-2 text-purple-600 w-32"></label>
             <span class="text-purple-300 mx-1 text-lg">☆</span>
             <input type="password" id="password" required 
                   class="flex-1 border-3 border-purple-300 px-3 py-2 rounded-none bg-white focus:border-purple-400" />
           </div>
 
           <div class="pt-4 flex justify-center">
-            <button type="submit" 
+            <button type="submit" data-i18n="Connexion"
                     class="relative px-8 py-2 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400 
                           text-purple-800 font-bold
                           shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
                           active:shadow-none active:translate-y-[2px] active:border-purple-300
                           transition-all duration-100">
-              Connexion
             </button>
           </div>
         </form>
       `;
-      toggleBtn.textContent = "Je n'ai pas de compte, je veux m'inscrire";
+      toggleBtn.setAttribute("data-i18n", "Jen_aipasdecompte_jeveuxm_inscrire");
     } else {
+      authTitle.setAttribute("data-i18n", "Inscription");
       formContainer.innerHTML = `
         <form id="authForm" class="space-y-4">
           <div class="flex items-center">
-            <label for="name" class="whitespace-nowrap font-semibold mr-2 text-purple-600 w-32">Nom</label>
+            <label for="name" data-i18n="Nom"
+                   class="whitespace-nowrap font-semibold mr-2 text-purple-600 w-32"></label>
             <span class="text-purple-300 mx-1 text-lg">☆</span>
             <input type="text" id="name" required 
                   class="flex-1 border-3 border-purple-300 px-3 py-2 rounded-none bg-white focus:border-purple-400" />
           </div>
 
           <div class="flex items-center">
-            <label for="email" class="whitespace-nowrap font-semibold mr-2 text-purple-600 w-32">Email</label>
+            <label for="email" data-i18n="Email"
+                   class="whitespace-nowrap font-semibold mr-2 text-purple-600 w-32"></label>
             <span class="text-purple-300 mx-1 text-lg">☆</span>
             <input type="email" id="email" required 
                   class="flex-1 border-3 border-purple-300 px-3 py-2 rounded-none bg-white focus:border-purple-400" />
           </div>
 
           <div class="flex items-center">
-            <label for="password" class="whitespace-nowrap font-semibold mr-2 text-purple-600 w-32">Mot de passe</label>
+            <label for="password" data-i18n="Motdepasse"
+                   class="whitespace-nowrap font-semibold mr-2 text-purple-600 w-32"></label>
             <span class="text-purple-300 mx-1 text-lg">☆</span>
             <input type="password" id="password" required 
                   class="flex-1 border-3 border-purple-300 px-3 py-2 rounded-none bg-white focus:border-purple-400" />
           </div>
 
           <div class="pt-4 flex justify-center">
-            <button type="submit" 
+            <button type="submit" data-i18n="Inscription"
                     class="relative px-8 py-2 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400 
                           text-purple-800 font-bold
                           shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
                           active:shadow-none active:translate-y-[2px] active:border-purple-300
                           transition-all duration-100">
-              S'inscrire
             </button>
           </div>
         </form>
       `;
-      toggleBtn.textContent = "J'ai déjà un compte, je veux me connecter";
+      toggleBtn.setAttribute("data-i18n", "Jai_deja_un_compte_jeveux_me_connecter");
     }
 
     const authForm = document.getElementById('authForm') as HTMLFormElement;
@@ -122,7 +129,6 @@ export async function renderAuth(): Promise<void> {
     const password = (document.getElementById('password') as HTMLInputElement).value.trim();
 
     if (isLogin) {
-      // Login
       try {
         const res = await fetch('/login', {
           method: 'POST',
@@ -132,23 +138,20 @@ export async function renderAuth(): Promise<void> {
         });
         const data = await res.json();
 
-        if (!res.ok) throw new Error(data.error || 'Erreur lors de la connexion');
+        if (!res.ok) throw new Error(data.error || "ErreurConnexion");
 
         message.style.color = 'green';
-        message.textContent = 'Connecté avec succès !';
+        message.setAttribute("data-i18n", "SuccesConnexion");
         navigate('/');
-
-        // Ici tu peux rediriger ou appeler une fonction pour afficher la page profil, etc.
       } catch (err: any) {
         message.style.color = 'red';
         message.textContent = err.message;
       }
     } else {
-      // Register
       const name = (document.getElementById('name') as HTMLInputElement).value.trim();
       if (!name) {
         message.style.color = 'red';
-        message.textContent = 'Le nom est requis';
+        message.setAttribute("data-i18n", "NomRequis");
         return;
       }
 
@@ -160,10 +163,10 @@ export async function renderAuth(): Promise<void> {
         });
         const data = await res.json();
 
-        if (!res.ok) throw new Error(data.error || 'Erreur lors de l\'inscription');
+        if (!res.ok) throw new Error(data.error || "ErreurInscription");
 
         message.style.color = 'green';
-        message.textContent = 'Inscription réussie, vous pouvez maintenant vous connecter.';
+        message.setAttribute("data-i18n", "SuccesInscription");
 
         isLogin = true;
         renderForm();

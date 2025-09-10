@@ -8,7 +8,7 @@
   "play_pong": " Start a game",
   "Classement": "☆ Ranking",
   "open_btn": "(=^･ω･^=) Open",
-  "Top10": "٩(◕‿◕｡)۶ Top 10",
+  "Top10": "٩(◕‿◕｡)۶Top 10",
 
   "_comment_navbar": "Navigation bar",
   "Home": "Home",
@@ -27,9 +27,18 @@
   "Envoyer": "Send",
 
   "_comment_login_signup": "Login and signup",
+  "Connexion": "Login",
+  "Inscription": "Sign Up",
   "Email": "Email",
-  "Jen_aipasdecompte_jeveuxm_inscrire": "I don't have an account, I want to sign up",
   "Motdepasse": "Password",
+  "Nom": "Name",
+  "Jen_aipasdecompte_jeveuxm_inscrire": "I don't have an account, I want to sign up",
+  "Jai_deja_un_compte_jeveux_me_connecter": "I already have an account, I want to log in",
+  "ErreurConnexion": "Error during login",
+  "SuccesConnexion": "Successfully logged in!",
+  "ErreurInscription": "Error during registration",
+  "SuccesInscription": "Registration successful, you can now log in.",
+  "NomRequis": "Name is required",
 
   "_comment_profile": "Profile & settings page",
   "Monprofil": "My profile",
