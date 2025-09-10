@@ -270,12 +270,16 @@ function renderMessages() {
                 (msg.from === "Moi"
                     ? "bg-baby-pink border-l-4 border-baby-pink-dark text-purple-700 p-3 rounded-none"
                     : "bg-baby-blue border-l-4 border-darkest-blue text-purple-700 p-3 rounded-none");
-        let fromText = msg.from;
-        if (msg.from === "Moi")
-            fromText = "Vous";
+        // ⚡ Modification pour i18n de "(Vous)"
         const fromSpan = document.createElement("span");
         fromSpan.className = "font-bold text-purple-600";
-        fromSpan.textContent = fromText;
+        if (msg.from === "Moi") {
+            fromSpan.setAttribute("data-i18n", "Chat_you");
+            fromSpan.textContent = "(Vous)";
+        }
+        else {
+            fromSpan.textContent = msg.from;
+        }
         const textSpan = document.createElement("span");
         textSpan.textContent = ": " + msg.content;
         contentDiv.appendChild(fromSpan);
@@ -284,6 +288,7 @@ function renderMessages() {
         messagesContainer.appendChild(messageDiv);
     });
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    updateUI();
 }
 function openDM(username) {
     if (blockedUsers.has(username)) {
@@ -317,7 +322,7 @@ function updateBlockButton(username, blocked) {
 }
 window.block = (target) => {
     if (blockedUsers.has(target)) {
-        if (confirm(`Voulez-vous débloquer ${target} ?`)) {
+        if (confirm(`Voulez- débloquer ${target} ?`)) {
             blockedUsers.delete(target);
             localStorage.setItem("blockedUsers", JSON.stringify(Array.from(blockedUsers)));
             socket.send(JSON.stringify({ type: "unblock", target }));
