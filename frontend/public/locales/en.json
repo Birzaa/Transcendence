@@ -41,6 +41,31 @@
   "NomRequis": "Name is required",
 
   "_comment_profile": "Profile & settings page",
+   "Profil_NotFound": "Player not found (´；ω；｀)",
+  "Profil_PlayerHistory": "{{playerName}}'s game history ☆",
+  "Profil_MyHistory": "My game history ☆",
+  "Profil_FindPlayer": "Find a player",
+  "Profil_NamePlaceholder": "Name...",
+  "Profil_MyFriends": "My Friends",
+  "Profil_NoFriends": "No friends yet. (´• ω •｀)",
+  "Profil_ErrorFriends": "Error loading friends (´；д；｀)",
+  "Profil_Settings": "Settings",
+  "Profil_DeleteAccount": "Delete Account",
+  "Profil_AddFriend": "Add Friend",
+  "Profil_NoGames": "No games found yet... (´• ω •｀)",
+  "Profil_PlayFirst": "Play your first game!",
+  "Profil_DeletedUser": "Deleted user",
+  "Profil_Victory": "Victory! ☆",
+  "Profil_Draw": "Draw",
+  "Profil_Defeat": "Defeat",
+  "Profil_PlayedOn": "Played on",
+  "Profil_Duration": "Duration",
+  "Profil_LoadingHistory": "Loading game history... ☆",
+  "Profil_TryLater": "Please try again later",
+
+
+
+
   "Monprofil": "My profile",
   "Mesamis": "My friends",
   "Ajouterunami": "Add a friend",

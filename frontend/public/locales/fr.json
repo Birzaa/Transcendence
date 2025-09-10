@@ -41,6 +41,33 @@
   "NomRequis": "Le nom est requis",
 
   "_comment_profile": "Page profil & paramètres",
+   "Profil_NotFound": "Joueur non trouvé (´；ω；｀)",
+  "Profil_PlayerHistory": "Historique de jeu de {{playerName}} ☆",
+  "Profil_MyHistory": "Mon historique de jeu ☆",
+  "Profil_FindPlayer": "Trouver un joueur",
+  "Profil_NamePlaceholder": "Nom...",
+  "Profil_MyFriends": "Mes amis",
+  "Profil_NoFriends": "Pas encore d'amis. (´• ω •｀)",
+  "Profil_ErrorFriends": "Erreur lors du chargement des amis (´；д；｀)",
+  "Profil_Settings": "Paramètres",
+  "Profil_DeleteAccount": "Supprimer le compte",
+  "Profil_AddFriend": "Ajouter un ami",
+  "Profil_NoGames": "Aucune partie trouvée... (´• ω •｀)",
+  "Profil_PlayFirst": "Jouez votre première partie !",
+  "Profil_DeletedUser": "Utilisateur supprimé",
+  "Profil_Victory": "Victoire ! ☆",
+  "Profil_Draw": "Égalité",
+  "Profil_Defeat": "Défaite",
+  "Profil_PlayedOn": "Joué le",
+  "Profil_Duration": "Durée",
+  "Profil_LoadingHistory": "Chargement de l'historique des parties... ☆",
+  "Profil_TryLater": "Veuillez réessayer plus tard",
+
+
+
+
+
+
   "Monprofil": "Mon profil",
   "Mesamis": "Mes amis",
   "Ajouterunami": "Ajouter un ami",
