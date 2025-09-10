@@ -213,6 +213,10 @@ function initSoloGame() {
                 ballSpeedX = Math.abs(ballSpeedX) * 1.05;
                 const hit = ((ballY + ballSize/2) - (paddleY + paddleHeight/2)) / (paddleHeight/2);
                 ballSpeedY = hit * Math.max(3, Math.abs(ballSpeedX));
+                ball.setAttribute("src", "/images/ball_hit.png");
+                setTimeout(() => {
+                ball.setAttribute("src", "/images/ball.png");
+                }, 200);
             }
 
             // collisions raquette IA
@@ -225,6 +229,10 @@ function initSoloGame() {
                 ballSpeedX = -Math.abs(ballSpeedX) * 1.05;
                 const hit = ((ballY + ballSize/2) - (aiPaddleY + paddleHeight/2)) / (paddleHeight/2);
                 ballSpeedY = hit * Math.max(3, Math.abs(ballSpeedX));
+                ball.setAttribute("src", "/images/ball_hit.png");
+                setTimeout(() => {
+                ball.setAttribute("src", "/images/ball.png");
+                }, 200);
             }
 
             // score
