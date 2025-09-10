@@ -35,7 +35,7 @@ export default async function apiRoutes(fastify: FastifyInstance){
 				if (!user)
 				{
 					return{
-					name: 'Deleted user',
+					name: '<span data-i18n="Profil_DeletedUser">Deleted user</span>',
 					};
 				}
 				return user;
