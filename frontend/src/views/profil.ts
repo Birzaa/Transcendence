@@ -115,7 +115,7 @@ export async function renderProfil(playerName?: string): Promise<void> {
         </div>
     `;
 
-    // ⚡ Appliquer directement les traductions
+    // ⚡ Traduction initiale
     updateUI();
 
     if (!userId && !invalidUser) {
@@ -135,12 +135,14 @@ export async function renderProfil(playerName?: string): Promise<void> {
     }
     const me = await meRes.json();
 
+    // ⚡ Chargement des amis
     try {
         const res = await fetch(`/api/friends?userId=${me.id}`, { credentials: 'include' });
         if (res.ok) {
             const friends = await res.json();
             if (friends.length === 0) {
                 friendsList.innerHTML = `<p class="text-purple-500 text-center italic" data-i18n="Profil_NoFriends">No friends yet. (´• ω •｀)</p>`;
+                updateUI();
             } else {
                 friendsList.innerHTML = '';
                 for (const friend of friends) {
@@ -149,10 +151,7 @@ export async function renderProfil(playerName?: string): Promise<void> {
 
                     const nameSpan = document.createElement('span');
                     nameSpan.className = 'text-purple-700 cursor-pointer hover:underline flex items-center';
-                    nameSpan.innerHTML = `
-                        <span class="text-purple-300 mr-2">✧</span>
-                        ${friend.name}
-                    `;
+                    nameSpan.innerHTML = `<span class="text-purple-300 mr-2">✧</span>${friend.name}`;
                     nameSpan.onclick = () => navigate(`/profil?player=${encodeURIComponent(friend.name)}`);
                     friendEl.appendChild(nameSpan);
 
@@ -176,20 +175,20 @@ export async function renderProfil(playerName?: string): Promise<void> {
                     friendEl.appendChild(deleteBtn);
 
                     friendsList.appendChild(friendEl);
-
-                    if (playerName && friend.name === playerName) {
-                        alreadyFriend = true;
-                    }
                 }
+                updateUI();
             }
         } else {
             friendsList.innerHTML = `<p class="text-red-400 text-center" data-i18n="Profil_ErrorFriends">Error loading friends (´；д；｀)</p>`;
+            updateUI();
         }
     } catch (err) {
         console.error('Error loading friends:', err);
         friendsList.innerHTML = `<p class="text-red-400 text-center" data-i18n="Profil_ErrorFriends">Error loading friends (´；д；｀)</p>`;
+        updateUI();
     }
 
+    // ⚡ Ajouter ami dynamiquement
     if (playerName && !invalidUser && me.name !== playerName && !alreadyFriend) {
         addFriendContainer.innerHTML = `
             <button id="addFriendBtn" data-i18n="Profil_AddFriend" class="relative px-6 py-2 bg-baby-blue border-2 border-t-white border-l-white border-r-blue-400 border-b-blue-400 
@@ -201,6 +200,7 @@ export async function renderProfil(playerName?: string): Promise<void> {
                 ✨ Add Friend
             </button>
         `;
+        updateUI();
 
         document.getElementById('addFriendBtn')?.addEventListener('click', async () => {
             const res = await fetch('/api/addFriend', {
@@ -217,6 +217,7 @@ export async function renderProfil(playerName?: string): Promise<void> {
         });
     }
 
+    // ⚡ Historique des parties
     if (!invalidUser) {
         try {
             const gamesData = await fetchData('gamesHistory', userId!);
@@ -230,6 +231,7 @@ export async function renderProfil(playerName?: string): Promise<void> {
                     <p class="mt-2 text-sm" data-i18n="Profil_PlayFirst">Play your first game!</p>
                 `;
                 historyContainer.appendChild(div);
+                updateUI();
             } else {
                 for (const game of gamesData) {
                     const minutes = Math.floor(game.duration / 60);
@@ -257,52 +259,32 @@ export async function renderProfil(playerName?: string): Promise<void> {
                     gameDiv.innerHTML = `
                         <div class="flex items-center justify-around mb-4">
                             <div class="text-center">
-                                <img src="${player1Avatar}" 
-                                     class="w-16 h-16 rounded-full border-2 ${
-                                        game.player1_id === me.id ? 'border-purple-400' : 'border-purple-200'
-                                     } shadow-md">
-                                <p class="mt-2 font-semibold ${
-                                    game.winner_id === game.player1_id ? 'text-green-600' : 'text-purple-700'
-                                }">
+                                <img src="${player1Avatar}" class="w-16 h-16 rounded-full border-2 ${game.player1_id === me.id ? 'border-purple-400' : 'border-purple-200'} shadow-md">
+                                <p class="mt-2 font-semibold ${game.winner_id === game.player1_id ? 'text-green-600' : 'text-purple-700'}">
                                     ${player1Name} ${game.player1_id === me.id ? '(You)' : ''}
                                 </p>
                             </div>
                             
-                            <div class="text-2xl font-bold mx-4 px-4 py-2 bg-purple-100 rounded-lg border-2 ${
-                                isWinner ? 'border-green-300 bg-green-50' : 
-                                isDraw ? 'border-yellow-300 bg-yellow-50' : 'border-purple-300'
-                            }">
+                            <div class="text-2xl font-bold mx-4 px-4 py-2 bg-purple-100 rounded-lg border-2 ${isWinner ? 'border-green-300 bg-green-50' : isDraw ? 'border-yellow-300 bg-yellow-50' : 'border-purple-300'}">
                                 ${game.player1_score} - ${game.player2_score}
-                                ${isWinner ? '<div class="text-xs text-green-600" data-i18n="Profil_Victory">Victory! ☆</div>' : 
-                                  isDraw ? '<div class="text-xs text-yellow-600" data-i18n="Profil_Draw">Draw</div>' : 
-                                  '<div class="text-xs text-red-500" data-i18n="Profil_Defeat">Defeat</div>'}
+                                ${isWinner ? '<div class="text-xs text-green-600" data-i18n="Profil_Victory">Victory! ☆</div>' : isDraw ? '<div class="text-xs text-yellow-600" data-i18n="Profil_Draw">Draw</div>' : '<div class="text-xs text-red-500" data-i18n="Profil_Defeat">Defeat</div>'}
                             </div>
                             
                             <div class="text-center">
-                                <img src="${player2Avatar}" 
-                                     class="w-16 h-16 rounded-full border-2 ${
-                                        game.player2_id === me.id ? 'border-purple-400' : 'border-purple-200'
-                                     } shadow-md">
-                                <p class="mt-2 font-semibold ${
-                                    game.winner_id === game.player2_id ? 'text-green-600' : 'text-purple-700'
-                                }">
+                                <img src="${player2Avatar}" class="w-16 h-16 rounded-full border-2 ${game.player2_id === me.id ? 'border-purple-400' : 'border-purple-200'} shadow-md">
+                                <p class="mt-2 font-semibold ${game.winner_id === game.player2_id ? 'text-green-600' : 'text-purple-700'}">
                                     ${player2Name} ${game.player2_id === me.id ? '(You)' : ''}
                                 </p>
                             </div>
                         </div>
                         
                         <div class="text-center text-sm text-purple-700 bg-purple-100 p-2 rounded-lg">
-                            <p>
-                              <span data-i18n="Profil_PlayedOn">Played on</span>: 
-                              <span class="font-semibold">${new Date(game.created_at).toLocaleString()}</span>
-                            </p>
-                            <p class="mt-1">
-                              <span data-i18n="Profil_Duration">Duration</span>: 
-                              <span class="font-semibold">${durationStr}</span>
-                            </p>
+                            <p><span data-i18n="Profil_PlayedOn">Played on</span>: <span class="font-semibold">${new Date(game.created_at).toLocaleString()}</span></p>
+                            <p class="mt-1"><span data-i18n="Profil_Duration">Duration</span>: <span class="font-semibold">${durationStr}</span></p>
                         </div>
                     `;
                     historyContainer.appendChild(gameDiv);
+                    updateUI();
                 }
             }
         } catch (err) {
@@ -314,10 +296,11 @@ export async function renderProfil(playerName?: string): Promise<void> {
                 <p class="text-sm mt-2" data-i18n="Profil_TryLater">Please try again later</p>
             `;
             historyContainer.appendChild(errorDiv);
+            updateUI();
         }
     }
 
-    // Gestion des événements
+    // ⚡ Gestion des événements
     document.getElementById('btn-settings')?.addEventListener('click', () => navigate('/settings'));
 
     const playerNameInput = document.getElementById('playerName') as HTMLInputElement;
