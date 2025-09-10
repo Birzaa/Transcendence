@@ -261,7 +261,7 @@ export async function renderProfil(playerName?: string): Promise<void> {
                             <div class="text-center">
                                 <img src="${player1Avatar}" class="w-16 h-16 rounded-full border-2 ${game.player1_id === me.id ? 'border-purple-400' : 'border-purple-200'} shadow-md">
                                 <p class="mt-2 font-semibold ${game.winner_id === game.player1_id ? 'text-green-600' : 'text-purple-700'}">
-                                    ${player1Name} ${game.player1_id === me.id ? '(You)' : ''}
+                                    ${player1Name} ${game.player1_id === me.id ? '<span data-i18n="Profil_You">(Vous)</span>' : ''}
                                 </p>
                             </div>
                             
