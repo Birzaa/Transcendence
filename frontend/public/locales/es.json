@@ -41,6 +41,8 @@
   "SuccesInscription": "Registro exitoso, ahora puede iniciar sesión.",
   "NomRequis": "El nombre es obligatorio",
 
+
+
   "_comment_profile": "Página de perfil y configuración",
   "Profil_NotFound": "Jugador no encontrado (´；ω；｀)",
   "Profil_PlayerHistory": "Historial de juego de {{playerName}} ☆",
@@ -66,7 +68,13 @@
   "Profil_TryLater": "Por favor, inténtalo de nuevo más tarde",
 
 
-
+ "_comment_solo": "Modo de juego en solitario UI",
+ "Solo_Back": "← Volver",
+  "Solo_Player": "JUGADOR",
+  "Solo_Bot": "BOT",
+  "Solo_Pause": "Pausa",
+  "Solo_Resume": "Continuar",
+  "Solo_Instructions": "Usa las flechas ↑ y ↓ para mover tu paleta",
 
 
   "Monprofil": "Mi perfil",

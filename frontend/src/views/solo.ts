@@ -1,3 +1,5 @@
+import { t } from "../utils/i18n.js"; // Import de la fonction de traduction
+
 export function renderSoloGame(): void {
     document.getElementById('game-menu-container')?.remove();
 
@@ -12,39 +14,40 @@ export function renderSoloGame(): void {
         document.head.appendChild(fontLink);
     }
 
-    // HTML principal
     app.innerHTML = `
     <div class="min-h-screen bg-[url('/images/background.png')] bg-cover bg-fixed pt-[190px] pb-4">
         <div class="flex flex-col items-center mx-auto px-4" style="max-width: 800px;">
             <!-- Barre de contrôle -->
             <div class="flex justify-between items-center w-full mb-3 gap-2">
                 <button onclick="window.navigate('/')" 
+                    data-i18n="Solo_Back"
                     class="flex-1 px-3 py-1 bg-purple-200 border-2 border-t-purple-400 border-l-purple-400 border-r-white border-b-white 
                         text-purple-800 font-bold text-sm shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
                         active:border-t-white active:border-l-white active:border-r-purple-400 active:border-b-purple-400
                         active:shadow-none active:translate-y-[2px] transition-all duration-100 text-center">
-                    ← Retour
+                    ${t("Solo_Back")}
                 </button>
 
                 <!-- Scores -->
                 <div class="flex-1 flex justify-center items-center gap-4 pixel-font" style="font-size: 1.25rem;">
                     <div class="text-center">
-                        <div class="text-purple-300 text-xs">JOUEUR</div>
+                        <div class="text-purple-300 text-xs" data-i18n="Solo_Player">${t("Solo_Player")}</div>
                         <span id="player-score" class="text-yellow-300">00</span>
                     </div>
                     <span class="text-white">:</span>
                     <div class="text-center">
-                        <div class="text-pink-300 text-xs">BOT</div>
+                        <div class="text-pink-300 text-xs" data-i18n="Solo_Bot">${t("Solo_Bot")}</div>
                         <span id="ai-score" class="text-yellow-300">00</span>
                     </div>
                 </div>
 
                 <button id="pause-btn" 
+                    data-i18n="Solo_Pause"
                     class="flex-1 px-3 py-1 bg-purple-200 border-2 border-t-purple-400 border-l-purple-400 border-r-white border-b-white 
                         text-purple-800 font-bold text-sm shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
                         active:border-t-white active:border-l-white active:border-r-purple-400 active:border-b-purple-400
                         active:shadow-none active:translate-y-[2px] transition-all duration-100">
-                    Pause
+                    ${t("Solo_Pause")}
                 </button>
             </div>
 
@@ -65,8 +68,8 @@ export function renderSoloGame(): void {
             </div>
 
             <!-- Instructions clavier -->
-            <div class="mt-4 text-center text-white text-sm pixel-font">
-                Flèches ↑ et ↓ pour déplacer votre raquette
+            <div class="mt-4 text-center text-white text-sm pixel-font" data-i18n="Solo_Instructions">
+                ${t("Solo_Instructions")}
             </div>
         </div>
 
@@ -76,7 +79,6 @@ export function renderSoloGame(): void {
     </div>
     `;
 
-    // Styles dynamiques
     const style = document.createElement('style');
     style.textContent = `
         .pixel-font { font-family: 'Press Start 2P', cursive; letter-spacing: 1px; }
@@ -89,15 +91,11 @@ export function renderSoloGame(): void {
 }
 
 function initSoloGame() {
-    // scores
     let playerScore = 0;
     let aiScore = 0;
-
-    // états du jeu
     let gamePaused = false;
     let waitingForServe = true;
 
-    // éléments DOM
     const ball = document.getElementById('ball')!;
     const paddle = document.getElementById('paddle')!;
     const aiPaddle = document.getElementById('ai-paddle')!;
@@ -106,29 +104,24 @@ function initSoloGame() {
     const pauseBtn = document.getElementById('pause-btn')!;
     const gameContainer = document.getElementById('game-container')!;
 
-    // dimensions dynamiques
     let gameWidth = gameContainer.clientWidth;
     let gameHeight = gameContainer.clientHeight;
     let paddleHeight = paddle.offsetHeight;
     let ballSize = ball.offsetWidth;
 
-    // positions
     let paddleY = (gameHeight - paddleHeight) / 2;
     let aiPaddleY = (gameHeight - paddleHeight) / 2;
     let ballX = (gameWidth - ballSize) / 2;
     let ballY = (gameHeight - ballSize) / 2;
 
-    // vitesses
     let paddleSpeed = Math.max(6, gameHeight * 0.02);
     let ballSpeedX = 0;
     let ballSpeedY = 0;
     const baseBallSpeed = 4;
 
-    // états des touches
     let upKeyPressed = false;
     let downKeyPressed = false;
 
-    // mise à jour des dimensions (resize + init)
     function updateDimensions() {
         gameWidth = gameContainer.clientWidth;
         gameHeight = gameContainer.clientHeight;
@@ -163,19 +156,11 @@ function initSoloGame() {
 
     function gameLoop() {
         if (!gamePaused) {
-            // paddle joueur → contrôlé par clavier
-            if (upKeyPressed) {
-                paddleY = Math.max(paddleY - paddleSpeed, 0);
-            }
-            if (downKeyPressed) {
-                paddleY = Math.min(paddleY + paddleSpeed, gameHeight - paddleHeight);
-            }
+            if (upKeyPressed) paddleY = Math.max(paddleY - paddleSpeed, 0);
+            if (downKeyPressed) paddleY = Math.min(paddleY + paddleSpeed, gameHeight - paddleHeight);
 
-            // paddle IA → suit la balle avec limites
             const targetY = ballY - (paddleHeight / 2) + ballSize / 2;
             aiPaddleY += (targetY - aiPaddleY) * 0.07;
-            
-            // Limites pour l'IA (comme le joueur)
             aiPaddleY = Math.max(0, Math.min(aiPaddleY, gameHeight - paddleHeight));
         }
 
@@ -183,15 +168,13 @@ function initSoloGame() {
             ballX += ballSpeedX;
             ballY += ballSpeedY;
 
-            // collisions mur haut/bas
             if (ballY <= 0 || ballY + ballSize >= gameHeight) {
                 ballSpeedY = -ballSpeedY;
-                // Ajustement pour éviter que la balle reste coincée
                 if (ballY <= 0) ballY = 0;
                 if (ballY + ballSize >= gameHeight) ballY = gameHeight - ballSize;
             }
 
-            // collisions raquette joueur
+            // collisions raquettes
             if (
                 ballX <= paddle.offsetLeft + paddle.offsetWidth &&
                 ballY + ballSize >= paddleY &&
@@ -203,7 +186,6 @@ function initSoloGame() {
                 ballSpeedY = hit * Math.max(3, Math.abs(ballSpeedX));
             }
 
-            // collisions raquette IA
             if (
                 ballX + ballSize >= aiPaddle.offsetLeft &&
                 ballY + ballSize >= aiPaddleY &&
@@ -231,20 +213,15 @@ function initSoloGame() {
         requestAnimationFrame(gameLoop);
     }
 
-    // gestion des événements clavier
-    function handleKeyDown(e: KeyboardEvent) {
+    document.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowUp') upKeyPressed = true;
         if (e.key === 'ArrowDown') downKeyPressed = true;
-    }
+    });
 
-    function handleKeyUp(e: KeyboardEvent) {
+    document.addEventListener('keyup', (e) => {
         if (e.key === 'ArrowUp') upKeyPressed = false;
         if (e.key === 'ArrowDown') downKeyPressed = false;
-    }
-
-    // événements
-    document.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('keyup', handleKeyUp);
+    });
 
     gameContainer.addEventListener('click', () => {
         if (waitingForServe) serveBall();
@@ -252,7 +229,8 @@ function initSoloGame() {
 
     pauseBtn.addEventListener('click', () => {
         gamePaused = !gamePaused;
-        pauseBtn.textContent = gamePaused ? 'Resume' : 'Pause';
+        pauseBtn.textContent = gamePaused ? t("Solo_Resume") : t("Solo_Pause");
+        pauseBtn.setAttribute("data-i18n", gamePaused ? "Solo_Resume" : "Solo_Pause");
     });
 
     window.addEventListener('resize', () => {
@@ -261,10 +239,16 @@ function initSoloGame() {
         drawPositions();
     });
 
-    // init
     updateDimensions();
     resetBall();
     playerScoreDisplay.textContent = '00';
     aiScoreDisplay.textContent = '00';
     requestAnimationFrame(gameLoop);
 }
+
+
+
+
+
+
+
