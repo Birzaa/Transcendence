@@ -15,60 +15,61 @@ export async function navBar() {
           </a>
       </div>
 
-      <!-- Animation Ping-Pong Pixel -->
-      <div class="flex-1 mx-10 relative h-12 overflow-hidden">
-          <div class="absolute inset-0 flex items-center justify-center">
-              <div class="h-full w-1 bg-purple-300/50"></div>
-          </div>
-          <div class="absolute left-0 top-1/2 transform -translate-y-1/2 ping-pong-paddle-left">
-              <div class="relative" style="width: 16px; height: 32px;">
-                  <div class="absolute" style="
-                      width: 4px; height: 32px;
-                      background: #FF9FF3;
-                      left: 0;
-                      box-shadow: 
-                          4px 0 0 #FF9FF3,
-                          8px 0 0 #FF9FF3,
-                          12px 0 0 #FF9FF3;
-                  "></div>
-                  <div class="absolute" style="
-                      width: 16px; height: 8px;
-                      background: #FECA57;
-                      top: 12px;
-                      box-shadow: 0 8px 0 #FECA57;
-                  "></div>
-              </div>
-          </div>
-          <div class="absolute right-0 top-1/2 transform -translate-y-1/2 ping-pong-paddle-right">
-              <div class="relative" style="width: 16px; height: 32px;">
-                  <div class="absolute" style="
-                      width: 4px; height: 32px;
-                      background: #54A0FF;
-                      right: 0;
-                      box-shadow: 
-                          -4px 0 0 #54A0FF,
-                          -8px 0 0 #54A0FF,
-                          -12px 0 0 #54A0FF;
-                  "></div>
-                  <div class="absolute" style="
-                      width: 16px; height: 8px;
-                      background: #00D2D3;
-                      top: 12px;
-                      box-shadow: 0 8px 0 #00D2D3;
-                  "></div>
-              </div>
-          </div>
-          <div class="absolute top-1/2 left-1/2 ping-pong-ball">
-              <div style="
-                  width: 8px; height: 8px;
-                  background: #FECA57;
-                  box-shadow: 
-                      8px 0 0 #FECA57,
-                      0 8px 0 #FECA57,
-                      8px 8px 0 #FECA57;
-              "></div>
-          </div>
-      </div>
+            <!-- Animation Ping-Pong Pixel -->
+            <div class="flex-1 mx-10 relative h-12 overflow-hidden">
+                <!-- Ligne centrale -->
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="h-full w-1 bg-purple-300/50"></div>
+                </div>
+                
+                <!-- Raquette GAUCHE pixelisée (forme reconnaissable) -->
+                <div class="absolute left-0 top-1/2 transform -translate-y-1/2 ping-pong-paddle-left">
+                    <div class="relative" style="width: 16px; height: 32px;">
+                        <div class="absolute" style="
+                            width: 4px; height: 32px;
+                            background: #FF9FF3;
+                            left: 0;
+                            box-shadow: 
+                                4px 0 0 #FF9FF3,
+                                8px 0 0 #FF9FF3,
+                                12px 0 0 #FF9FF3;
+                        "></div>
+                        <div class="absolute" style="
+                            width: 16px; height: 8px;
+                            background: #FECA57;
+                            top: 12px;
+                            box-shadow: 0 8px 0 #FECA57;
+                        "></div>
+                    </div>
+                </div>
+                
+                <!-- Raquette DROITE pixelisée -->
+                <div class="absolute right-0 top-1/2 transform -translate-y-1/2 ping-pong-paddle-right">
+                    <div class="relative" style="width: 16px; height: 32px;">
+                        <div class="absolute" style="
+                            width: 4px; height: 32px;
+                            background: #54A0FF;
+                            right: 0;
+                            box-shadow: 
+                                -4px 0 0 #54A0FF,
+                                -8px 0 0 #54A0FF,
+                                -12px 0 0 #54A0FF;
+                        "></div>
+                        <div class="absolute" style="
+                            width: 16px; height: 8px;
+                            background: #00D2D3;
+                            top: 12px;
+                            box-shadow: 0 8px 0 #00D2D3;
+                        "></div>
+                    </div>
+                </div>
+                
+                <!-- Balle pixelisée -->
+                <img src="/images/blue.png"
+                     alt="Ball"
+                     class="absolute top-1/2 left-1/2 ping-pong-ball"
+                     style="width: 20px; height: 20px;">
+            </div>
 
       <!-- Boutons -->
       <div class="flex space-x-6 mr-6">

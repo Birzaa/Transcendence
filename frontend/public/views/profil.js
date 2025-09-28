@@ -1,6 +1,5 @@
-import { navigate } from "../main.js";
 import { fetchData } from "../tools/fetchData.js";
-import { getOnlineUsers, subscribeToStatusUpdates } from "../main.js";
+import { getOnlineUsers, subscribeToStatusUpdates, navigate } from "../main.js";
 let statusUpdateUnsubscribe = null;
 let onlineUsers = [];
 // Fonction utilitaire pour attacher les événements de manière sécurisée

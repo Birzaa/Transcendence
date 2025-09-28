@@ -13,4 +13,3 @@
 **/tsconfig.json
 **/tailwind.config.js
 **/src/             # Sauf si vous avez besoin des sources
-**/test/

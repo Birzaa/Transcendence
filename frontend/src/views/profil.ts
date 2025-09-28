@@ -1,6 +1,5 @@
-import { navigate } from "../main.js";
 import { fetchData } from "../tools/fetchData.js";
-import { getOnlineUsers, subscribeToStatusUpdates, userState } from "../main.js";
+import { getOnlineUsers, subscribeToStatusUpdates, userState, navigate } from "../main.js";
 
 let statusUpdateUnsubscribe: (() => void) | null = null;
 let onlineUsers: string[] = [];
