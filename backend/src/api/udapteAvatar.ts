@@ -4,7 +4,6 @@ import path from 'path';
 import fs from 'fs';
 
 export default async function updateAvatar(fastify: FastifyInstance) {
-  console.log('gggg');
   fastify.post('/api/updateAvatar', async (request, reply) => {
     const currentUser = (request.session as any)?.user;
     if (!currentUser) {
@@ -30,8 +29,8 @@ export default async function updateAvatar(fastify: FastifyInstance) {
 
     const relativePath = `/avatar/${fileName}`;
     const result = db.prepare('UPDATE users SET avatar = ? WHERE id = ?').run(relativePath, currentUser.id);
-    console.log('Updating avatar for user:', currentUser.id, 'path:', relativePath);
-    console.log('DB update result:', result);
+    // console.log('Updating avatar for user:', currentUser.id, 'path:', relativePath);
+    // console.log('DB update result:', result);
     request.session.user.avatar = relativePath;
     return reply.send({ success: true, avatar: relativePath });
   });

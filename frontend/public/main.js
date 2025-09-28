@@ -2,55 +2,36 @@ import { renderHome } from "./views/home.js";
 import { renderProfil, initProfilSubscriptions } from "./views/profil.js";
 import { renderChat } from "./views/chat.js";
 import { renderAuth } from "./views/auth.js";
-import { setupNavBar } from "./components/navbar.js";
+import { navBar, setupNavBar } from "./components/navbar.js";
 import { renderSettings } from "./views/settings.js";
 import { renderPerformances } from "./views/performance.js";
+import { renderGameMenu } from "./views/gamemenu.js";
 import { renderSoloGame } from "./views/solo.js";
 import { render1vs1 } from "./views/1vs1.js";
-const statusListeners = [];
+import { renderRemoteRoom } from "./views/remoteRoom.js";
+import { renderRemoteGame } from "./views/remoteGame.js";
+import { renderTournament } from "./views/tournament.js";
+let statusListeners = [];
 let onlineUsers = [];
 export function getOnlineUsers() {
     return onlineUsers;
 }
 export function subscribeToStatusUpdates(cb) {
-    if (!statusListeners.includes(cb)) {
+    if (!statusListeners.includes(cb))
         statusListeners.push(cb);
-    }
+    return () => {
+        statusListeners = statusListeners.filter((listener) => listener !== cb);
+    };
 }
-function sendUsernameWhenReady(username) {
-    if (!socket) {
-        console.warn("WebSocket non initialisé");
-        return;
-    }
-    if (isUsernameSent)
-        return;
-    if (socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({
-            type: 'set_username',
-            username,
-            timestamp: Date.now(),
-        }));
-        console.log('Username envoyé:', username);
-        isUsernameSent = true;
-    }
-    else {
-        // Retente dans 200ms si socket pas encore ouvert
-        setTimeout(() => sendUsernameWhenReady(username), 200);
-    }
-}
-// Gestion du userState avec setter déclenchant un événement custom
 class UserState {
     constructor() {
-        this._currentUsername = 'anonymous';
+        this._currentUsername = "anonymous";
     }
-    get currentUsername() {
-        return this._currentUsername;
-    }
+    get currentUsername() { return this._currentUsername; }
     set currentUsername(username) {
         if (this._currentUsername !== username) {
             this._currentUsername = username;
-            // Dispatch event global pour signaler le changement
-            window.dispatchEvent(new CustomEvent('userStateChanged', { detail: { username } }));
+            window.dispatchEvent(new CustomEvent("userStateChanged", { detail: { username } }));
         }
     }
 }
@@ -60,204 +41,236 @@ let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
 let isUsernameSent = false;
 let hasLoggedConnection = false;
-let isConnecting = false; // Nouveau flag pour éviter les connexions multiples
+let isConnecting = false;
 export async function connectWebSocket(username) {
-    // Éviter les connexions multiples
-    if (isConnecting) {
-        console.log('Connexion WebSocket déjà en cours...');
+    if (isConnecting)
         return;
-    }
-    if (socket && socket.readyState === WebSocket.OPEN) {
-        console.log('WebSocket déjà connecté');
+    if (socket && socket.readyState === WebSocket.OPEN)
         return;
-    }
     isConnecting = true;
-    // Fermer proprement la connexion existante
     if (socket) {
         socket.close();
         socket = null;
     }
-    await new Promise(resolve => setTimeout(resolve, 100)); // Réduit le délai
-    // Utiliser le bon protocole (ws ou wss) selon la page
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    await new Promise(resolve => setTimeout(resolve, 100));
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const wsUrl = `${protocol}//${window.location.hostname}:3001/ws`;
-    console.log('Tentative de connexion WebSocket à:', wsUrl);
     try {
         socket = new WebSocket(wsUrl);
-        socket.addEventListener('open', () => {
+        socket.addEventListener("open", () => {
             isConnecting = false;
-            if (!hasLoggedConnection) {
-                console.log('✅ Connecté au WebSocket');
-                hasLoggedConnection = true;
-            }
             reconnectAttempts = 0;
             isUsernameSent = false;
-            sendUsernameWhenReady(userState.currentUsername);
+            sendUsernameWhenReady(userState.currentUsername, false);
+            if (!hasLoggedConnection) {
+                hasLoggedConnection = true;
+            }
         });
-        socket.addEventListener('message', (event) => {
+        socket.addEventListener("message", (event) => {
             try {
                 const msg = JSON.parse(event.data);
-                console.log('Message WebSocket reçu:', msg);
-                if (msg.type === "status_update" || msg.type === "online_users") {
-                    statusListeners.forEach(cb => cb(msg));
-                }
-                else if (msg.type === "user_list") {
-                    onlineUsers = msg.users;
+                if (msg.type === "status_update" || msg.type === "online_users" || msg.type === "user_list") {
+                    if (msg.users)
+                        onlineUsers = msg.users;
                     statusListeners.forEach(cb => cb(msg));
                 }
                 else if (msg.type === "message" || msg.type === "private_message") {
-                    // Transmettre les messages de chat aux listeners
                     statusListeners.forEach(cb => cb(msg));
                 }
             }
-            catch (err) {
-                console.warn("Message WebSocket invalide :", event.data);
+            catch {
             }
         });
-        socket.addEventListener('close', () => {
+        socket.addEventListener("close", () => {
             isConnecting = false;
-            console.log('❌ Déconnecté du WebSocket');
-            if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS && userState.currentUsername !== 'anonymous') {
+            // MODIFICATION : Mettre à jour la liste des utilisateurs immédiatement
+            onlineUsers = onlineUsers.filter(user => user !== userState.currentUsername);
+            statusListeners.forEach(cb => cb({ type: "user_list", users: onlineUsers }));
+            if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS && userState.currentUsername !== "anonymous") {
                 const delay = Math.min(5000, 1000 * Math.pow(2, reconnectAttempts));
-                console.log(`Tentative de reconnexion dans ${delay}ms...`);
                 setTimeout(() => connectWebSocket(userState.currentUsername), delay);
                 reconnectAttempts++;
             }
         });
-        socket.addEventListener('error', (error) => {
+        socket.addEventListener("error", (error) => {
             isConnecting = false;
-            console.error('Erreur WebSocket:', error);
+            console.error("Erreur WebSocket:", error);
         });
     }
     catch (error) {
         isConnecting = false;
-        console.error('Erreur lors de la création du WebSocket:', error);
+        console.error("Erreur lors de la création du WebSocket:", error);
     }
 }
-// Navigation SPA
+function sendUsernameWhenReady(username, inChat = false) {
+    if (!socket)
+        return;
+    if (isUsernameSent)
+        return;
+    if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: "set_username", username, inChat }));
+        isUsernameSent = true;
+    }
+    else {
+        setTimeout(() => sendUsernameWhenReady(username, inChat), 200);
+    }
+}
+// --- Gestion chat ---
+export function joinChat() {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: "set_username", username: userState.currentUsername, inChat: true }));
+    }
+}
+export function leaveChat() {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: "set_username", username: userState.currentUsername, inChat: false }));
+    }
+}
+// --- Navigation SPA ---
 async function renderNav() {
-    await setupNavBar();
+    const existingNav = document.querySelector("nav");
+    if (existingNav)
+        existingNav.remove();
+    if (setupNavBar) {
+        await setupNavBar();
+    }
+    else {
+        const nav = await navBar();
+        document.body.prepend(nav);
+    }
 }
 function render(pathWithQuery) {
     const url = new URL(window.location.origin + pathWithQuery);
     const basePath = url.pathname;
     const params = url.searchParams;
     switch (basePath) {
-        case '/':
+        case "/":
             renderHome();
             break;
-        case '/chat':
+        case "/chat":
             renderChat();
             break;
-        case '/auth':
+        case "/auth":
             renderAuth();
             break;
-        case '/settings':
+        case "/settings":
             renderSettings();
             break;
-        case '/performances':
+        case "/performances":
             renderPerformances();
             break;
-        case '/profil': {
-            const player = params.get('player');
+        case "/profil": {
+            const player = params.get("player");
             renderProfil(player ?? undefined);
             initProfilSubscriptions();
             break;
         }
-        case '/game': {
-            const mode = params.get('mode');
-            if (mode === 'solo')
+        case "/tournament":
+            renderTournament();
+            break;
+        case "/game": {
+            const mode = params.get("mode");
+            if (!mode)
+                renderGameMenu();
+            else if (mode === "solo")
                 renderSoloGame();
-            else if (mode === '1v1')
+            else if (mode === "1v1")
                 render1vs1();
+            else if (mode === "remote") {
+                const roomId = params.get("roomId");
+                if (roomId) {
+                    if (socket)
+                        renderRemoteGame(socket, "host", roomId);
+                    else
+                        renderRemoteRoom();
+                }
+                else
+                    renderRemoteRoom();
+            }
+            else if (mode === "tournament")
+                renderTournament();
             else
                 document.getElementById("app").innerHTML =
                     `<h1 class="text-center mt-10">Mode "${mode}" non supporté.</h1>`;
             break;
         }
-        default:
-            document.getElementById("app").innerHTML =
-                `<h1 class="text-center text-5xl p-10">Page non trouvée</h1>`;
+        default: document.getElementById("app").innerHTML =
+            `<h1 class="text-center text-5xl p-10">Page non trouvée</h1>`;
     }
 }
 export function navigate(pathWithQuery) {
-    window.history.pushState({}, '', pathWithQuery);
+    const currentPath = window.location.pathname;
+    if (currentPath === "/chat")
+        leaveChat();
+    window.history.pushState({}, "", pathWithQuery);
     render(pathWithQuery);
+    if (pathWithQuery.startsWith("/chat"))
+        joinChat();
 }
-window.addEventListener('popstate', () => {
-    render(window.location.pathname + window.location.search);
-});
-// Au changement du userState, mettre à jour navbar et websocket
-window.addEventListener('userStateChanged', async (e) => {
+window.addEventListener("popstate", () => render(window.location.pathname + window.location.search));
+window.addEventListener("userStateChanged", async (e) => {
     const detail = e.detail;
-    console.log('userStateChanged:', detail.username);
-    // Met à jour la navbar
     await renderNav();
-    // Fermer WS si ouvert
     if (socket) {
         socket.close();
         socket = null;
         isUsernameSent = false;
     }
-    // Si connecté, reconnecte WS avec le nouveau user
-    if (detail.username !== 'anonymous') {
+    if (detail.username !== "anonymous")
         await connectWebSocket(detail.username);
-    }
 });
-// Initialisation de l'app
 async function initializeApp() {
     try {
-        const res = await fetch('/api/me', { credentials: 'include' });
+        const res = await fetch("/api/me", { credentials: "include" });
         if (res.ok) {
             const user = await res.json();
-            userState.currentUsername = user.name || 'anonymous';
+            userState.currentUsername = user.name || "anonymous";
         }
-        else {
-            userState.currentUsername = 'anonymous';
-        }
+        else
+            userState.currentUsername = "anonymous";
     }
     catch {
-        userState.currentUsername = 'anonymous';
+        userState.currentUsername = "anonymous";
     }
     await renderNav();
     render(window.location.pathname + window.location.search);
-    if (userState.currentUsername !== 'anonymous') {
+    if (userState.currentUsername !== "anonymous")
         await connectWebSocket(userState.currentUsername);
-    }
 }
-// Événement beforeunload pour nettoyer
-window.addEventListener('beforeunload', () => {
+// MODIFICATION : Gestion améliorée de la fermeture de l'onglet/navigateur
+window.addEventListener("beforeunload", () => {
     if (socket) {
+        // Envoyer un message de déconnexion avant de fermer
+        if (socket.readyState === WebSocket.OPEN) {
+            try {
+                socket.send(JSON.stringify({ type: "user_disconnected", username: userState.currentUsername }));
+            }
+            catch (e) {
+                console.log("Impossible d'envoyer le message de déconnexion");
+            }
+        }
         socket.close();
         socket = null;
     }
 });
-// Éviter l'initialisation multiple
 if (!window._appInitialized) {
     window._appInitialized = true;
     initializeApp();
 }
-else {
-    console.log('App déjà initialisée');
-}
-// Gestion des clics sur liens internes
-document.addEventListener('click', (e) => {
+document.addEventListener("click", (e) => {
     const target = e.target;
-    if (target.tagName === 'A') {
-        const anchor = target;
-        const href = anchor.getAttribute('href');
-        if (href?.startsWith('/')) {
+    if (target.tagName === "A") {
+        const href = target.getAttribute("href");
+        if (href?.startsWith("/")) {
             e.preventDefault();
             navigate(href);
         }
     }
 });
-// Debug
 window.debugSocket = {
     getUsername: () => userState.currentUsername,
     getSocketStatus: () => socket?.readyState,
     getSocket: () => socket,
-    reconnect: () => connectWebSocket(userState.currentUsername)
+    reconnect: () => connectWebSocket(userState.currentUsername),
 };
-// A corriger intégrer directement la fonction navigate() dans home.ts pour l'utiliser
 window.navigate = navigate;
