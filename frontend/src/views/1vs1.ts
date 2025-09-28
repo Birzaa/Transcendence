@@ -160,18 +160,35 @@ function init1vs1Game(player1Name: string, player2Name: string, mode: string | n
   function showEndMatchScreen(winner: string) {
     const overlay = document.createElement("div");
     overlay.className =
-      "absolute inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center z-50 text-center";
+      "absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50";
+  
     overlay.innerHTML = `
-      <h2 class="pixel-font text-2xl text-yellow-300 mb-4">🎉 ${winner} gagne la partie ! 🎉</h2>
-      <button id="next-match" 
-        class="px-6 py-2 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400 
-        text-purple-800 font-bold shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
-        active:shadow-none active:translate-y-[2px] active:border-purple-300 transition-all duration-100">
-        Partie suivante →
-      </button>
+      <div class="relative max-w-md w-full bg-pink-50 bg-opacity-90 shadow-lg border-2 border-purple-300 text-center">
+        <!-- Petit chat décoratif -->
+        <img src="/images/logo.png" class="absolute -top-4 -right-4 w-12 h-12 rotate-12" alt="Petit chat">
+  
+        <!-- Barre violette -->
+        <div class="bg-purple-600 text-pink-100 p-3">
+          <h1 class="text-xl font-bold">Résultat du match</h1>
+        </div>
+  
+        <!-- Contenu -->
+        <div class="p-6">
+          <h2 class="pixel-font text-lg text-purple-700 mb-6">
+            ☆ ${winner} gagne la partie ! ☆
+          </h2>
+          <button id="next-match"
+            class="px-6 py-2 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400 
+                   text-purple-800 font-bold shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
+                   active:shadow-none active:translate-y-[2px] active:border-purple-300 transition-all duration-100">
+            ${mode === "tournament" ? "Partie suivante →" : "← Retour au menu"}
+          </button>
+        </div>
+      </div>
     `;
+  
     gameContainer.appendChild(overlay);
-
+  
     document.getElementById("next-match")?.addEventListener("click", () => {
       if (mode === "tournament") {
         goToNextMatch(winner);
@@ -180,6 +197,8 @@ function init1vs1Game(player1Name: string, player2Name: string, mode: string | n
       }
     });
   }
+  
+  
 
   function goToNextMatch(winner: string) {
     const matches = JSON.parse(localStorage.getItem("tournamentMatches") || "[]");

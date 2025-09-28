@@ -135,6 +135,7 @@ function initSoloGame() {
     let ballSpeedX = 0;
     let ballSpeedY = 0;
     const baseBallSpeed = 4;
+    const WIN_SCORE = 5;
 
     // états des touches
     let upKeyPressed = false;
@@ -173,21 +174,55 @@ function initSoloGame() {
         ball.style.top = `${Math.round(ballY)}px`;
     }
 
+    function endGame(winner: string) {
+        gamePaused = true;
+        const overlay = document.createElement("div");
+        overlay.className =
+          "absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50";
+      
+        overlay.innerHTML = `
+          <div class="relative max-w-md w-full bg-pink-50 bg-opacity-90 shadow-lg border-2 border-purple-300 text-center">
+            <!-- Petit chat décoratif -->
+            <img src="/images/logo.png" class="absolute -top-4 -right-4 w-12 h-12 rotate-12" alt="Petit chat">
+      
+            <!-- Barre violette -->
+            <div class="bg-purple-600 text-pink-100 p-3">
+              <h1 class="text-xl font-bold">Résultat de la partie</h1>
+            </div>
+      
+            <!-- Contenu -->
+            <div class="p-6">
+              <h2 class="pixel-font text-lg text-purple-700 mb-6">
+                ☆ ${winner} gagne la partie ! ☆
+              </h2>
+              <button id="back-menu"
+                class="px-6 py-2 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400 
+                       text-purple-800 font-bold shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
+                       active:shadow-none active:translate-y-[2px] active:border-purple-300 transition-all duration-100">
+                ← Retour au menu
+              </button>
+            </div>
+          </div>
+        `;
+      
+        gameContainer.appendChild(overlay);
+      
+        document.getElementById("back-menu")?.addEventListener("click", () => {
+          window.location.href = "/";
+        });
+      }
+      
+      
+
     function gameLoop() {
         if (!gamePaused) {
             // paddle joueur → contrôlé par clavier
-            if (upKeyPressed) {
-                paddleY = Math.max(paddleY - paddleSpeed, 0);
-            }
-            if (downKeyPressed) {
-                paddleY = Math.min(paddleY + paddleSpeed, gameHeight - paddleHeight);
-            }
+            if (upKeyPressed) paddleY = Math.max(paddleY - paddleSpeed, 0);
+            if (downKeyPressed) paddleY = Math.min(paddleY + paddleSpeed, gameHeight - paddleHeight);
 
-            // paddle IA → suit la balle avec limites
+            // paddle IA
             const targetY = ballY - (paddleHeight / 2) + ballSize / 2;
             aiPaddleY += (targetY - aiPaddleY) * 0.07;
-            
-            // Limites pour l'IA (comme le joueur)
             aiPaddleY = Math.max(0, Math.min(aiPaddleY, gameHeight - paddleHeight));
         }
 
@@ -195,15 +230,13 @@ function initSoloGame() {
             ballX += ballSpeedX;
             ballY += ballSpeedY;
 
-            // collisions mur haut/bas
             if (ballY <= 0 || ballY + ballSize >= gameHeight) {
                 ballSpeedY = -ballSpeedY;
-                // Ajustement pour éviter que la balle reste coincée
                 if (ballY <= 0) ballY = 0;
                 if (ballY + ballSize >= gameHeight) ballY = gameHeight - ballSize;
             }
 
-            // collisions raquette joueur
+            // collisions joueur
             if (
                 ballX <= paddle.offsetLeft + paddle.offsetWidth &&
                 ballY + ballSize >= paddleY &&
@@ -213,13 +246,9 @@ function initSoloGame() {
                 ballSpeedX = Math.abs(ballSpeedX) * 1.05;
                 const hit = ((ballY + ballSize/2) - (paddleY + paddleHeight/2)) / (paddleHeight/2);
                 ballSpeedY = hit * Math.max(3, Math.abs(ballSpeedX));
-                ball.setAttribute("src", "/images/ball_hit.png");
-                setTimeout(() => {
-                ball.setAttribute("src", "/images/ball.png");
-                }, 200);
             }
 
-            // collisions raquette IA
+            // collisions IA
             if (
                 ballX + ballSize >= aiPaddle.offsetLeft &&
                 ballY + ballSize >= aiPaddleY &&
@@ -229,21 +258,19 @@ function initSoloGame() {
                 ballSpeedX = -Math.abs(ballSpeedX) * 1.05;
                 const hit = ((ballY + ballSize/2) - (aiPaddleY + paddleHeight/2)) / (paddleHeight/2);
                 ballSpeedY = hit * Math.max(3, Math.abs(ballSpeedX));
-                ball.setAttribute("src", "/images/ball_hit.png");
-                setTimeout(() => {
-                ball.setAttribute("src", "/images/ball.png");
-                }, 200);
             }
 
             // score
             if (ballX < 0) {
                 aiScore++;
                 aiScoreDisplay.textContent = String(aiScore).padStart(2, '0');
-                resetBall();
+                if (aiScore >= WIN_SCORE) endGame("BOT");
+                else resetBall();
             } else if (ballX > gameWidth) {
                 playerScore++;
                 playerScoreDisplay.textContent = String(playerScore).padStart(2, '0');
-                resetBall();
+                if (playerScore >= WIN_SCORE) endGame("JOUEUR");
+                else resetBall();
             }
         }
 
@@ -251,10 +278,16 @@ function initSoloGame() {
         requestAnimationFrame(gameLoop);
     }
 
-    // gestion des événements clavier
+    // gestion clavier
     function handleKeyDown(e: KeyboardEvent) {
-        if (e.key === 'ArrowUp') upKeyPressed = true;
-        if (e.key === 'ArrowDown') downKeyPressed = true;
+        if (e.key === 'ArrowUp') {
+            upKeyPressed = true;
+            if (waitingForServe) serveBall(); // démarre dès qu'on joue
+        }
+        if (e.key === 'ArrowDown') {
+            downKeyPressed = true;
+            if (waitingForServe) serveBall(); // démarre dès qu'on joue
+        }
     }
 
     function handleKeyUp(e: KeyboardEvent) {
@@ -262,13 +295,8 @@ function initSoloGame() {
         if (e.key === 'ArrowDown') downKeyPressed = false;
     }
 
-    // événements
     document.addEventListener('keydown', handleKeyDown);
     document.addEventListener('keyup', handleKeyUp);
-
-    gameContainer.addEventListener('click', () => {
-        if (waitingForServe) serveBall();
-    });
 
     pauseBtn.addEventListener('click', () => {
         gamePaused = !gamePaused;
@@ -281,7 +309,6 @@ function initSoloGame() {
         drawPositions();
     });
 
-    // init
     updateDimensions();
     resetBall();
     playerScoreDisplay.textContent = '00';
