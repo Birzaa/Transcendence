@@ -25,7 +25,10 @@ export default async function (app: FastifyInstance) {
       return reply.send({ success: true });
     } catch (err: any) {
       if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
-        return reply.status(409).send({ error: 'email-used' });
+        if (err.message.includes('users.email'))
+          return reply.status(409).send({ error: 'email already used' });
+        if (err.message.includes('users.name'))
+          return reply.status(409).send({ error: 'name already used' });
       }
       app.log.error(err);
       return reply.status(500).send({ error: 'server-error' });
