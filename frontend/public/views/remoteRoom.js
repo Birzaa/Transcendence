@@ -50,7 +50,7 @@ export function renderRemoteRoom() {
                   Rejoindre
                 </button>
               </div>
-            </div>
+            </div> 
 
             <div id="room-info" class="hidden space-y-4 pt-4 border-t border-purple-200">
               <h3 class="font-bold text-purple-800 flex items-center">

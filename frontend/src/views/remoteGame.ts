@@ -16,7 +16,7 @@ interface WsMsgGameState {
 interface WsMsgPaddleMove {
   type: 'paddle_move';
   roomId: string;
-  player: 'host' | 'guest';
+  player: 'host' | 'guest'; 
   y: number;
 }
 
