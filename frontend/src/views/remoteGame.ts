@@ -20,6 +20,12 @@ interface WsMsgPaddleMove {
   y: number;
 }
 
+interface WsMsgGameEnd {
+  type: 'game_end';
+  roomId: string;
+  winner: string;
+}
+
 const WIN_SCORE = 5;
 
 export function renderRemoteGame(ws: WebSocket, role: Role, roomId: string): void {
@@ -127,6 +133,7 @@ function initRemoteGame(ws: WebSocket, role: Role, roomId: string) {
   let s2 = 0;
   let waitingForServe = true;
   let gamePaused = false;
+  let gameEnded = false;
 
   const keys: Record<string, boolean> = {};
   document.addEventListener('keydown', e => keys[e.key] = true);
@@ -138,7 +145,7 @@ function initRemoteGame(ws: WebSocket, role: Role, roomId: string) {
   // 📡 Réception messages WS
   ws.addEventListener('message', (event) => {
     try {
-      const msg = JSON.parse(event.data) as WsMsgGameState | WsMsgPaddleMove;
+      const msg = JSON.parse(event.data) as WsMsgGameState | WsMsgPaddleMove | WsMsgGameEnd;
       if (msg.type === 'game_state' && role === 'guest') {
         ({ s1, s2, waitingForServe } = msg.state);
         ballX = ballX + (msg.state.ballX - ballX) * 0.4;
@@ -148,6 +155,10 @@ function initRemoteGame(ws: WebSocket, role: Role, roomId: string) {
       }
       if (msg.type === 'paddle_move' && role === 'host' && msg.player === 'guest') {
         p2Y = p2Y + (clampY(msg.y) - p2Y) * 0.7;
+      }
+      // AJOUT: Le guest reçoit la notification de fin de partie
+      if (msg.type === 'game_end') {
+        endGame(msg.winner);
       }
     } catch (e) {
       console.error('Error parsing WS message:', e);
@@ -178,6 +189,7 @@ function initRemoteGame(ws: WebSocket, role: Role, roomId: string) {
 
   function endGame(winner: string) {
     gamePaused = true;
+    gameEnded = true;
   
     const overlay = document.createElement('div');
     overlay.className = "fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center";
@@ -216,8 +228,6 @@ function initRemoteGame(ws: WebSocket, role: Role, roomId: string) {
       navigate('/');
     });
   }   
-  
-
   
   function sendStateFromHost() {
     if (ws.readyState === WebSocket.OPEN && role === 'host') {
@@ -265,16 +275,37 @@ function handleCollisions() {
 
     if (ballX < 0) { 
       s2++; 
-      if (s2 >= WIN_SCORE) endGame("Joueur 2");
+      if (s2 >= WIN_SCORE) {
+        // AJOUT: Le host envoie la notification au guest
+        if (role === 'host' && ws.readyState === WebSocket.OPEN) {
+          const endMsg: WsMsgGameEnd = {
+            type: 'game_end',
+            roomId,
+            winner: "Joueur 2"
+          };
+          ws.send(JSON.stringify(endMsg));
+        }
+        endGame("Joueur 2");
+      }
       else resetBall(); 
     }
     if (ballX > gameWidth) { 
       s1++; 
-      if (s1 >= WIN_SCORE) endGame("Joueur 1");
+      if (s1 >= WIN_SCORE) {
+        // AJOUT: Le host envoie la notification au guest
+        if (role === 'host' && ws.readyState === WebSocket.OPEN) {
+          const endMsg: WsMsgGameEnd = {
+            type: 'game_end',
+            roomId,
+            winner: "Joueur 1"
+          };
+          ws.send(JSON.stringify(endMsg));
+        }
+        endGame("Joueur 1");
+      }
       else resetBall(); 
     }
   }
-
 
   function updatePositions() {
     paddle1.style.top = `${p1Y}px`;
@@ -286,7 +317,7 @@ function handleCollisions() {
   }
 
   function loop() {
-    if (!gamePaused) {
+    if (!gamePaused && !gameEnded) {
       if (role === 'host') {
         if (keys['w']) p1Y = clampY(p1Y - 6);
         if (keys['s']) p1Y = clampY(p1Y + 6);
@@ -311,8 +342,10 @@ function handleCollisions() {
   }
 
   pauseBtn.addEventListener('click', () => {
-    gamePaused = !gamePaused;
-    (pauseBtn as HTMLButtonElement).textContent = gamePaused ? 'Resume' : 'Pause';
+    if (!gameEnded) {
+      gamePaused = !gamePaused;
+      (pauseBtn as HTMLButtonElement).textContent = gamePaused ? 'Resume' : 'Pause';
+    }
   });
 
   window.addEventListener('resize', () => {

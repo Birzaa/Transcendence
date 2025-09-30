@@ -14,42 +14,34 @@ interface GameRoom {
 }
 
 // --- Maps globales ---
-const chatClients = new Map<WebSocket, string>(); // Utilisateurs dans le chat
-const siteClients = new Map<WebSocket, string>(); // Tous les utilisateurs du site
-const blockedMap = new Map<string, Set<string>>(); // username -> Set de blocages
-const gameRooms = new Map<string, GameRoom>(); // id -> room
-const hasWelcomed = new WeakSet<WebSocket>(); // sockets déjà accueillis
-const gameClients = new Map<WebSocket, string>(); // jeu : socket -> username
+const chatClients = new Map<WebSocket, string>();
+const siteClients = new Map<WebSocket, string>();
+const blockedMap = new Map<string, Set<string>>();
+const gameRooms = new Map<string, GameRoom>();
+const hasWelcomed = new WeakSet<WebSocket>();
+const gameClients = new Map<WebSocket, string>();
 
-// --- Diffusion de la liste des utilisateurs connectés au site ---
+// --- Diffusion ---
 function broadcastSiteUsers() {
   const userListMessage = JSON.stringify({
     type: "user_list",
     users: Array.from(siteClients.values()),
   });
-
   for (const client of siteClients.keys()) {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(userListMessage);
-    }
+    if (client.readyState === WebSocket.OPEN) client.send(userListMessage);
   }
 }
 
-// --- Diffusion de la liste des utilisateurs dans le chat ---
 function broadcastChatUsers() {
   const chatUserListMessage = JSON.stringify({
     type: "online_users",
     users: Array.from(chatClients.values()),
   });
-
   for (const client of chatClients.keys()) {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(chatUserListMessage);
-    }
+    if (client.readyState === WebSocket.OPEN) client.send(chatUserListMessage);
   }
 }
 
-// --- Récupérer un socket par username ---
 function getSocketByUsername(username: string): WebSocket | undefined {
   for (const [sock, name] of siteClients.entries()) {
     if (name === username) return sock;
@@ -57,7 +49,6 @@ function getSocketByUsername(username: string): WebSocket | undefined {
   return undefined;
 }
 
-// --- Diffusion d'un message de jeu dans une room ---
 function broadcastGame(roomId: string, data: any) {
   const room = gameRooms.get(roomId);
   if (!room) return;
@@ -68,6 +59,31 @@ function broadcastGame(roomId: string, data: any) {
   });
 }
 
+// --- Gestion départ d'un joueur ---
+function handlePlayerLeaving(roomId: string, leavingUsername: string) {
+  const room = gameRooms.get(roomId);
+  if (!room) return;
+
+  room.players = room.players.filter(p => p.username !== leavingUsername);
+
+  if (room.players.length === 0) {
+    gameRooms.delete(roomId);
+    console.log(`[ws] Salle ${roomId} supprimée`);
+  } else {
+    const remainingPlayer = room.players[0];
+    if (remainingPlayer.socket.readyState === WebSocket.OPEN) {
+      remainingPlayer.socket.send(JSON.stringify({
+        type: "game_end",
+        roomId: room.id,
+        winner: remainingPlayer.username,
+        message: "Votre adversaire a quitté la partie."
+      }));
+    }
+    gameRooms.delete(roomId);
+    console.log(`[ws] Salle ${roomId} supprimée après départ de ${leavingUsername}`);
+  }
+}
+
 export default async function setupWebSocket(fastify: FastifyInstance) {
   const wss = new WebSocketServer({ noServer: true });
 
@@ -75,15 +91,12 @@ export default async function setupWebSocket(fastify: FastifyInstance) {
     const clientIp = request.socket.remoteAddress;
     console.log("[ws] Nouveau client connecté:", clientIp);
 
-    // Message de bienvenue unique
     if (!hasWelcomed.has(socket)) {
-      socket.send(
-        JSON.stringify({
-          type: "message",
-          from: "Server",
-          content: "Bienvenue sur le serveur WebSocket !",
-        })
-      );
+      socket.send(JSON.stringify({
+        type: "message",
+        from: "Server",
+        content: "Bienvenue sur le serveur WebSocket !",
+      }));
       hasWelcomed.add(socket);
     }
 
@@ -96,13 +109,12 @@ export default async function setupWebSocket(fastify: FastifyInstance) {
       try {
         const data = JSON.parse(message.toString());
 
-        // --- Définir le pseudo ---
+        // --- set_username ---
         if (data.type === "set_username") {
           username = data.username;
           isGameClient = !!data.isGame;
           inChat = !!data.inChat;
 
-          // MODIFICATION : Gestion des deux listes
           siteClients.set(socket, username);
           broadcastSiteUsers();
 
@@ -133,15 +145,23 @@ export default async function setupWebSocket(fastify: FastifyInstance) {
           return;
         }
 
-        // --- Déconnexion utilisateur ---
+        // --- user_disconnected ---
         if (data.type === "user_disconnected" && username) {
           console.log(`[ws] ${username} s'est déconnecté`);
           siteClients.delete(socket);
           chatClients.delete(socket);
           broadcastSiteUsers();
           broadcastChatUsers();
+          if (currentRoomId) handlePlayerLeaving(currentRoomId, username);
           return;
-      }
+        }
+
+        // --- leave_game ---
+        if (data.type === "leave_game" && username && currentRoomId) {
+          handlePlayerLeaving(currentRoomId, username);
+          currentRoomId = null;
+          return;
+        }
 
         // --- CHAT ---
         if (data.type === "message" && username && inChat) {
@@ -150,7 +170,6 @@ export default async function setupWebSocket(fastify: FastifyInstance) {
             from: username,
             content: data.content,
           });
-
           for (const [client, recipientUsername] of chatClients.entries()) {
             if (
               client.readyState === WebSocket.OPEN &&
@@ -167,27 +186,20 @@ export default async function setupWebSocket(fastify: FastifyInstance) {
         if (data.type === "private_message" && username && inChat) {
           const recipientName = data.to;
           const recipientSocket = getSocketByUsername(recipientName);
-
-          // Confirmation à l'expéditeur
-          socket.send(
-            JSON.stringify({
+          socket.send(JSON.stringify({
+            type: "private_message",
+            from: username,
+            to: recipientName,
+            content: data.content,
+          }));
+          if (recipientSocket && recipientSocket.readyState === WebSocket.OPEN) {
+            if (blockedMap.get(recipientName)?.has(username)) return;
+            recipientSocket.send(JSON.stringify({
               type: "private_message",
               from: username,
               to: recipientName,
               content: data.content,
-            })
-          );
-
-          if (recipientSocket && recipientSocket.readyState === WebSocket.OPEN) {
-            if (blockedMap.get(recipientName)?.has(username)) return;
-            recipientSocket.send(
-              JSON.stringify({
-                type: "private_message",
-                from: username,
-                to: recipientName,
-                content: data.content,
-              })
-            );
+            }));
           }
           return;
         }
@@ -198,14 +210,13 @@ export default async function setupWebSocket(fastify: FastifyInstance) {
           console.log(`[ws] ${username} a bloqué ${data.target}`);
           return;
         }
-
         if (data.type === "unblock" && username) {
           blockedMap.get(username)?.delete(data.target);
           console.log(`[ws] ${username} a débloqué ${data.target}`);
           return;
         }
 
-        // --- Déconnexion de la page chat (SPA) ---
+        // --- leave_chat ---
         if (data.type === "leave_chat" && username) {
           chatClients.delete(socket);
           inChat = false;
@@ -232,7 +243,6 @@ export default async function setupWebSocket(fastify: FastifyInstance) {
           room.players.push({ socket, username });
           currentRoomId = data.roomId;
 
-          // Notifier invité
           socket.send(JSON.stringify({
             type: "room_joined",
             roomId: data.roomId,
@@ -240,7 +250,6 @@ export default async function setupWebSocket(fastify: FastifyInstance) {
             host: room.host
           }));
 
-          // Notifier hôte
           const hostPlayer = room.players.find(p => p.username === room.host);
           if (hostPlayer && hostPlayer.socket.readyState === WebSocket.OPEN) {
             hostPlayer.socket.send(JSON.stringify({
@@ -281,6 +290,18 @@ export default async function setupWebSocket(fastify: FastifyInstance) {
           return;
         }
 
+        if (data.type === "game_end") {
+          const room = gameRooms.get(data.roomId || currentRoomId);
+          if (room && room.host === username) {
+            broadcastGame(room.id, {
+              type: "game_end",
+              roomId: room.id,
+              winner: data.winner
+            });
+          }
+          return;
+        }
+
       } catch (err) {
         console.error("[ws] Erreur parsing:", err);
       }
@@ -288,49 +309,27 @@ export default async function setupWebSocket(fastify: FastifyInstance) {
 
     socket.on("close", () => {
       console.log(`[ws] Utilisateur ${username} déconnecté (${clientIp})`);
-      
-      // MODIFICATION IMPORTANTE : Toujours diffuser les mises à jour après suppression
       chatClients.delete(socket);
       siteClients.delete(socket);
       gameClients.delete(socket);
-
-      // Diffuser les mises à jour immédiatement
       broadcastSiteUsers();
       broadcastChatUsers();
 
-      if (currentRoomId) {
-        const room = gameRooms.get(currentRoomId);
-        if (room) {
-          room.players = room.players.filter(p => p.socket !== socket);
-          if (room.players.length === 0) {
-            gameRooms.delete(currentRoomId);
-            console.log(`[ws] Salle ${currentRoomId} supprimée`);
-          } else {
-            const remainingPlayer = room.players[0];
-            if (remainingPlayer.socket.readyState === WebSocket.OPEN) {
-              remainingPlayer.socket.send(JSON.stringify({
-                type: "opponent_disconnected",
-                message: "Votre adversaire a quitté la partie."
-              }));
-            }
-          }
-        }
-      }
+      if (currentRoomId) handlePlayerLeaving(currentRoomId, username);
     });
 
     socket.on("error", (err) => {
       console.error("[ws] Erreur WebSocket:", err);
-      
-      // En cas d'erreur, nettoyer aussi
       chatClients.delete(socket);
       siteClients.delete(socket);
       gameClients.delete(socket);
       broadcastSiteUsers();
       broadcastChatUsers();
+
+      if (currentRoomId) handlePlayerLeaving(currentRoomId, username);
     });
   });
 
-  // --- Upgrade HTTP vers WebSocket ---
   fastify.server.on("upgrade", (request, socket, head) => {
     if (request.url === "/ws") {
       wss.handleUpgrade(request, socket, head, (ws) => {

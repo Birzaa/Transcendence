@@ -99,6 +99,7 @@ function initRemoteGame(ws, role, roomId) {
     let s2 = 0;
     let waitingForServe = true;
     let gamePaused = false;
+    let gameEnded = false;
     const keys = {};
     document.addEventListener('keydown', e => keys[e.key] = true);
     document.addEventListener('keyup', e => keys[e.key] = false);
@@ -117,6 +118,10 @@ function initRemoteGame(ws, role, roomId) {
             }
             if (msg.type === 'paddle_move' && role === 'host' && msg.player === 'guest') {
                 p2Y = p2Y + (clampY(msg.y) - p2Y) * 0.7;
+            }
+            // AJOUT: Le guest reçoit la notification de fin de partie
+            if (msg.type === 'game_end') {
+                endGame(msg.winner);
             }
         }
         catch (e) {
@@ -143,6 +148,7 @@ function initRemoteGame(ws, role, roomId) {
     }
     function endGame(winner) {
         gamePaused = true;
+        gameEnded = true;
         const overlay = document.createElement('div');
         overlay.className = "fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center";
         overlay.innerHTML = `
@@ -220,15 +226,35 @@ function initRemoteGame(ws, role, roomId) {
         }
         if (ballX < 0) {
             s2++;
-            if (s2 >= WIN_SCORE)
+            if (s2 >= WIN_SCORE) {
+                // AJOUT: Le host envoie la notification au guest
+                if (role === 'host' && ws.readyState === WebSocket.OPEN) {
+                    const endMsg = {
+                        type: 'game_end',
+                        roomId,
+                        winner: "Joueur 2"
+                    };
+                    ws.send(JSON.stringify(endMsg));
+                }
                 endGame("Joueur 2");
+            }
             else
                 resetBall();
         }
         if (ballX > gameWidth) {
             s1++;
-            if (s1 >= WIN_SCORE)
+            if (s1 >= WIN_SCORE) {
+                // AJOUT: Le host envoie la notification au guest
+                if (role === 'host' && ws.readyState === WebSocket.OPEN) {
+                    const endMsg = {
+                        type: 'game_end',
+                        roomId,
+                        winner: "Joueur 1"
+                    };
+                    ws.send(JSON.stringify(endMsg));
+                }
                 endGame("Joueur 1");
+            }
             else
                 resetBall();
         }
@@ -242,7 +268,7 @@ function initRemoteGame(ws, role, roomId) {
         score2El.textContent = String(s2).padStart(2, '0');
     }
     function loop() {
-        if (!gamePaused) {
+        if (!gamePaused && !gameEnded) {
             if (role === 'host') {
                 if (keys['w'])
                     p1Y = clampY(p1Y - 6);
@@ -270,8 +296,10 @@ function initRemoteGame(ws, role, roomId) {
         requestAnimationFrame(loop);
     }
     pauseBtn.addEventListener('click', () => {
-        gamePaused = !gamePaused;
-        pauseBtn.textContent = gamePaused ? 'Resume' : 'Pause';
+        if (!gameEnded) {
+            gamePaused = !gamePaused;
+            pauseBtn.textContent = gamePaused ? 'Resume' : 'Pause';
+        }
     });
     window.addEventListener('resize', () => {
         gameWidth = gameContainer.clientWidth;
