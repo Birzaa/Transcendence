@@ -1,6 +1,11 @@
 import { navigate } from "../main.js";
 const WIN_SCORE = 5;
 export function renderRemoteGame(ws, role, roomId) {
+    // Nettoyer la room précédente si elle existe
+    const previousCleanup = window.__remoteGameCleanup;
+    if (previousCleanup && typeof previousCleanup === 'function') {
+        previousCleanup();
+    }
     const app = document.getElementById('app');
     if (!app)
         return;
@@ -8,8 +13,8 @@ export function renderRemoteGame(ws, role, roomId) {
     <div class="min-h-screen bg-[url('/images/background.png')] bg-cover bg-fixed pt-[190px] pb-4">
       <div class="flex flex-col items-center mx-auto px-4" style="max-width: 800px;">
         <div class="flex justify-between items-center w-full mb-3 gap-2">
-          <button onclick="window.navigate('/')" 
-              class="flex-1 px-3 py-1 bg-purple-200 border-2 border-t-purple-400 border-l-purple-400 border-r-white border-b-white 
+          <button id="back-btn"
+              class="flex-1 px-3 py-1 bg-purple-200 border-2 border-t-purple-400 border-l-purple-400 border-r-white border-b-white
                      text-purple-800 font-bold text-sm shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
                      active:border-t-white active:border-l-white active:border-r-purple-400 active:border-b-purple-400
                      active:shadow-none active:translate-y-[2px] transition-all duration-100 text-center">
@@ -85,7 +90,6 @@ function initRemoteGame(ws, role, roomId) {
     const score1El = document.getElementById('player1-score');
     const score2El = document.getElementById('player2-score');
     const pauseBtn = document.getElementById('pause-btn');
-    const gameStartTime = Date.now();
     let gameWidth = gameContainer.clientWidth;
     let gameHeight = gameContainer.clientHeight;
     let paddleHeight = paddle1.offsetHeight;
@@ -100,6 +104,8 @@ function initRemoteGame(ws, role, roomId) {
     let s2 = 0;
     let waitingForServe = true;
     let gamePaused = false;
+    let gameEnded = false;
+    let gameStartTime = Date.now();
     const keys = {};
     document.addEventListener('keydown', e => keys[e.key] = true);
     document.addEventListener('keyup', e => keys[e.key] = false);
@@ -114,18 +120,41 @@ function initRemoteGame(ws, role, roomId) {
                 ballX = ballX + (msg.state.ballX - ballX) * 0.4;
                 ballY = ballY + (msg.state.ballY - ballY) * 0.4;
                 p1Y = p1Y + (msg.state.p1Y - p1Y) * 0.6;
+                p2Y = p2Y + (msg.state.p2Y - p2Y) * 0.6;
                 updatePositions();
             }
             if (msg.type === 'paddle_move' && role === 'host' && msg.player === 'guest') {
                 p2Y = p2Y + (clampY(msg.y) - p2Y) * 0.7;
+            }
+            // AJOUT: Le guest reçoit la notification de fin de partie
+            if (msg.type === 'game_end') {
+                endGame(msg.winner);
             }
         }
         catch (e) {
             console.error('Error parsing WS message:', e);
         }
     });
-    ws.addEventListener('error', (e) => console.error('WS error', e));
-    ws.addEventListener('close', (e) => console.warn('WS closed'));
+    ws.addEventListener('error', (e) => {
+        console.error('WS error', e);
+        if (!gameEnded) {
+            endGame('Personne');
+            alert('Connexion perdue avec le serveur.');
+        }
+    });
+    ws.addEventListener('close', (e) => {
+        console.warn('WS closed', e);
+        if (!gameEnded) {
+            endGame('Personne');
+            const overlay = document.querySelector('.fixed.inset-0');
+            if (overlay) {
+                const message = overlay.querySelector('.text-lg');
+                if (message) {
+                    message.textContent = '⚠ La connexion a été interrompue';
+                }
+            }
+        }
+    });
     function clampY(y) {
         return Math.min(Math.max(0, y), gameHeight - paddleHeight);
     }
@@ -148,6 +177,7 @@ function initRemoteGame(ws, role, roomId) {
             const duration = Math.floor((Date.now() - gameStartTime) / 1000); // Durée en secondes
             ws.send(JSON.stringify({ type: 'game_end', roomId, score1: s1, score2: s2, duration }));
         }
+        gameEnded = true;
         const overlay = document.createElement('div');
         overlay.className = "fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center";
         overlay.innerHTML = `
@@ -225,15 +255,35 @@ function initRemoteGame(ws, role, roomId) {
         }
         if (ballX < 0) {
             s2++;
-            if (s2 >= WIN_SCORE)
+            if (s2 >= WIN_SCORE) {
+                // AJOUT: Le host envoie la notification au guest
+                if (role === 'host' && ws.readyState === WebSocket.OPEN) {
+                    const endMsg = {
+                        type: 'game_end',
+                        roomId,
+                        winner: "Joueur 2"
+                    };
+                    ws.send(JSON.stringify(endMsg));
+                }
                 endGame("Joueur 2");
+            }
             else
                 resetBall();
         }
         if (ballX > gameWidth) {
             s1++;
-            if (s1 >= WIN_SCORE)
+            if (s1 >= WIN_SCORE) {
+                // AJOUT: Le host envoie la notification au guest
+                if (role === 'host' && ws.readyState === WebSocket.OPEN) {
+                    const endMsg = {
+                        type: 'game_end',
+                        roomId,
+                        winner: "Joueur 1"
+                    };
+                    ws.send(JSON.stringify(endMsg));
+                }
                 endGame("Joueur 1");
+            }
             else
                 resetBall();
         }
@@ -247,7 +297,7 @@ function initRemoteGame(ws, role, roomId) {
         score2El.textContent = String(s2).padStart(2, '0');
     }
     function loop() {
-        if (!gamePaused) {
+        if (!gamePaused && !gameEnded) {
             if (role === 'host') {
                 if (keys['w'])
                     p1Y = clampY(p1Y - 6);
@@ -275,10 +325,36 @@ function initRemoteGame(ws, role, roomId) {
         requestAnimationFrame(loop);
     }
     pauseBtn.addEventListener('click', () => {
-        gamePaused = !gamePaused;
-        pauseBtn.textContent = gamePaused ? 'Resume' : 'Pause';
+        if (!gameEnded) {
+            gamePaused = !gamePaused;
+            pauseBtn.textContent = gamePaused ? 'Resume' : 'Pause';
+        }
     });
-    window.addEventListener('resize', () => {
+    // Fonction de nettoyage qui sera appelée quand on quitte la page
+    const cleanup = () => {
+        if (!gameEnded && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'leave_game', roomId }));
+            console.log('[remoteGame] leave_game envoyé');
+        }
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+        window.removeEventListener('resize', handleResize);
+    };
+    // Stocker la fonction de nettoyage globalement dans window
+    window.__remoteGameCleanup = cleanup;
+    // Gestion du bouton retour
+    const backBtn = document.getElementById('back-btn');
+    backBtn.addEventListener('click', () => {
+        cleanup();
+        navigate('/');
+    });
+    // Gestion de la fermeture de la page/tab
+    const handleBeforeUnload = () => {
+        if (!gameEnded && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'leave_game', roomId }));
+        }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    const handleResize = () => {
         gameWidth = gameContainer.clientWidth;
         gameHeight = gameContainer.clientHeight;
         paddleHeight = paddle1.offsetHeight;
@@ -286,7 +362,8 @@ function initRemoteGame(ws, role, roomId) {
         if (waitingForServe)
             resetBall();
         updatePositions();
-    });
+    };
+    window.addEventListener('resize', handleResize);
     if (role === 'host')
         serveBall(); // ⚡ partie démarre direct
     updatePositions();
