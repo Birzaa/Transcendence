@@ -1,6 +1,7 @@
 // backend/src/ws.ts
 import { FastifyInstance } from "fastify";
 import { WebSocketServer, WebSocket } from "ws";
+import db from "../database";
 
 interface Player {
   socket: WebSocket;
@@ -20,6 +21,16 @@ const blockedMap = new Map<string, Set<string>>(); // username -> Set de blocage
 const gameRooms = new Map<string, GameRoom>(); // id -> room
 const hasWelcomed = new WeakSet<WebSocket>(); // sockets déjà accueillis
 const gameClients = new Map<WebSocket, string>(); // jeu : socket -> username
+const getUserIdStmt = db.prepare('SELECT id FROM users WHERE name = ?');
+
+function getUserIdByName(username: string): number | null {
+  const result = getUserIdStmt.get(username);
+  // better-sqlite3 retourne l'objet si trouvé, undefined sinon
+  if (result && typeof result === 'object' && 'id' in result) {
+    return (result as { id: number }).id;
+  }
+  return null;
+}
 
 // --- Diffusion de la liste des utilisateurs connectés au site ---
 function broadcastSiteUsers() {
@@ -81,7 +92,7 @@ export default async function setupWebSocket(fastify: FastifyInstance) {
         JSON.stringify({
           type: "message",
           from: "Server",
-          content: "Bienvenue sur le serveur WebSocket !",
+          content: "Bienvenue sur le chat !",
         })
       );
       hasWelcomed.add(socket);
@@ -192,6 +203,156 @@ export default async function setupWebSocket(fastify: FastifyInstance) {
           return;
         }
 
+        // --- Invitation de jeu via chat---
+        if (data.type === "invite_to_game" && username) {
+          const targetName = data.target;
+          const targetSocket = getSocketByUsername(targetName);
+
+          if (!targetSocket || targetSocket.readyState !== WebSocket.OPEN) {
+            socket.send(
+              JSON.stringify({ type: "error", content: `${targetName} est hors ligne ou introuvable.` })
+            );
+            return;
+          }
+
+          if (blockedMap.get(targetName)?.has(username)) {
+            socket.send(
+              JSON.stringify({ type: "error", content: `Votre invitation à ${targetName} a été bloquée.` })
+            );
+            return;
+          }
+          
+          // Envoi de l'invitation à la cible
+          targetSocket.send(
+            JSON.stringify({
+              type: "game_invite",
+              from: username,
+            })
+          );
+          console.log(`[ws] ${username} a invité ${targetName} à jouer.`);
+          return;
+        }
+
+        // --- ACCEPTATION/REFUS D'INVITATION ---
+        if (data.type === "accept_invite" && username) {
+          const inviterName = data.inviter;
+          const inviterSocket = getSocketByUsername(inviterName);
+          const accepted = data.accept;
+
+          if (!inviterSocket || inviterSocket.readyState !== WebSocket.OPEN) {
+            socket.send(
+              JSON.stringify({ type: "error", content: `L'inviteur (${inviterName}) est parti.` })
+            );
+            return;
+          }
+
+          if (accepted) {
+            const roomId = Math.random().toString(36).substr(2, 6).toUpperCase();
+            
+            // 1. Définir les objets Player et CRÉER LA SALLE SUR LE SERVEUR
+            // ÉTAPE CRUCIALE : Enregistrer la salle pour que le routage des messages de jeu fonctionne.
+            const hostPlayer = { socket: inviterSocket, username: inviterName };
+            const guestPlayer = { socket: socket, username: username }; // 'socket' est la socket de l'invité
+
+            gameRooms.set(roomId, {
+                id: roomId,
+                players: [hostPlayer, guestPlayer],
+                host: inviterName,
+            });
+            
+            console.log(`[ws] Salle ${roomId} créée pour ${inviterName} (Host) et ${username} (Guest).`);
+
+            // 2. Informer l'INVITEUR (le HOST)
+            // Il va recevoir 'room_created_for_game', se mettre en mode isGame: true et naviguer.
+            inviterSocket.send(
+              JSON.stringify({ 
+                type: "room_created_for_game", 
+                roomId,
+                opponent: username,
+                role: "host",      // Rôle: HOST (joueur P1)
+                host: inviterName   // Nom de l'hôte
+              })
+            );
+
+            // 3. Informer l'INVITÉ (le GUEST)
+            // Il va recevoir 'room_created_for_game', se mettre en mode isGame: true et naviguer.
+            socket.send(
+              JSON.stringify({ 
+                type: "room_created_for_game", 
+                roomId,
+                opponent: inviterName, // L'opposant est l'inviteur, le host
+                role: "guest",       // Rôle: GUEST (joueur P2)
+                host: inviterName   // Nom de l'hôte
+              })
+            );
+            
+          } else {
+            // Refus. Notifier l'inviteur.
+            inviterSocket.send(
+              JSON.stringify({ 
+                type: "message", 
+                from: "System", 
+                content: `${username} a refusé votre invitation à jouer.`
+              })
+            );
+            console.log(`[ws] ${username} a refusé l'invitation de ${inviterName}.`);
+          }
+          return;
+        }
+
+        // --- Enregistrement des scores de jeu ---
+         // -- Enregistrement des scores de jeu ---
+        if (data.type === "game_end" && username) {
+          const room = gameRooms.get(data.roomId);
+
+          // Seul le HOST peut envoyer game_end
+          if (!room || room.host !== username) {
+            console.warn(`[ws] Tentative d'enregistrement de fin de partie non autorisée par ${username}`);
+            return;
+          }
+
+          const { score1, score2, duration } = data;
+          
+          const guestUsername = room.players.find(p => p.username !== room.host)?.username;
+
+          // Récupérer les IDs des joueurs
+          const hostPlayer = room.players.find(p => p.username === room.host);
+          const guestPlayer = room.players.find(p => p.username !== room.host);
+
+          if (guestUsername) {
+            
+            // 1. RÉCUPÉRATION DES IDs (via la DB)
+            const hostUser = getUserIdByName(username);
+            const guestUser = getUserIdByName(guestUsername);
+
+            if (!hostUser || !guestUser) {
+                 console.error(`[ws] Erreur: impossible de trouver les IDs DB pour ${username} ou ${guestUsername}`);
+                 return;
+            }
+
+            const winnerId = score1 > score2 ? hostUser : guestUser;
+
+            try {
+              const query = db.prepare(`
+                INSERT INTO games (player1_id, player2_id, player1_score, player2_score, winner_id, duration) 
+                VALUES (?, ?, ?, ?, ?, ?)
+                `);
+              
+              // 2. CORRECTION : Passage des arguments positionnels (les IDs et scores)
+              query.run(hostUser, guestUser, score1, score2, winnerId, duration);
+              
+              console.log(`[ws] Partie enregistrée: ${username} vs ${guestUsername}, score ${score1}-${score2}, durée ${duration}s`);
+              
+              // Optionnel : Supprimer la salle après enregistrement
+              gameRooms.delete(data.roomId);
+              console.log(`[ws] Salle ${data.roomId} supprimée après enregistrement de la partie.`);
+
+            } catch (err) {
+              console.error("[ws] Erreur enregistrement partie:", err);
+            }
+          }
+        }
+
         // --- Blocage ---
         if (data.type === "block" && username) {
           blockedMap.get(username)?.add(data.target);
@@ -214,7 +375,7 @@ export default async function setupWebSocket(fastify: FastifyInstance) {
           return;
         }
 
-        // --- GAME ---
+        // --- GAME (Méthode de jointure manuelle, non utilisée pour l'invite) ---
         if (data.type === "create_room") {
           if (!username) return socket.send(JSON.stringify({ type: "error", content: "Pseudo requis" }));
           const roomId = Math.random().toString(36).substr(2, 6).toUpperCase();
@@ -259,23 +420,34 @@ export default async function setupWebSocket(fastify: FastifyInstance) {
           return;
         }
 
+        // --- Gestion des messages de jeu synchronisés ---
+        // Le HOST envoie l'état du jeu (balle + P1) au GUEST
         if (data.type === "game_state") {
           const room = gameRooms.get(data.roomId || currentRoomId);
-          if (room && room.host === username) {
-            const guest = room.players.find(p => p.username !== username);
-            if (guest && guest.socket.readyState === WebSocket.OPEN) {
-              guest.socket.send(JSON.stringify({ type: "game_state", roomId: room.id, state: data.state }));
+          // Seul le HOST est censé envoyer game_state
+          if (room && room.host === username) { 
+            // Diffuser à l'autre joueur (le GUEST)
+            for (const player of room.players) {
+                if (player.socket !== socket && player.socket.readyState === WebSocket.OPEN) {
+                    player.socket.send(JSON.stringify(data));
+                    break;
+                }
             }
           }
           return;
         }
 
+        // Le GUEST envoie la position de sa raquette (P2) au HOST
         if (data.type === "paddle_move") {
           const room = gameRooms.get(data.roomId || currentRoomId);
-          if (room && room.host !== username) {
-            const host = room.players.find(p => p.username === room.host);
-            if (host && host.socket.readyState === WebSocket.OPEN) {
-              host.socket.send(JSON.stringify({ type: "paddle_move", roomId: room.id, player: "guest", y: data.y }));
+          // Seul le GUEST est censé envoyer paddle_move (car il contrôle P2)
+          if (room && room.host !== username) { 
+            // Relayer le mouvement uniquement au HOST
+            for (const player of room.players) {
+                if (player.username === room.host && player.socket.readyState === WebSocket.OPEN) {
+                    player.socket.send(JSON.stringify({ type: "paddle_move", roomId: room.id, player: "guest", y: data.y }));
+                    break;
+                }
             }
           }
           return;

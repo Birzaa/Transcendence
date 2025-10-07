@@ -85,6 +85,7 @@ function initRemoteGame(ws, role, roomId) {
     const score1El = document.getElementById('player1-score');
     const score2El = document.getElementById('player2-score');
     const pauseBtn = document.getElementById('pause-btn');
+    const gameStartTime = Date.now();
     let gameWidth = gameContainer.clientWidth;
     let gameHeight = gameContainer.clientHeight;
     let paddleHeight = paddle1.offsetHeight;
@@ -143,6 +144,10 @@ function initRemoteGame(ws, role, roomId) {
     }
     function endGame(winner) {
         gamePaused = true;
+        if (role === 'host' && ws.readyState === WebSocket.OPEN) {
+            const duration = Math.floor((Date.now() - gameStartTime) / 1000); // Durée en secondes
+            ws.send(JSON.stringify({ type: 'game_end', roomId, score1: s1, score2: s2, duration }));
+        }
         const overlay = document.createElement('div');
         overlay.className = "fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center";
         overlay.innerHTML = `
@@ -156,7 +161,7 @@ function initRemoteGame(ws, role, roomId) {
         <!-- Contenu principal -->
         <div class="p-6 text-center">
           <h2 class="text-lg font-semibold text-purple-700 mb-6">
-          ☆ ${winner} gagne la partie ! ☆
+          ☆ ${winner}endGame gagne la partie ! ☆
           </h2>
   
           <button id="back-to-menu"

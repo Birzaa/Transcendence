@@ -69,12 +69,15 @@ export async function connectWebSocket(username) {
         socket.addEventListener("message", (event) => {
             try {
                 const msg = JSON.parse(event.data);
-                if (msg.type === "status_update" || msg.type === "online_users" || msg.type === "user_list") {
-                    if (msg.users)
-                        onlineUsers = msg.users;
-                    statusListeners.forEach(cb => cb(msg));
-                }
-                else if (msg.type === "message" || msg.type === "private_message") {
+                // NOUVEAU: Inclure les types de messages d'invitation/jeu pour les relayer aux listeners
+                if (msg.type === "status_update" || msg.type === "online_users" || msg.type === "user_list" ||
+                    msg.type === "message" || msg.type === "private_message" ||
+                    msg.type === "game_invite" || msg.type === "room_created_for_game" // <--- NOUVEAUX TYPES AJOUTÉS
+                ) {
+                    if (msg.type === "user_list" || msg.type === "online_users") {
+                        if (msg.users)
+                            onlineUsers = msg.users;
+                    }
                     statusListeners.forEach(cb => cb(msg));
                 }
             }
@@ -178,9 +181,11 @@ function render(pathWithQuery) {
                 render1vs1();
             else if (mode === "remote") {
                 const roomId = params.get("roomId");
+                const role = params.get('role');
+                const host = params.get('host');
                 if (roomId) {
                     if (socket)
-                        renderRemoteGame(socket, "host", roomId);
+                        renderRemoteGame(socket, role, roomId);
                     else
                         renderRemoteRoom();
                 }

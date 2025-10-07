@@ -3,7 +3,6 @@ import { renderProfil } from "../views/profil.js";
 import { subscribeToStatusUpdates, getOnlineUsers, userState, navigate } from "../main.js";
 
 const blockedUsers = new Set<string>(JSON.parse(localStorage.getItem('blockedUsers') || '[]'));
-const hasSeenWelcome = new Set<string>(); // Pour éviter les messages de bienvenue en double
 
 interface Message {
   from: string;
@@ -95,7 +94,6 @@ export async function renderChat(): Promise<void> {
   channels.clear();
   channels.set('global', { id: 'global', title: 'Global', messages: [] });
   currentChannelId = 'global';
-  hasSeenWelcome.clear();
 
   setupEventListeners();
   renderChannelsTabs();
@@ -110,6 +108,10 @@ export async function renderChat(): Promise<void> {
       handleIncomingMessage(msg);
     } else if (msg.type === "private_message") {
       handleIncomingPrivateMessage(msg);
+    } else if (msg.type === "game_invite") {
+      handleGameInvitation(msg);
+    } else if (msg.type === "room_created_for_game") {
+      handleRoomCreatedForGame(msg);
     }
   });
 
@@ -117,10 +119,8 @@ export async function renderChat(): Promise<void> {
 }
 
 function handleIncomingMessage(msg: any) {
-  if (msg.from === 'Server' && msg.content === 'Bienvenue dans le chat !') {
-    const welcomeKey = `${msg.from}-${msg.content}`;
-    if (hasSeenWelcome.has(welcomeKey)) return;
-    hasSeenWelcome.add(welcomeKey);
+  if (msg.from === 'Server' && msg.content === 'Bienvenue sur le serveur WebSocket') {
+    return;
   }
 
   if (msg.from === userState.currentUsername) return;
@@ -231,6 +231,22 @@ function sendMessage() {
   }
 }
 
+function inviteToGame(username: string) {
+  const socket: WebSocket | null = (window as any).debugSocket.getSocket();
+  if (!socket || socket.readyState !== WebSocket.OPEN || !username) {
+    alert('WebSocket non connecté. Impossible d\'inviter.');
+    return;
+  }
+
+  socket.send(JSON.stringify({ type: 'invite_to_game', target: username }));
+  handleIncomingMessage({
+    from: 'System',
+    content: `Invitation envoyée à ${username} !`,
+    type: 'message',
+  });
+  
+}
+
 
 function renderUserList(users: string[], currentUsername: string) {
   const usersContainer = document.getElementById('users')!;
@@ -254,6 +270,11 @@ function renderUserList(users: string[], currentUsername: string) {
     btnDM.className = 'text-purple-800 hover:text-white hover:bg-purple-600 px-2 py-1 rounded border border-purple-400';
     btnDM.onclick = (e) => { e.stopPropagation(); openDM(user); };
 
+    const btnInvite = document.createElement('button');
+    btnInvite.textContent = 'Inviter';
+    btnInvite.className = 'text-purple-800 hover:text-white hover:bg-purple-600 px-2 py-1 rounded border border-purple-700';
+    btnInvite.onclick = (e) => { e.stopPropagation(); inviteToGame(user); };
+
     const btnBlock = document.createElement('button');
     btnBlock.textContent = isBlocked ? 'Débloquer' : 'Bloquer';
     btnBlock.className = isBlocked
@@ -263,6 +284,7 @@ function renderUserList(users: string[], currentUsername: string) {
 
     li.appendChild(userSpan);
     li.appendChild(btnDM);
+    li.appendChild(btnInvite);
     li.appendChild(btnBlock);
     usersContainer.appendChild(li);
   });
@@ -401,3 +423,59 @@ function openDM(username: string) {
     }
   }
 };
+
+
+function handleGameInvitation(msg: any) {
+  const inviter = msg.from;
+  const isBlocking = blockedUsers.has(inviter);
+
+  if (isBlocking) {
+    alert(`Vous avez bloqué ${inviter}. Impossible d'accepter l'invitation.`);
+  }
+
+  const socket: WebSocket | null = (window as any).debugSocket.getSocket();
+  if (!socket || socket.readyState !== WebSocket.OPEN) {
+    alert('WebSocket non connecté. Impossible de répondre à l\'invitation.');
+    return;
+  }
+  const result = confirm(`${inviter} vous invite à une partie Pong ! Accepter ?`);
+
+  if (result)
+  {
+    socket.send(JSON.stringify({
+      type: "accept_invite",
+      inviter: inviter,
+      accept: true
+    }));
+  } else {
+    socket.send(JSON.stringify({
+      type: "accept_invite",
+      inviter: inviter,
+      accept: false
+    }));
+  }
+}
+
+function handleRoomCreatedForGame(msg: any) {
+  const roomId = msg.roomId;
+  const inviter = msg.inviter;
+  const role = msg.role; // Récupère le rôle (host ou guest)
+  const host = msg.host; // Récupère le nom de l'hôte
+
+
+  const socket: WebSocket | null = (window as any).debugSocket.getSocket();
+  if (!socket || socket.readyState !== WebSocket.OPEN) {
+    alert('WebSocket non connecté. Impossible de répondre à l\'invitation.');
+    return;
+  }
+    // Changer l'état de l'utilisateur pour indiquer qu'il est maintenant un client de jeu
+    socket.send(JSON.stringify({
+        type: "set_username",
+        username: userState.currentUsername,
+        isGame: true, // IMPORTANT : Passer isGame à true
+        inChat: false // Quitter le chat (SPA de navigation gère ça aussi mais sécurité)
+    }));
+
+    // Naviguer vers la salle de jeu pour rejoindre la partie
+  navigate(`/game?mode=remote&roomId=${roomId}&role=${role}&host=${host}`); 
+}
