@@ -1,6 +1,7 @@
 // backend/src/ws.ts
 import { FastifyInstance } from "fastify";
 import { WebSocketServer, WebSocket } from "ws";
+import db from "../database";
 
 interface Player {
   socket: WebSocket;
@@ -11,6 +12,7 @@ interface GameRoom {
   id: string;
   players: Player[];
   host: string;
+  startTime?: number;
 }
 
 // --- Maps globales ---
@@ -259,6 +261,7 @@ export default async function setupWebSocket(fastify: FastifyInstance) {
           }
 
           if (room.players.length === 2) {
+            room.startTime = Date.now(); // Enregistrer le début de la partie
             broadcastGame(room.id, {
               type: "game_start",
               host: room.host,
@@ -298,6 +301,47 @@ export default async function setupWebSocket(fastify: FastifyInstance) {
               roomId: room.id,
               winner: data.winner
             });
+
+            // Enregistrer la partie dans la base de données
+            if (data.player1Score != null && data.player2Score != null && data.duration != null) {
+              try {
+                const player1 = room.players[0]?.username;
+                const player2 = room.players[1]?.username;
+
+                if (player1 && player2) {
+                  const p1 = db.prepare('SELECT id FROM users WHERE name = ?').get(player1) as { id?: number } | undefined;
+                  const p2 = db.prepare('SELECT id FROM users WHERE name = ?').get(player2) as { id?: number } | undefined;
+
+                  const player1_id = p1?.id ?? null;
+                  const player2_id = p2?.id ?? null;
+
+                  let winnerId: number | null = null;
+                  if (data.player1Score > data.player2Score) winnerId = player1_id ?? null;
+                  else if (data.player2Score > data.player1Score) winnerId = player2_id ?? null;
+
+                  const stmt = db.prepare(`
+                    INSERT INTO games
+                      (player1_id, player2_id, player1_name, player2_name, player1_score, player2_score, winner_id, duration)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                  `);
+
+                  stmt.run(
+                    player1_id,
+                    player2_id,
+                    player1,
+                    player2,
+                    data.player1Score,
+                    data.player2Score,
+                    winnerId,
+                    data.duration
+                  );
+
+                  console.log(`[ws] Partie enregistrée: ${player1} vs ${player2} (${data.player1Score}-${data.player2Score})`);
+                }
+              } catch (err) {
+                console.error('[ws] Erreur enregistrement partie:', err);
+              }
+            }
           }
           return;
         }
@@ -338,3 +382,4 @@ export default async function setupWebSocket(fastify: FastifyInstance) {
     }
   });
 }
+

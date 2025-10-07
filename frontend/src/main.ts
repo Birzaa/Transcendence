@@ -184,13 +184,38 @@ function render(pathWithQuery: string) {
 
 export function navigate(pathWithQuery: string) {
   const currentPath = window.location.pathname;
+  const currentParams = new URLSearchParams(window.location.search);
+
+  // Si on quitte une page de jeu remote, nettoyer
+  if (currentPath === "/game" && currentParams.get("mode") === "remote") {
+    const cleanup = (window as any).__remoteGameCleanup;
+    if (cleanup && typeof cleanup === 'function') {
+      cleanup();
+      (window as any).__remoteGameCleanup = null;
+    }
+  }
+
   if (currentPath === "/chat") leaveChat();
   window.history.pushState({}, "", pathWithQuery);
   render(pathWithQuery);
   if (pathWithQuery.startsWith("/chat")) joinChat();
 }
 
-window.addEventListener("popstate", () => render(window.location.pathname + window.location.search));
+window.addEventListener("popstate", () => {
+  // Nettoyer le jeu remote si on en quitte un
+  const cleanup = (window as any).__remoteGameCleanup;
+  if (cleanup && typeof cleanup === 'function') {
+    const newUrl = new URL(window.location.href);
+    const isStillInRemoteGame = newUrl.pathname === "/game" && newUrl.searchParams.get("mode") === "remote";
+
+    if (!isStillInRemoteGame) {
+      cleanup();
+      (window as any).__remoteGameCleanup = null;
+    }
+  }
+
+  render(window.location.pathname + window.location.search);
+});
 
 window.addEventListener("userStateChanged", async (e: Event) => {
   const detail = (e as CustomEvent).detail;
