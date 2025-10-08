@@ -11,6 +11,7 @@ import { render1vs1 } from "./views/1vs1.js";
 import { renderRemoteRoom } from "./views/remoteRoom.js";
 import { renderRemoteGame } from "./views/remoteGame.js";
 import { renderTournament } from "./views/tournament.js";
+import { setLanguage, getLanguage, updateUI, initI18n } from "./utils/i18n.js";
 let statusListeners = [];
 let onlineUsers = [];
 export function getOnlineUsers() {
@@ -42,7 +43,7 @@ const MAX_RECONNECT_ATTEMPTS = 5;
 let isUsernameSent = false;
 let hasLoggedConnection = false;
 let isConnecting = false;
-export async function connectWebSocket(username) {
+export async function connectWebSocket(_username) {
     if (isConnecting)
         return;
     if (socket && socket.readyState === WebSocket.OPEN)
@@ -69,11 +70,10 @@ export async function connectWebSocket(username) {
         socket.addEventListener("message", (event) => {
             try {
                 const msg = JSON.parse(event.data);
-                // NOUVEAU: Inclure les types de messages d'invitation/jeu pour les relayer aux listeners
+                // Inclure les types de messages d'invitation/jeu pour les relayer aux listeners
                 if (msg.type === "status_update" || msg.type === "online_users" || msg.type === "user_list" ||
                     msg.type === "message" || msg.type === "private_message" ||
-                    msg.type === "game_invite" || msg.type === "room_created_for_game" // <--- NOUVEAUX TYPES AJOUTÉS
-                ) {
+                    msg.type === "game_invite" || msg.type === "room_created_for_game") {
                     if (msg.type === "user_list" || msg.type === "online_users") {
                         if (msg.users)
                             onlineUsers = msg.users;
@@ -86,7 +86,7 @@ export async function connectWebSocket(username) {
         });
         socket.addEventListener("close", () => {
             isConnecting = false;
-            // MODIFICATION : Mettre à jour la liste des utilisateurs immédiatement
+            // Mettre à jour la liste des utilisateurs immédiatement
             onlineUsers = onlineUsers.filter(user => user !== userState.currentUsername);
             statusListeners.forEach(cb => cb({ type: "user_list", users: onlineUsers }));
             if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS && userState.currentUsername !== "anonymous") {
@@ -141,6 +141,15 @@ async function renderNav() {
         const nav = await navBar();
         document.body.prepend(nav);
     }
+    // Attacher le listener du sélecteur de langue après que le navbar soit dans le DOM
+    const select = document.getElementById("language-select");
+    if (select) {
+        select.value = getLanguage(); // Définit la valeur du select sur la langue courante
+        select.addEventListener("change", async (e) => {
+            const target = e.target;
+            await setLanguage(target.value);
+        });
+    }
 }
 function render(pathWithQuery) {
     const url = new URL(window.location.origin + pathWithQuery);
@@ -173,35 +182,45 @@ function render(pathWithQuery) {
             break;
         case "/game": {
             const mode = params.get("mode");
-            if (!mode)
+            if (!mode) {
                 renderGameMenu();
-            else if (mode === "solo")
+            }
+            else if (mode === "solo") {
                 renderSoloGame();
-            else if (mode === "1v1")
+            }
+            else if (mode === "1v1") {
                 render1vs1();
+            }
             else if (mode === "remote") {
                 const roomId = params.get("roomId");
                 const role = params.get('role');
-                const host = params.get('host');
                 if (roomId) {
-                    if (socket)
+                    if (socket) {
                         renderRemoteGame(socket, role, roomId);
-                    else
+                    }
+                    else {
                         renderRemoteRoom();
+                    }
                 }
-                else
+                else {
                     renderRemoteRoom();
+                }
             }
-            else if (mode === "tournament")
+            else if (mode === "tournament") {
                 renderTournament();
-            else
+            }
+            else {
                 document.getElementById("app").innerHTML =
                     `<h1 class="text-center mt-10">Mode "${mode}" non supporté.</h1>`;
+            }
             break;
         }
-        default: document.getElementById("app").innerHTML =
-            `<h1 class="text-center text-5xl p-10">Page non trouvée</h1>`;
+        default:
+            document.getElementById("app").innerHTML =
+                `<h1 class="text-center text-5xl p-10">Page non trouvée</h1>`;
     }
+    // Mettre à jour les textes avec la langue courante après chaque rendu
+    updateUI();
 }
 export function navigate(pathWithQuery) {
     const currentPath = window.location.pathname;
@@ -242,28 +261,38 @@ window.addEventListener("userStateChanged", async (e) => {
         socket = null;
         isUsernameSent = false;
     }
-    if (detail.username !== "anonymous")
+    if (detail.username !== "anonymous") {
         await connectWebSocket(detail.username);
+    }
 });
 async function initializeApp() {
+    console.log("===== init called =================");
+    // Initialisation i18n
+    await initI18n();
+    // Récupération de l'utilisateur connecté
     try {
         const res = await fetch("/api/me", { credentials: "include" });
         if (res.ok) {
             const user = await res.json();
             userState.currentUsername = user.name || "anonymous";
         }
-        else
+        else {
             userState.currentUsername = "anonymous";
+        }
     }
     catch {
         userState.currentUsername = "anonymous";
     }
+    // Rendu de la navbar
     await renderNav();
+    // Rendu de la page actuelle
     render(window.location.pathname + window.location.search);
-    if (userState.currentUsername !== "anonymous")
+    // Connexion WebSocket si utilisateur connecté
+    if (userState.currentUsername !== "anonymous") {
         await connectWebSocket(userState.currentUsername);
+    }
 }
-// MODIFICATION : Gestion améliorée de la fermeture de l'onglet/navigateur
+// Gestion améliorée de la fermeture de l'onglet/navigateur
 window.addEventListener("beforeunload", () => {
     if (socket) {
         // Envoyer un message de déconnexion avant de fermer
@@ -279,10 +308,12 @@ window.addEventListener("beforeunload", () => {
         socket = null;
     }
 });
+// Initialisation unique
 if (!window._appInitialized) {
     window._appInitialized = true;
     initializeApp();
 }
+// Intercepter les clics sur les liens
 document.addEventListener("click", (e) => {
     const target = e.target;
     if (target.tagName === "A") {
@@ -293,6 +324,7 @@ document.addEventListener("click", (e) => {
         }
     }
 });
+// Debug et exposition globale
 window.debugSocket = {
     getUsername: () => userState.currentUsername,
     getSocketStatus: () => socket?.readyState,

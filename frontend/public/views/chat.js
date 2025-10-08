@@ -1,10 +1,10 @@
-// chat.ts
 import { renderProfil } from "../views/profil.js";
 import { subscribeToStatusUpdates, getOnlineUsers, userState, navigate } from "../main.js";
+import { updateUI } from "../utils/i18n.js";
 const blockedUsers = new Set(JSON.parse(localStorage.getItem('blockedUsers') || '[]'));
 const channels = new Map();
 let currentChannelId = 'global';
-// 🔹 Gestion du désabonnement
+// Gestion du désabonnement
 let chatStatusUnsubscribe = null;
 async function isAuth() {
     try {
@@ -35,13 +35,13 @@ export async function renderChat() {
       <div class="min-h-screen flex items-center justify-center">
         <div class="max-w-6xl w-full bg-pink-50 bg-opacity-90 shadow-lg border-2 border-purple-300">
           <div class="bg-purple-600 text-pink-100 p-3">
-            <h1 class="text-xl font-bold text-center">Chat (=^･ω･^=)</h1>
+            <h1 class="text-xl font-bold text-center" data-i18n="Chattitle">Chat (=^･ω･^=)</h1>
           </div>
 
           <div class="flex h-[70vh]">
             <!-- Liste des utilisateurs -->
             <div class="w-1/4 bg-purple-100 p-4 overflow-y-auto border-r-2 border-purple-300">
-              <h3 class="font-bold mb-2 text-purple-800">Utilisateurs connectés</h3>
+              <h3 class="font-bold mb-2 text-purple-800" data-i18n="Utilisateursconnectes">Utilisateurs connectés</h3>
               <ul id="users" class="space-y-2 text-sm"></ul>
             </div>
 
@@ -53,13 +53,19 @@ export async function renderChat() {
                 <div class="flex">
                   <textarea 
                     id="input" 
+                    data-i18n="Votremessage"
                     placeholder="Votre message..." 
                     class="flex-1 border-2 border-purple-300 px-3 py-2 bg-violet-100 resize-none" 
                     rows="3"
                   ></textarea>
                   <button 
                     id="send" 
-                    class="ml-2 px-6 py-2 bg-purple-200 border-2 border-purple-400 text-purple-800 font-bold rounded"
+                    class="ml-2 px-6 py-2 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400 
+                          text-purple-800 font-bold
+                          shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
+                          active:shadow-none active:translate-y-[2px] active:border-purple-300
+                          transition-all duration-100"
+                    data-i18n="Envoyer"
                   >
                     Envoyer
                   </button>
@@ -78,7 +84,6 @@ export async function renderChat() {
     renderChannelsTabs();
     renderMessages();
     chatStatusUnsubscribe = subscribeToStatusUpdates((msg) => {
-        // console.log('Message reçu dans chat:', msg);
         if (msg.type === "user_list" || msg.type === "online_users") {
             renderUserList(msg.users, userState.currentUsername);
         }
@@ -96,6 +101,7 @@ export async function renderChat() {
         }
     });
     renderUserList(getOnlineUsers(), userState.currentUsername);
+    updateUI(); // Appliquer les traductions
 }
 function handleIncomingMessage(msg) {
     if (msg.from === 'Server' && msg.content === 'Bienvenue sur le serveur WebSocket') {
@@ -172,7 +178,7 @@ function sendMessage() {
         };
         // Ajout du message de l'utilisateur
         addMessageToChannel(localMessage);
-        // Si c'est un DM et que le destinataire est hors ligne, ajouter un petit message "System" juste après
+        // Si c'est un DM et que le destinataire est hors ligne, ajouter un petit message "System"
         if (!isGlobal) {
             const onlineUsers = getOnlineUsers();
             if (!onlineUsers.includes(currentChannelId)) {
@@ -183,7 +189,6 @@ function sendMessage() {
                     to: currentChannelId,
                     timestamp: Date.now()
                 };
-                // On injecte ce message **dans le même canal**, donc pas de nouvel onglet
                 channels.get(currentChannelId)?.messages.push(systemMessage);
             }
         }
@@ -265,7 +270,6 @@ function addMessageToChannel(message) {
     const existingMessage = channels.get(channelId).messages.find(m => m.timestamp === message.timestamp && m.from === message.from && m.content === message.content);
     if (!existingMessage) {
         channels.get(channelId).messages.push(message);
-        // console.log('Message ajouté au canal', channelId, ':', message);
     }
 }
 function renderChannelsTabs() {
@@ -277,6 +281,7 @@ function renderChannelsTabs() {
             (id === currentChannelId ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-800 hover:bg-purple-300');
         const titleSpan = document.createElement('span');
         titleSpan.textContent = channel.title;
+        titleSpan.setAttribute('data-i18n', channel.title);
         tab.appendChild(titleSpan);
         const unreadCount = channel.messages.filter(msg => msg.from !== userState.currentUsername &&
             id !== currentChannelId).length;
@@ -293,6 +298,7 @@ function renderChannelsTabs() {
         };
         tabsContainer.appendChild(tab);
     });
+    updateUI();
 }
 function renderMessages() {
     const messagesContainer = document.getElementById('messages');
@@ -302,6 +308,23 @@ function renderMessages() {
         return;
     channel.messages.forEach(msg => {
         const messageDiv = document.createElement('div');
+        // Message serveur
+        if (msg.from === 'Server' || msg.from === 'Serveur') {
+            messageDiv.className = 'flex justify-center my-2';
+            const serverMsg = document.createElement('div');
+            serverMsg.className = 'bg-baby-pink border-l-4 border-baby-pink-dark text-purple-800 p-3 rounded-none';
+            serverMsg.innerHTML = `
+        <div class="font-bold">
+          <span class="text-purple-300">☆</span> <span data-i18n="Serveur">Serveur</span>
+        </div>
+        <div class="italic" data-i18n="Bienvenuedanslechat">${msg.content}</div>
+      `;
+            messageDiv.appendChild(serverMsg);
+            messagesContainer.appendChild(messageDiv);
+            updateUI();
+            return;
+        }
+        // Message normal
         messageDiv.className = 'flex ' + (msg.from === userState.currentUsername ? 'justify-end' : 'justify-start') + ' my-2';
         const contentDiv = document.createElement('div');
         contentDiv.className = 'max-w-[80%] p-3 rounded-lg ' +
@@ -310,10 +333,15 @@ function renderMessages() {
                 : msg.from === 'System'
                     ? 'bg-gray-200 border-l-4 border-gray-400 text-gray-700 italic'
                     : 'bg-baby-blue border-l-4 border-darkest-blue text-purple-700');
-        let fromText = msg.from === userState.currentUsername ? 'Vous' : msg.from;
         const fromSpan = document.createElement('span');
         fromSpan.className = 'font-bold text-purple-600';
-        fromSpan.textContent = fromText;
+        if (msg.from === userState.currentUsername) {
+            fromSpan.setAttribute('data-i18n', 'Chat_you');
+            fromSpan.textContent = '(Vous)';
+        }
+        else {
+            fromSpan.textContent = msg.from;
+        }
         const textSpan = document.createElement('span');
         textSpan.textContent = ': ' + msg.content;
         contentDiv.appendChild(fromSpan);
@@ -322,6 +350,7 @@ function renderMessages() {
         messagesContainer.appendChild(messageDiv);
     });
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    updateUI();
 }
 function openDM(username) {
     if (blockedUsers.has(username)) {
@@ -364,6 +393,7 @@ function handleGameInvitation(msg) {
     const isBlocking = blockedUsers.has(inviter);
     if (isBlocking) {
         alert(`Vous avez bloqué ${inviter}. Impossible d'accepter l'invitation.`);
+        return;
     }
     const socket = window.debugSocket.getSocket();
     if (!socket || socket.readyState !== WebSocket.OPEN) {
@@ -389,20 +419,20 @@ function handleGameInvitation(msg) {
 function handleRoomCreatedForGame(msg) {
     const roomId = msg.roomId;
     const inviter = msg.inviter;
-    const role = msg.role; // Récupère le rôle (host ou guest)
-    const host = msg.host; // Récupère le nom de l'hôte
+    const role = msg.role;
+    const host = msg.host;
     const socket = window.debugSocket.getSocket();
     if (!socket || socket.readyState !== WebSocket.OPEN) {
-        alert('WebSocket non connecté. Impossible de répondre à l\'invitation.');
+        alert('WebSocket non connecté. Impossible de rejoindre la partie.');
         return;
     }
     // Changer l'état de l'utilisateur pour indiquer qu'il est maintenant un client de jeu
     socket.send(JSON.stringify({
         type: "set_username",
         username: userState.currentUsername,
-        isGame: true, // IMPORTANT : Passer isGame à true
-        inChat: false // Quitter le chat (SPA de navigation gère ça aussi mais sécurité)
+        isGame: true,
+        inChat: false
     }));
-    // Naviguer vers la salle de jeu pour rejoindre la partie
+    // Naviguer vers la salle de jeu
     navigate(`/game?mode=remote&roomId=${roomId}&role=${role}&host=${host}`);
 }

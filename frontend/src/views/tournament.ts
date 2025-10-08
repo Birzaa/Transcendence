@@ -21,25 +21,26 @@ export function renderTournament(): void {
       <div class="min-h-screen flex items-center justify-center">
         <div class="max-w-md w-full bg-pink-50 bg-opacity-90 shadow-lg border-2 border-purple-300">
           <div class="bg-purple-600 text-pink-100 p-3">
-            <h1 class="text-xl font-bold text-center">Tournoi Pong</h1>
+            <h1 class="text-xl font-bold text-center" data-i18n="Tournament_Title">Tournoi Pong</h1>
           </div>
           <div class="p-6">
             <form id="tournament-form" class="space-y-4">
               ${[1, 2, 3, 4].map(i => `
                 <div class="flex items-center">
-                  <label for="player${i}" class="whitespace-nowrap font-semibold mr-2 text-purple-600 w-32">Joueur ${i}</label>
+                  <label for="player${i}" class="whitespace-nowrap font-semibold mr-2 text-purple-600 w-32" data-i18n="Tournament_Player">Joueur ${i}</label>
                   <span class="text-purple-300 mx-1 text-lg">☆</span>
-                  <input type="text" id="player${i}" name="player" placeholder="Alias${i > 2 ? ' (optionnel)' : ''}" ${i <= 2 ? 'required' : ''} 
+                  <input type="text" id="player${i}" name="player" placeholder="Alias${i > 2 ? ' (optionnel)' : ''}" ${i <= 2 ? 'required' : ''}
                         class="flex-1 border-3 border-purple-300 px-3 py-2 rounded-none bg-white focus:border-purple-400" />
                 </div>
               `).join("")}
               <div class="pt-4 flex justify-center">
-                <button type="submit" 
-                        class="relative px-8 py-2 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400 
+                <button type="submit"
+                        class="relative px-8 py-2 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400
                               text-purple-800 font-bold
                               shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
                               active:shadow-none active:translate-y-[2px] active:border-purple-300
-                              transition-all duration-100">
+                              transition-all duration-100"
+                        data-i18n="Tournament_Start">
                   Démarrer le tournoi
                 </button>
               </div>
@@ -63,7 +64,7 @@ export function renderTournament(): void {
 
     if (players.length < 2) {
       if (preview) {
-        preview.innerHTML = `<p class="text-red-400">Il faut au moins 2 joueurs pour commencer un tournoi.</p>`;
+        preview.innerHTML = `<p class="text-red-400" data-i18n="Tournament_MinPlayers">Il faut au moins 2 joueurs pour commencer un tournoi.</p>`;
       }
       return;
     }

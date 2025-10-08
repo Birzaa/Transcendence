@@ -1,6 +1,12 @@
 import { navigate, userState, connectWebSocket } from "../main.js";
+import { t, setLanguage, getLanguage, updateUI, initI18n } from "../utils/i18n.js";
 
 let currentNav: HTMLElement | null = null;
+
+// Initialisation de i18n
+(async () => {
+  await initI18n();
+})();
 
 /**
  * Crée la barre de navigation selon l'état de connexion (userState.currentUsername)
@@ -18,65 +24,66 @@ export async function navBar(): Promise<HTMLElement> {
           </a>
       </div>
 
-            <!-- Animation Ping-Pong Pixel -->
-            <div class="flex-1 mx-10 relative h-12 overflow-hidden">
-                <!-- Ligne centrale -->
-                <div class="absolute inset-0 flex items-center justify-center">
-                    <div class="h-full w-1 bg-purple-300/50"></div>
-                </div>
-                
-                <!-- Raquette GAUCHE pixelisée (forme reconnaissable) -->
-                <div class="absolute left-0 top-1/2 transform -translate-y-1/2 ping-pong-paddle-left">
-                    <div class="relative" style="width: 16px; height: 32px;">
-                        <div class="absolute" style="
-                            width: 4px; height: 32px;
-                            background: #FF9FF3;
-                            left: 0;
-                            box-shadow: 
-                                4px 0 0 #FF9FF3,
-                                8px 0 0 #FF9FF3,
-                                12px 0 0 #FF9FF3;
-                        "></div>
-                        <div class="absolute" style="
-                            width: 16px; height: 8px;
-                            background: #FECA57;
-                            top: 12px;
-                            box-shadow: 0 8px 0 #FECA57;
-                        "></div>
-                    </div>
-                </div>
-                
-                <!-- Raquette DROITE pixelisée -->
-                <div class="absolute right-0 top-1/2 transform -translate-y-1/2 ping-pong-paddle-right">
-                    <div class="relative" style="width: 16px; height: 32px;">
-                        <div class="absolute" style="
-                            width: 4px; height: 32px;
-                            background: #54A0FF;
-                            right: 0;
-                            box-shadow: 
-                                -4px 0 0 #54A0FF,
-                                -8px 0 0 #54A0FF,
-                                -12px 0 0 #54A0FF;
-                        "></div>
-                        <div class="absolute" style="
-                            width: 16px; height: 8px;
-                            background: #00D2D3;
-                            top: 12px;
-                            box-shadow: 0 8px 0 #00D2D3;
-                        "></div>
-                    </div>
-                </div>
-                
-                <!-- Balle pixelisée -->
-                <img src="/images/blue.png"
-                     alt="Ball"
-                     class="absolute top-1/2 left-1/2 ping-pong-ball"
-                     style="width: 20px; height: 20px;">
-            </div>
+      <!-- Animation Ping-Pong Pixel -->
+      <div class="flex-1 mx-10 relative h-12 overflow-hidden">
+          <!-- Ligne centrale -->
+          <div class="absolute inset-0 flex items-center justify-center">
+              <div class="h-full w-1 bg-purple-300/50"></div>
+          </div>
+          
+          <!-- Raquette GAUCHE pixelisée (forme reconnaissable) -->
+          <div class="absolute left-0 top-1/2 transform -translate-y-1/2 ping-pong-paddle-left">
+              <div class="relative" style="width: 16px; height: 32px;">
+                  <div class="absolute" style="
+                      width: 4px; height: 32px;
+                      background: #FF9FF3;
+                      left: 0;
+                      box-shadow: 
+                          4px 0 0 #FF9FF3,
+                          8px 0 0 #FF9FF3,
+                          12px 0 0 #FF9FF3;
+                  "></div>
+                  <div class="absolute" style="
+                      width: 16px; height: 8px;
+                      background: #FECA57;
+                      top: 12px;
+                      box-shadow: 0 8px 0 #FECA57;
+                  "></div>
+              </div>
+          </div>
+          
+          <!-- Raquette DROITE pixelisée -->
+          <div class="absolute right-0 top-1/2 transform -translate-y-1/2 ping-pong-paddle-right">
+              <div class="relative" style="width: 16px; height: 32px;">
+                  <div class="absolute" style="
+                      width: 4px; height: 32px;
+                      background: #54A0FF;
+                      right: 0;
+                      box-shadow: 
+                          -4px 0 0 #54A0FF,
+                          -8px 0 0 #54A0FF,
+                          -12px 0 0 #54A0FF;
+                  "></div>
+                  <div class="absolute" style="
+                      width: 16px; height: 8px;
+                      background: #00D2D3;
+                      top: 12px;
+                      box-shadow: 0 8px 0 #00D2D3;
+                  "></div>
+              </div>
+          </div>
+          
+          <!-- Balle pixelisée -->
+          <img src="/images/blue.png"
+               alt="Ball"
+               class="absolute top-1/2 left-1/2 ping-pong-ball"
+               style="width: 20px; height: 20px;">
+      </div>
 
-      <!-- Boutons -->
-      <div class="flex space-x-6 mr-6">
+      <!-- Boutons + Sélecteur de langue -->
+      <div class="flex items-center space-x-6 mr-6">
           <a href="/" 
+             data-i18n="Home"
              class="relative px-4 py-2 bg-pink-200 border-2 border-t-white border-l-white border-r-pink-400 border-b-pink-400 
                    text-blue-300 font-bold
                    shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
@@ -85,6 +92,7 @@ export async function navBar(): Promise<HTMLElement> {
               Home
           </a>
           <a href="/chat" 
+             data-i18n="Chat"
              class="relative px-4 py-2 bg-pink-200 border-2 border-t-white border-l-white border-r-pink-400 border-b-pink-400 
                    text-blue-300 font-bold
                    shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
@@ -93,6 +101,7 @@ export async function navBar(): Promise<HTMLElement> {
               Chat
           </a>
           <a href="/profil" 
+             data-i18n="Profile"
              class="relative px-4 py-2 bg-pink-200 border-2 border-t-white border-l-white border-r-pink-400 border-b-pink-400 
                    text-blue-300 font-bold
                    shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
@@ -102,6 +111,7 @@ export async function navBar(): Promise<HTMLElement> {
           </a>
           ${isLogin 
             ? `<a href="/logout" id="logout-btn" 
+                 data-i18n="Logout"
                  class="relative px-4 py-2 bg-pink-200 border-2 border-t-white border-l-white border-r-pink-400 border-b-pink-400 
                        text-blue-300 font-bold
                        shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
@@ -110,6 +120,7 @@ export async function navBar(): Promise<HTMLElement> {
                     Logout
                  </a>`
             : `<a href="/auth" 
+                 data-i18n="Login"
                  class="relative px-4 py-2 bg-pink-200 border-2 border-t-white border-l-white border-r-pink-400 border-b-pink-400 
                        text-blue-300 font-bold
                        shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
@@ -117,6 +128,24 @@ export async function navBar(): Promise<HTMLElement> {
                        transition-all duration-100">
                     Login
                  </a>`}
+
+          <!-- Sélecteur de langue -->
+          <div class="relative">
+              <select id="language-select" 
+                      class="relative px-4 py-2 bg-pink-200 border-2 border-t-white border-l-white 
+                             border-r-pink-400 border-b-pink-400 text-blue-300 font-bold
+                             shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
+                             active:shadow-none active:translate-y-[2px] active:border-pink-300
+                             transition-all duration-100 appearance-none pr-8">
+                  <option value="fr" selected>🇫🇷 Français</option>
+                  <option value="en">🇬🇧 English</option>
+                  <option value="es">🇪🇸 Español</option>
+              </select>
+              <!-- Little dropdown arrow -->
+              <span class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-blue-300">
+                  ▼
+              </span>
+          </div>
       </div>
 
       <style>
@@ -150,6 +179,7 @@ export async function navBar(): Promise<HTMLElement> {
     </nav>
   `;
 
+  // Gestion du bouton logout
   if (isLogin) {
     const logoutBtn = nav.querySelector('#logout-btn');
     if (logoutBtn) {

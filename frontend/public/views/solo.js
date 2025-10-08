@@ -1,4 +1,5 @@
 import { navigate } from "../main.js";
+import { t, updateUI } from "../utils/i18n.js";
 export function renderSoloGame() {
     document.getElementById('game-menu-container')?.remove();
     const app = document.getElementById('app');
@@ -18,6 +19,7 @@ export function renderSoloGame() {
             <!-- Barre de contrôle -->
             <div class="flex justify-between items-center w-full mb-3 gap-2">
                 <button onclick="window.navigate('/')" 
+                    data-i18n="Solo_Back"
                     class="flex-1 px-3 py-1 bg-purple-200 border-2 border-t-purple-400 border-l-purple-400 border-r-white border-b-white 
                         text-purple-800 font-bold text-sm shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
                         active:border-t-white active:border-l-white active:border-r-purple-400 active:border-b-purple-400
@@ -28,17 +30,18 @@ export function renderSoloGame() {
                 <!-- Scores -->
                 <div class="flex-1 flex justify-center items-center gap-4 pixel-font" style="font-size: 1.25rem;">
                     <div class="text-center">
-                        <div class="text-purple-300 text-xs">JOUEUR</div>
+                        <div class="text-purple-300 text-xs" data-i18n="Solo_Player">JOUEUR</div>
                         <span id="player-score" class="text-yellow-300">00</span>
                     </div>
                     <span class="text-white">:</span>
                     <div class="text-center">
-                        <div class="text-pink-300 text-xs">BOT</div>
+                        <div class="text-pink-300 text-xs" data-i18n="Solo_Bot">BOT</div>
                         <span id="ai-score" class="text-yellow-300">00</span>
                     </div>
                 </div>
 
                 <button id="pause-btn" 
+                    data-i18n="Solo_Pause"
                     class="flex-1 px-3 py-1 bg-purple-200 border-2 border-t-purple-400 border-l-purple-400 border-r-white border-b-white 
                         text-purple-800 font-bold text-sm shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
                         active:border-t-white active:border-l-white active:border-r-purple-400 active:border-b-purple-400
@@ -76,7 +79,7 @@ export function renderSoloGame() {
             </div>
 
             <!-- Instructions clavier -->
-            <div class="mt-4 text-center text-white text-sm pixel-font">
+            <div class="mt-4 text-center text-white text-sm pixel-font" data-i18n="Solo_Instructions">
                 Flèches ↑ et ↓ pour déplacer votre raquette
             </div>
         </div>
@@ -94,6 +97,8 @@ export function renderSoloGame() {
         .animate-float { animation: float 2s ease-in-out infinite; }
     `;
     document.head.appendChild(style);
+    // Appliquer les traductions
+    updateUI();
     initSoloGame();
 }
 function initSoloGame() {
@@ -134,8 +139,8 @@ function initSoloGame() {
     function updateDimensions() {
         gameWidth = gameContainer.clientWidth;
         gameHeight = gameContainer.clientHeight;
-        paddleHeight = paddle.offsetHeight || 80;
-        ballSize = ball.offsetWidth || 5;
+        paddleHeight = paddle.offsetHeight || 96;
+        ballSize = ball.offsetWidth || 30;
         paddleSpeed = Math.max(6, gameHeight * 0.02);
     }
     function resetBall() {
@@ -171,15 +176,16 @@ function initSoloGame() {
       
             <!-- Barre violette -->
             <div class="bg-purple-600 text-pink-100 p-3">
-              <h1 class="text-xl font-bold">Résultat de la partie</h1>
+              <h1 class="text-xl font-bold" data-i18n="Solo_GameResult">Résultat de la partie</h1>
             </div>
       
             <!-- Contenu -->
             <div class="p-6">
               <h2 class="pixel-font text-lg text-purple-700 mb-6">
-                ☆ ${winner} gagne la partie ! ☆
+                ☆ <span data-i18n="Solo_Winner">${winner}</span> <span data-i18n="Solo_Wins">gagne la partie !</span> ☆
               </h2>
               <button id="back-menu"
+                data-i18n="Solo_BackToMenu"
                 class="px-6 py-2 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400 
                        text-purple-800 font-bold shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
                        active:shadow-none active:translate-y-[2px] active:border-purple-300 transition-all duration-100">
@@ -189,6 +195,7 @@ function initSoloGame() {
           </div>
         `;
         gameContainer.appendChild(overlay);
+        updateUI(); // Appliquer les traductions sur le modal
         document.getElementById("back-menu")?.addEventListener("click", () => {
             navigate("/");
         });
@@ -246,7 +253,7 @@ function initSoloGame() {
                 aiScore++;
                 aiScoreDisplay.textContent = String(aiScore).padStart(2, '0');
                 if (aiScore >= WIN_SCORE)
-                    endGame("BOT");
+                    endGame(t("Solo_Bot"));
                 else
                     resetBall();
             }
@@ -254,7 +261,7 @@ function initSoloGame() {
                 playerScore++;
                 playerScoreDisplay.textContent = String(playerScore).padStart(2, '0');
                 if (playerScore >= WIN_SCORE)
-                    endGame("JOUEUR");
+                    endGame(t("Solo_Player"));
                 else
                     resetBall();
             }
@@ -267,12 +274,12 @@ function initSoloGame() {
         if (e.key === 'ArrowUp') {
             upKeyPressed = true;
             if (waitingForServe)
-                serveBall(); // démarre dès qu'on joue
+                serveBall();
         }
         if (e.key === 'ArrowDown') {
             downKeyPressed = true;
             if (waitingForServe)
-                serveBall(); // démarre dès qu'on joue
+                serveBall();
         }
     }
     function handleKeyUp(e) {
@@ -285,7 +292,8 @@ function initSoloGame() {
     document.addEventListener('keyup', handleKeyUp);
     pauseBtn.addEventListener('click', () => {
         gamePaused = !gamePaused;
-        pauseBtn.textContent = gamePaused ? 'Resume' : 'Pause';
+        pauseBtn.textContent = gamePaused ? t("Solo_Resume") : t("Solo_Pause");
+        pauseBtn.setAttribute("data-i18n", gamePaused ? "Solo_Resume" : "Solo_Pause");
     });
     window.addEventListener('resize', () => {
         updateDimensions();

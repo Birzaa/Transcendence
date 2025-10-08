@@ -11,6 +11,7 @@ import { render1vs1 } from "./views/1vs1.js";
 import { renderRemoteRoom } from "./views/remoteRoom.js";
 import { renderRemoteGame } from "./views/remoteGame.js";
 import { renderTournament } from "./views/tournament.js";
+import { setLanguage, getLanguage, updateUI, initI18n } from "./utils/i18n.js";
 
 type WSMessage = { type: string; [key: string]: any };
 
@@ -47,7 +48,7 @@ let isUsernameSent = false;
 let hasLoggedConnection = false;
 let isConnecting = false;
 
-export async function connectWebSocket(username: string) {
+export async function connectWebSocket(_username: string) {
   if (isConnecting) return;
   if (socket && socket.readyState === WebSocket.OPEN) return;
 
@@ -78,11 +79,11 @@ export async function connectWebSocket(username: string) {
       try {
         const msg: WSMessage = JSON.parse(event.data);
 
-        // NOUVEAU: Inclure les types de messages d'invitation/jeu pour les relayer aux listeners
+        // Inclure les types de messages d'invitation/jeu pour les relayer aux listeners
         if (
             msg.type === "status_update" || msg.type === "online_users" || msg.type === "user_list" ||
             msg.type === "message" || msg.type === "private_message" ||
-            msg.type === "game_invite" || msg.type === "room_created_for_game" // <--- NOUVEAUX TYPES AJOUTÉS
+            msg.type === "game_invite" || msg.type === "room_created_for_game"
         ) {
           if (msg.type === "user_list" || msg.type === "online_users") {
              if (msg.users) onlineUsers = msg.users;
@@ -95,7 +96,7 @@ export async function connectWebSocket(username: string) {
 
     socket.addEventListener("close", () => {
       isConnecting = false;
-      // MODIFICATION : Mettre à jour la liste des utilisateurs immédiatement
+      // Mettre à jour la liste des utilisateurs immédiatement
       onlineUsers = onlineUsers.filter(user => user !== userState.currentUsername);
       statusListeners.forEach(cb => cb({ type: "user_list", users: onlineUsers }));
       
@@ -146,7 +147,23 @@ export function leaveChat() {
 async function renderNav() {
   const existingNav = document.querySelector("nav");
   if (existingNav) existingNav.remove();
-  if (setupNavBar) { await setupNavBar(); } else { const nav = await navBar(); document.body.prepend(nav); }
+  
+  if (setupNavBar) { 
+    await setupNavBar(); 
+  } else { 
+    const nav = await navBar(); 
+    document.body.prepend(nav); 
+  }
+  
+  // Attacher le listener du sélecteur de langue après que le navbar soit dans le DOM
+  const select = document.getElementById("language-select") as HTMLSelectElement;
+  if (select) {
+    select.value = getLanguage(); // Définit la valeur du select sur la langue courante
+    select.addEventListener("change", async (e) => {
+      const target = e.target as HTMLSelectElement;
+      await setLanguage(target.value);
+    });
+  }
 }
 
 function render(pathWithQuery: string) {
@@ -155,39 +172,65 @@ function render(pathWithQuery: string) {
   const params = url.searchParams;
 
   switch (basePath) {
-    case "/": renderHome(); break;
-    case "/chat": renderChat(); break;
-    case "/auth": renderAuth(); break;
-    case "/settings": renderSettings(); break;
-    case "/performances": renderPerformances(); break;
+    case "/": 
+      renderHome(); 
+      break;
+    case "/chat": 
+      renderChat(); 
+      break;
+    case "/auth": 
+      renderAuth(); 
+      break;
+    case "/settings": 
+      renderSettings(); 
+      break;
+    case "/performances": 
+      renderPerformances(); 
+      break;
     case "/profil": {
       const player = params.get("player");
       renderProfil(player ?? undefined);
       initProfilSubscriptions();
       break;
     }
-    case "/tournament": renderTournament(); break;
+    case "/tournament": 
+      renderTournament(); 
+      break;
     case "/game": {
       const mode = params.get("mode");
-      if (!mode) renderGameMenu();
-      else if (mode === "solo") renderSoloGame();
-      else if (mode === "1v1") render1vs1();
-      else if (mode === "remote") {
+      if (!mode) {
+        renderGameMenu();
+      } else if (mode === "solo") {
+        renderSoloGame();
+      } else if (mode === "1v1") {
+        render1vs1();
+      } else if (mode === "remote") {
         const roomId = params.get("roomId");
         const role = params.get('role') as 'host' | 'guest';
-        const host = params.get('host');
         if (roomId) {
-          if (socket) renderRemoteGame(socket, role, roomId);
-          else renderRemoteRoom();
-        } else renderRemoteRoom();
-      } else if (mode === "tournament") renderTournament();
-      else document.getElementById("app")!.innerHTML =
-        `<h1 class="text-center mt-10">Mode "${mode}" non supporté.</h1>`;
+          if (socket) {
+            renderRemoteGame(socket, role, roomId);
+          } else {
+            renderRemoteRoom();
+          }
+        } else {
+          renderRemoteRoom();
+        }
+      } else if (mode === "tournament") {
+        renderTournament();
+      } else {
+        document.getElementById("app")!.innerHTML =
+          `<h1 class="text-center mt-10">Mode "${mode}" non supporté.</h1>`;
+      }
       break;
     }
-    default: document.getElementById("app")!.innerHTML =
-      `<h1 class="text-center text-5xl p-10">Page non trouvée</h1>`;
+    default: 
+      document.getElementById("app")!.innerHTML =
+        `<h1 class="text-center text-5xl p-10">Page non trouvée</h1>`;
   }
+  
+  // Mettre à jour les textes avec la langue courante après chaque rendu
+  updateUI();
 }
 
 export function navigate(pathWithQuery: string) {
@@ -228,27 +271,48 @@ window.addEventListener("popstate", () => {
 window.addEventListener("userStateChanged", async (e: Event) => {
   const detail = (e as CustomEvent).detail;
   await renderNav();
-  if (socket) { socket.close(); socket = null; isUsernameSent = false; }
-  if (detail.username !== "anonymous") await connectWebSocket(detail.username);
+  if (socket) { 
+    socket.close(); 
+    socket = null; 
+    isUsernameSent = false; 
+  }
+  if (detail.username !== "anonymous") {
+    await connectWebSocket(detail.username);
+  }
 });
 
 async function initializeApp() {
+  console.log("===== init called =================");
+  
+  // Initialisation i18n
+  await initI18n();
+  
+  // Récupération de l'utilisateur connecté
   try {
     const res = await fetch("/api/me", { credentials: "include" });
     if (res.ok) { 
       const user = await res.json(); 
       userState.currentUsername = user.name || "anonymous"; 
-    }
-    else 
+    } else {
       userState.currentUsername = "anonymous";
-  } catch { userState.currentUsername = "anonymous"; }
+    }
+  } catch { 
+    userState.currentUsername = "anonymous"; 
+  }
 
+  // Rendu de la navbar
   await renderNav();
+  
+  // Rendu de la page actuelle
   render(window.location.pathname + window.location.search);
-  if (userState.currentUsername !== "anonymous") await connectWebSocket(userState.currentUsername);
+  
+  // Connexion WebSocket si utilisateur connecté
+  if (userState.currentUsername !== "anonymous") {
+    await connectWebSocket(userState.currentUsername);
+  }
 }
 
-// MODIFICATION : Gestion améliorée de la fermeture de l'onglet/navigateur
+// Gestion améliorée de la fermeture de l'onglet/navigateur
 window.addEventListener("beforeunload", () => { 
   if (socket) { 
     // Envoyer un message de déconnexion avant de fermer
@@ -264,16 +328,25 @@ window.addEventListener("beforeunload", () => {
   } 
 });
 
-if (!window._appInitialized) { window._appInitialized = true; initializeApp(); }
+// Initialisation unique
+if (!window._appInitialized) { 
+  window._appInitialized = true; 
+  initializeApp(); 
+}
 
+// Intercepter les clics sur les liens
 document.addEventListener("click", (e) => {
   const target = e.target as HTMLElement;
   if (target.tagName === "A") {
     const href = (target as HTMLAnchorElement).getAttribute("href");
-    if (href?.startsWith("/")) { e.preventDefault(); navigate(href); }
+    if (href?.startsWith("/")) { 
+      e.preventDefault(); 
+      navigate(href); 
+    }
   }
 });
 
+// Debug et exposition globale
 (window as any).debugSocket = {
   getUsername: () => userState.currentUsername,
   getSocketStatus: () => socket?.readyState,
@@ -282,4 +355,8 @@ document.addEventListener("click", (e) => {
 };
 (window as any).navigate = navigate;
 
-declare global { interface Window { _appInitialized?: boolean; } }
+declare global { 
+  interface Window { 
+    _appInitialized?: boolean; 
+  } 
+}

@@ -1,5 +1,6 @@
 import { fetchData } from "../tools/fetchData.js";
 import { getOnlineUsers, subscribeToStatusUpdates, navigate } from "../main.js";
+import { updateUI } from "../utils/i18n.js";
 let statusUpdateUnsubscribe = null;
 let onlineUsers = [];
 // Fonction utilitaire pour attacher les événements de manière sécurisée
@@ -8,8 +9,9 @@ function safeAttachEvent(elementId, eventHandler) {
     if (element) {
         element.onclick = eventHandler;
     }
-    else
+    else {
         return;
+    }
 }
 // Fonction de setup des événements avec limite de tentatives
 function setupProfilEventListeners() {
@@ -27,7 +29,7 @@ function setupProfilEventListeners() {
     else {
         return;
     }
-    // Attachement sécurisé des boutons avec limite de tentatives
+    // Attachement sécurisé des boutons
     safeAttachEvent("btn-settings", () => navigate("/settings"));
     safeAttachEvent("btn-performance", () => navigate("/performances"));
     safeAttachEvent("btn-deleteUser", async () => {
@@ -41,7 +43,7 @@ function setupProfilEventListeners() {
     });
 }
 /**
- * Met à jour l’affichage des pastilles d’amis
+ * Met à jour l'affichage des pastilles d'amis
  */
 function updateFriendStatusIndicators() {
     const usersOnline = getOnlineUsers(); // Tous les connectés
@@ -123,35 +125,42 @@ export async function renderProfil(playerName) {
     }
     const app = document.getElementById("app");
     const title = invalidUser
-        ? `${playerName} not found`
+        ? `<span data-i18n="Profil_NotFound">${playerName} not found</span>`
         : playerName
-            ? `${playerName}'s game history`
-            : `My game history`;
+            ? `<span data-i18n="Profil_PlayerHistory">${playerName}'s game history</span>`
+            : `<span data-i18n="Profil_MyHistory">My game history</span>`;
     app.innerHTML = `
     <div class="min-h-screen mt-[128px] bg-[url('/images/background.png')] bg-cover bg-center bg-no-repeat bg-fixed flex">
       <div class="w-1/6 h-screen fixed left-0 top-0 pt-[140px] px-4 bg-pink-50 bg-opacity-95 border-r-4 border-purple-300 shadow-xl flex flex-col justify-between">
         <div>
-          <label for="playerName" class="mt-[75px] block text-purple-700 mb-2 text-lg font-semibold">🔍 Find a player</label>
+          <label for="playerName" class="mt-[75px] block text-purple-700 mb-2 text-lg font-semibold">
+            <span class="text-purple-300 mr-2">✧</span>
+            <span data-i18n="Profil_FindPlayer">Find a player</span>
+          </label>
           <input
             id="playerName"
             type="text"
             placeholder="Name's player..."
+            data-i18n="Profil_NamePlaceholder"
             class="w-full px-3 py-2 border-3 border-purple-300 bg-white text-purple-700 placeholder-purple-300 focus:outline-none focus:border-purple-400"
           />
           <div class="mt-6">
-            <h2 class="text-purple-600 text-lg font-bold mb-2">💖 My Friends</h2>
+            <h2 class="text-purple-600 text-lg font-bold mb-2">
+              <span class="text-purple-300 mr-2">☆</span>
+              <span data-i18n="Profil_MyFriends">My Friends</span>
+            </h2>
             <div id="friendsList" class="max-h-48 overflow-y-auto bg-white p-2 border-3 border-purple-200 shadow-inner space-y-1 rounded-none">
             </div>
           </div>
         </div>
         <div class="flex flex-col gap-4 pb-6">
-          <button id="btn-performance" class="relative px-4 py-2 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400 text-purple-800 font-bold text-lg shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)] active:shadow-none active:translate-y-[2px] active:border-purple-300 transition-all duration-100">📈 Performances</button>
-          <button id="btn-settings" class="relative px-4 py-2 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400 text-purple-800 font-bold text-lg shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)] active:shadow-none active:translate-y-[2px] active:border-purple-300 transition-all duration-100">⚙️ Settings</button>
-          <button id="btn-deleteUser" class="relative px-4 py-2 bg-red-200 border-2 border-t-white border-l-white border-r-red-400 border-b-red-400 text-red-800 font-bold text-lg shadow-[2px_2px_0px_0px_rgba(239,68,68,0.3)] active:shadow-none active:translate-y-[2px] active:border-red-300 transition-all duration-100">🗑️ Delete my account</button>
+          <button id="btn-performance" data-i18n="Profil_Performances" class="relative px-4 py-2 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400 text-purple-800 font-bold text-lg shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)] active:shadow-none active:translate-y-[2px] active:border-purple-300 transition-all duration-100">📈 Performances</button>
+          <button id="btn-settings" data-i18n="Profil_Settings" class="relative px-4 py-2 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400 text-purple-800 font-bold text-lg shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)] active:shadow-none active:translate-y-[2px] active:border-purple-300 transition-all duration-100">⚙️ Settings</button>
+          <button id="btn-deleteUser" data-i18n="Profil_DeleteAccount" class="relative px-4 py-2 bg-red-200 border-2 border-t-white border-l-white border-r-red-400 border-b-red-400 text-red-800 font-bold text-lg shadow-[2px_2px_0px_0px_rgba(239,68,68,0.3)] active:shadow-none active:translate-y-[2px] active:border-red-300 transition-all duration-100">🗑️ Delete my account</button>
         </div>
       </div>
       <div id="historyContainer" class="ml-[16.6667%] w-5/6 px-10 py-12">
-        <div class=" bg-pink-100 bg-opacity-90 border-4 border-purple-300 shadow-lg p-6">
+        <div class="bg-pink-100 bg-opacity-90 border-4 border-purple-300 shadow-lg p-6">
           <div class="bg-purple-600 text-pink-100 p-3 mb-6">
             <h1 class="text-2xl font-bold text-center">${title}</h1>
           </div>
@@ -159,6 +168,8 @@ export async function renderProfil(playerName) {
       </div>
     </div>
   `;
+    // Traduction initiale
+    updateUI();
     if (!userId && !invalidUser) {
         console.error("UserId is undefined");
         return;
@@ -177,7 +188,8 @@ export async function renderProfil(playerName) {
         if (res.ok) {
             const friends = await res.json();
             if (friends.length === 0) {
-                friendsList.innerHTML = `<p class="text-purple-400 text-sm">No friends yet.</p>`;
+                friendsList.innerHTML = `<p class="text-purple-400 text-sm" data-i18n="Profil_NoFriends">No friends yet.</p>`;
+                updateUI();
             }
             else {
                 friendsList.innerHTML = "";
@@ -226,17 +238,20 @@ export async function renderProfil(playerName) {
             }
         }
         else {
-            friendsList.innerHTML = `<p class="text-red-400 text-sm">Error loading friends.</p>`;
+            friendsList.innerHTML = `<p class="text-red-400 text-sm" data-i18n="Profil_ErrorFriends">Error loading friends.</p>`;
+            updateUI();
         }
     }
     catch (err) {
         console.error("Erreur lors du chargement des amis:", err);
-        friendsList.innerHTML = `<p class="text-red-400 text-sm">Error loading friends.</p>`;
+        friendsList.innerHTML = `<p class="text-red-400 text-sm" data-i18n="Profil_ErrorFriends">Error loading friends.</p>`;
+        updateUI();
     }
     // Bouton ajouter ami si nécessaire
     if (playerName && !invalidUser && me.name !== playerName && !alreadyFriend) {
         const addFriendBtn = document.createElement("button");
         addFriendBtn.textContent = "➕ Add Friend";
+        addFriendBtn.setAttribute("data-i18n", "Profil_AddFriend");
         addFriendBtn.className = "relative px-6 py-2 bg-blue-200 border-2 border-t-white border-l-white border-r-blue-400 border-b-blue-400 text-blue-900 font-bold shadow-[2px_2px_0px_0px_rgba(59,130,246,0.3)] active:shadow-none active:translate-y-[2px] active:border-blue-300 transition-all duration-100 block mx-auto mb-6";
         addFriendBtn.onclick = async () => {
             const res = await fetch("/api/addFriend", {
@@ -252,6 +267,7 @@ export async function renderProfil(playerName) {
         const h1 = historyContainer.querySelector("h1");
         if (h1)
             h1.after(addFriendBtn);
+        updateUI();
     }
     // Chargement de l'historique des parties
     const gamesDiv = document.createElement("div");
@@ -264,8 +280,9 @@ export async function renderProfil(playerName) {
             if (!gamesData || gamesData.length === 0) {
                 const div = document.createElement("div");
                 div.className = "p-4 border-3 border-purple-200 bg-white rounded-none text-purple-600 shadow text-2xl text-center";
-                div.textContent = "No games found...";
+                div.innerHTML = `<p data-i18n="Profil_NoGames">No games found...</p>`;
                 gamesDiv.appendChild(div);
+                updateUI();
             }
             else {
                 for (const game of gamesData) {
@@ -283,22 +300,22 @@ export async function renderProfil(playerName) {
                     let resultText;
                     let scoreClass;
                     if (game.winner_id === me.id) {
-                        resultText = "🌸 Victoire";
+                        resultText = '<span data-i18n="Profil_Victory">🌸 Victoire</span>';
                         scoreClass = "text-green-600";
                     }
                     else if (game.player1_score === game.player2_score) {
-                        resultText = "⚖️ Egalité";
+                        resultText = '<span data-i18n="Profil_Draw">⚖️ Egalité</span>';
                         scoreClass = "text-yellow-600";
                     }
                     else {
-                        resultText = "💔 Défaite";
+                        resultText = '<span data-i18n="Profil_Defeat">💔 Défaite</span>';
                         scoreClass = "text-red-600";
                     }
                     gameDiv.innerHTML = `
             <div class="flex items-center gap-6 justify-center">
               <div class="flex flex-col items-center">
                 <img src="${player1Avatar}" alt="Avatar 1" class="w-20 h-20 rounded-full border-4 border-purple-200 shadow-lg" />
-                <span class="mt-2 font-semibold">${player1Name}</span>
+                <span class="mt-2 font-semibold">${player1Name}${game.player1_id === me.id ? ' <span data-i18n="Profil_You">(Vous)</span>' : ''}</span>
               </div>
 
               <div class="flex flex-col items-center text-3xl font-bold ${scoreClass}">
@@ -308,25 +325,27 @@ export async function renderProfil(playerName) {
 
               <div class="flex flex-col items-center">
                 <img src="${player2Avatar}" alt="Avatar 2" class="w-20 h-20 rounded-full border-4 border-purple-200 shadow-lg" />
-                <span class="mt-2 font-semibold">${player2Name}</span>
+                <span class="mt-2 font-semibold">${player2Name}${game.player2_id === me.id ? ' <span data-i18n="Profil_You">(Vous)</span>' : ''}</span>
               </div>
             </div>
 
             <p class="text-sm mt-4 text-center text-purple-700">
-              Jouée le : <span class="font-semibold">${new Date(game.created_at).toLocaleString()}</span><br/>
-              Durée : <span class="font-semibold">${durationStr}</span>
+              <span data-i18n="Profil_PlayedOn">Jouée le</span> : <span class="font-semibold">${new Date(game.created_at).toLocaleString()}</span><br/>
+              <span data-i18n="Profil_Duration">Durée</span> : <span class="font-semibold">${durationStr}</span>
             </p>
           `;
                     gamesDiv.appendChild(gameDiv);
                 }
+                updateUI();
             }
         }
         catch (err) {
             console.error("Erreur chargement parties:", err);
             const errorDiv = document.createElement("div");
             errorDiv.className = "text-red-500 text-center";
-            errorDiv.textContent = "Error loading game history.";
+            errorDiv.innerHTML = `<p data-i18n="Profil_ErrorGames">Error loading game history.</p>`;
             gamesDiv.appendChild(errorDiv);
+            updateUI();
         }
     }
     // Configurer les événements de manière sécurisée
