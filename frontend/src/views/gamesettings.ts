@@ -86,7 +86,7 @@ export function renderGameSettings(): void {
 																	shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
 																	active:shadow-none active:translate-y-[2px] active:border-purple-300
 																	transition-all duration-100">
-													Démarrer le tournoi
+													Démarrer
 											</button>
 						</div>
 						</form>

@@ -2,16 +2,15 @@ import { renderHome } from "./views/home.js";
 import { renderProfil, initProfilSubscriptions } from "./views/profil.js";
 import { renderChat } from "./views/chat.js";
 import { renderAuth } from "./views/auth.js";
-import { navBar, setupNavBar } from "./components/navbar.js";
+import { setupNavBar } from "./components/navbar.js";
 import { renderSettings } from "./views/settings.js";
 import { renderPerformances } from "./views/performance.js";
 import { renderGameMenu } from "./views/gamemenu.js";
-import { renderSoloGame } from "./views/solo.js";
-import { render1vs1 } from "./views/1vs1.js";
 import { renderRemoteRoom } from "./views/remoteRoom.js";
 import { renderRemoteGame } from "./views/remoteGame.js";
 import { renderTournament } from "./views/tournament.js";
 import { setLanguage, getLanguage, updateUI, initI18n } from "./utils/i18n.js";
+import { renderGameSettings } from "./views/gamesettings.js";
 let statusListeners = [];
 let onlineUsers = [];
 export function getOnlineUsers() {
@@ -63,14 +62,12 @@ export async function connectWebSocket(_username) {
             reconnectAttempts = 0;
             isUsernameSent = false;
             sendUsernameWhenReady(userState.currentUsername, false);
-            if (!hasLoggedConnection) {
+            if (!hasLoggedConnection)
                 hasLoggedConnection = true;
-            }
         });
         socket.addEventListener("message", (event) => {
             try {
                 const msg = JSON.parse(event.data);
-                // Inclure les types de messages d'invitation/jeu pour les relayer aux listeners
                 if (msg.type === "status_update" || msg.type === "online_users" || msg.type === "user_list" ||
                     msg.type === "message" || msg.type === "private_message" ||
                     msg.type === "game_invite" || msg.type === "room_created_for_game") {
@@ -81,12 +78,10 @@ export async function connectWebSocket(_username) {
                     statusListeners.forEach(cb => cb(msg));
                 }
             }
-            catch {
-            }
+            catch { }
         });
         socket.addEventListener("close", () => {
             isConnecting = false;
-            // Mettre à jour la liste des utilisateurs immédiatement
             onlineUsers = onlineUsers.filter(user => user !== userState.currentUsername);
             statusListeners.forEach(cb => cb({ type: "user_list", users: onlineUsers }));
             if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS && userState.currentUsername !== "anonymous") {
@@ -106,9 +101,7 @@ export async function connectWebSocket(_username) {
     }
 }
 function sendUsernameWhenReady(username, inChat = false) {
-    if (!socket)
-        return;
-    if (isUsernameSent)
+    if (!socket || isUsernameSent)
         return;
     if (socket.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({ type: "set_username", username, inChat }));
@@ -118,7 +111,6 @@ function sendUsernameWhenReady(username, inChat = false) {
         setTimeout(() => sendUsernameWhenReady(username, inChat), 200);
     }
 }
-// --- Gestion chat ---
 export function joinChat() {
     if (socket && socket.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({ type: "set_username", username: userState.currentUsername, inChat: true }));
@@ -134,17 +126,11 @@ async function renderNav() {
     const existingNav = document.querySelector("nav");
     if (existingNav)
         existingNav.remove();
-    if (setupNavBar) {
-        await setupNavBar();
-    }
-    else {
-        const nav = await navBar();
-        document.body.prepend(nav);
-    }
-    // Attacher le listener du sélecteur de langue après que le navbar soit dans le DOM
+    await setupNavBar();
+    // Attacher le listener du sélecteur de langue
     const select = document.getElementById("language-select");
     if (select) {
-        select.value = getLanguage(); // Définit la valeur du select sur la langue courante
+        select.value = getLanguage();
         select.addEventListener("change", async (e) => {
             const target = e.target;
             await setLanguage(target.value);
@@ -182,50 +168,37 @@ function render(pathWithQuery) {
             break;
         case "/game": {
             const mode = params.get("mode");
-            if (!mode) {
+            if (!mode)
                 renderGameMenu();
-            }
-            else if (mode === "solo") {
-                renderSoloGame();
-            }
-            else if (mode === "1v1") {
-                render1vs1();
-            }
+            else if (mode === "solo" || mode === "1v1")
+                renderGameSettings();
             else if (mode === "remote") {
                 const roomId = params.get("roomId");
                 const role = params.get('role');
                 if (roomId) {
-                    if (socket) {
+                    if (socket)
                         renderRemoteGame(socket, role, roomId);
-                    }
-                    else {
+                    else
                         renderRemoteRoom();
-                    }
                 }
-                else {
+                else
                     renderRemoteRoom();
-                }
             }
-            else if (mode === "tournament") {
+            else if (mode === "tournament")
                 renderTournament();
-            }
-            else {
-                document.getElementById("app").innerHTML =
-                    `<h1 class="text-center mt-10">Mode "${mode}" non supporté.</h1>`;
-            }
+            else
+                document.getElementById("app").innerHTML = `<h1 class="text-center mt-10">Mode "${mode}" non supporté.</h1>`;
             break;
         }
         default:
-            document.getElementById("app").innerHTML =
-                `<h1 class="text-center text-5xl p-10">Page non trouvée</h1>`;
+            document.getElementById("app").innerHTML = `<h1 class="text-center text-5xl p-10">Page non trouvée</h1>`;
     }
-    // Mettre à jour les textes avec la langue courante après chaque rendu
+    // Mettre à jour les textes traduisibles
     updateUI();
 }
 export function navigate(pathWithQuery) {
     const currentPath = window.location.pathname;
     const currentParams = new URLSearchParams(window.location.search);
-    // Si on quitte une page de jeu remote, nettoyer
     if (currentPath === "/game" && currentParams.get("mode") === "remote") {
         const cleanup = window.__remoteGameCleanup;
         if (cleanup && typeof cleanup === 'function') {
@@ -241,7 +214,6 @@ export function navigate(pathWithQuery) {
         joinChat();
 }
 window.addEventListener("popstate", () => {
-    // Nettoyer le jeu remote si on en quitte un
     const cleanup = window.__remoteGameCleanup;
     if (cleanup && typeof cleanup === 'function') {
         const newUrl = new URL(window.location.href);
@@ -261,9 +233,8 @@ window.addEventListener("userStateChanged", async (e) => {
         socket = null;
         isUsernameSent = false;
     }
-    if (detail.username !== "anonymous") {
+    if (detail.username !== "anonymous")
         await connectWebSocket(detail.username);
-    }
 });
 async function initializeApp() {
     console.log("===== init called =================");
@@ -276,9 +247,8 @@ async function initializeApp() {
             const user = await res.json();
             userState.currentUsername = user.name || "anonymous";
         }
-        else {
+        else
             userState.currentUsername = "anonymous";
-        }
     }
     catch {
         userState.currentUsername = "anonymous";
@@ -292,10 +262,9 @@ async function initializeApp() {
         await connectWebSocket(userState.currentUsername);
     }
 }
-// Gestion améliorée de la fermeture de l'onglet/navigateur
+// Gestion fermeture onglet
 window.addEventListener("beforeunload", () => {
     if (socket) {
-        // Envoyer un message de déconnexion avant de fermer
         if (socket.readyState === WebSocket.OPEN) {
             try {
                 socket.send(JSON.stringify({ type: "user_disconnected", username: userState.currentUsername }));

@@ -12,6 +12,7 @@ import { renderRemoteRoom } from "./views/remoteRoom.js";
 import { renderRemoteGame } from "./views/remoteGame.js";
 import { renderTournament } from "./views/tournament.js";
 import { setLanguage, getLanguage, updateUI, initI18n } from "./utils/i18n.js";
+import { renderGameSettings } from "./views/gamesettings.js";
 
 type WSMessage = { type: string; [key: string]: any };
 
@@ -70,36 +71,31 @@ export async function connectWebSocket(_username: string) {
       reconnectAttempts = 0;
       isUsernameSent = false;
       sendUsernameWhenReady(userState.currentUsername, false);
-      if (!hasLoggedConnection) {
-        hasLoggedConnection = true;
-      }
+      if (!hasLoggedConnection) hasLoggedConnection = true;
     });
 
     socket.addEventListener("message", (event) => {
       try {
         const msg: WSMessage = JSON.parse(event.data);
 
-        // Inclure les types de messages d'invitation/jeu pour les relayer aux listeners
         if (
-            msg.type === "status_update" || msg.type === "online_users" || msg.type === "user_list" ||
-            msg.type === "message" || msg.type === "private_message" ||
-            msg.type === "game_invite" || msg.type === "room_created_for_game"
+          msg.type === "status_update" || msg.type === "online_users" || msg.type === "user_list" ||
+          msg.type === "message" || msg.type === "private_message" ||
+          msg.type === "game_invite" || msg.type === "room_created_for_game"
         ) {
           if (msg.type === "user_list" || msg.type === "online_users") {
-             if (msg.users) onlineUsers = msg.users;
+            if (msg.users) onlineUsers = msg.users;
           }
           statusListeners.forEach(cb => cb(msg));
         }
-      } catch {
-      }
+      } catch {}
     });
 
     socket.addEventListener("close", () => {
       isConnecting = false;
-      // Mettre à jour la liste des utilisateurs immédiatement
       onlineUsers = onlineUsers.filter(user => user !== userState.currentUsername);
       statusListeners.forEach(cb => cb({ type: "user_list", users: onlineUsers }));
-      
+
       if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS && userState.currentUsername !== "anonymous") {
         const delay = Math.min(5000, 1000 * Math.pow(2, reconnectAttempts));
         setTimeout(() => connectWebSocket(userState.currentUsername), delay);
@@ -119,8 +115,7 @@ export async function connectWebSocket(_username: string) {
 }
 
 function sendUsernameWhenReady(username: string, inChat = false) {
-  if (!socket) return;
-  if (isUsernameSent) return;
+  if (!socket || isUsernameSent) return;
 
   if (socket.readyState === WebSocket.OPEN) {
     socket.send(JSON.stringify({ type: "set_username", username, inChat }));
@@ -130,7 +125,6 @@ function sendUsernameWhenReady(username: string, inChat = false) {
   }
 }
 
-// --- Gestion chat ---
 export function joinChat() {
   if (socket && socket.readyState === WebSocket.OPEN) {
     socket.send(JSON.stringify({ type: "set_username", username: userState.currentUsername, inChat: true }));
@@ -148,17 +142,12 @@ async function renderNav() {
   const existingNav = document.querySelector("nav");
   if (existingNav) existingNav.remove();
   
-  if (setupNavBar) { 
-    await setupNavBar(); 
-  } else { 
-    const nav = await navBar(); 
-    document.body.prepend(nav); 
-  }
-  
-  // Attacher le listener du sélecteur de langue après que le navbar soit dans le DOM
+  await setupNavBar();
+
+  // Attacher le listener du sélecteur de langue
   const select = document.getElementById("language-select") as HTMLSelectElement;
   if (select) {
-    select.value = getLanguage(); // Définit la valeur du select sur la langue courante
+    select.value = getLanguage();
     select.addEventListener("change", async (e) => {
       const target = e.target as HTMLSelectElement;
       await setLanguage(target.value);
@@ -172,64 +161,39 @@ function render(pathWithQuery: string) {
   const params = url.searchParams;
 
   switch (basePath) {
-    case "/": 
-      renderHome(); 
-      break;
-    case "/chat": 
-      renderChat(); 
-      break;
-    case "/auth": 
-      renderAuth(); 
-      break;
-    case "/settings": 
-      renderSettings(); 
-      break;
-    case "/performances": 
-      renderPerformances(); 
-      break;
+    case "/": renderHome(); break;
+    case "/chat": renderChat(); break;
+    case "/auth": renderAuth(); break;
+    case "/settings": renderSettings(); break;
+    case "/performances": renderPerformances(); break;
     case "/profil": {
       const player = params.get("player");
       renderProfil(player ?? undefined);
       initProfilSubscriptions();
       break;
     }
-    case "/tournament": 
-      renderTournament(); 
-      break;
+    case "/tournament": renderTournament(); break;
     case "/game": {
       const mode = params.get("mode");
-      if (!mode) {
-        renderGameMenu();
-      } else if (mode === "solo") {
-        renderSoloGame();
-      } else if (mode === "1v1") {
-        render1vs1();
-      } else if (mode === "remote") {
+      if (!mode) renderGameMenu();
+      else if (mode === "solo" || mode === "1v1") renderGameSettings();
+      else if (mode === "remote") {
         const roomId = params.get("roomId");
         const role = params.get('role') as 'host' | 'guest';
         if (roomId) {
-          if (socket) {
-            renderRemoteGame(socket, role, roomId);
-          } else {
-            renderRemoteRoom();
-          }
-        } else {
-          renderRemoteRoom();
-        }
-      } else if (mode === "tournament") {
-        renderTournament();
-      } else {
-        document.getElementById("app")!.innerHTML =
-          `<h1 class="text-center mt-10">Mode "${mode}" non supporté.</h1>`;
+          if (socket) renderRemoteGame(socket, role, roomId);
+          else renderRemoteRoom();
+        } else renderRemoteRoom();
       }
+      else if (mode === "tournament") renderTournament();
+      else document.getElementById("app")!.innerHTML = `<h1 class="text-center mt-10">Mode "${mode}" non supporté.</h1>`;
       break;
     }
-    default: 
-      document.getElementById("app")!.innerHTML =
-        `<h1 class="text-center text-5xl p-10">Page non trouvée</h1>`;
+    default:
+      document.getElementById("app")!.innerHTML = `<h1 class="text-center text-5xl p-10">Page non trouvée</h1>`;
   }
-  
-  // Mettre à jour les textes avec la langue courante après chaque rendu
+
+  // Mettre à jour les textes traduisibles
   updateUI();
 }
 
@@ -237,7 +201,6 @@ export function navigate(pathWithQuery: string) {
   const currentPath = window.location.pathname;
   const currentParams = new URLSearchParams(window.location.search);
 
-  // Si on quitte une page de jeu remote, nettoyer
   if (currentPath === "/game" && currentParams.get("mode") === "remote") {
     const cleanup = (window as any).__remoteGameCleanup;
     if (cleanup && typeof cleanup === 'function') {
@@ -253,75 +216,58 @@ export function navigate(pathWithQuery: string) {
 }
 
 window.addEventListener("popstate", () => {
-  // Nettoyer le jeu remote si on en quitte un
   const cleanup = (window as any).__remoteGameCleanup;
   if (cleanup && typeof cleanup === 'function') {
     const newUrl = new URL(window.location.href);
     const isStillInRemoteGame = newUrl.pathname === "/game" && newUrl.searchParams.get("mode") === "remote";
-
     if (!isStillInRemoteGame) {
       cleanup();
       (window as any).__remoteGameCleanup = null;
     }
   }
-
   render(window.location.pathname + window.location.search);
 });
 
 window.addEventListener("userStateChanged", async (e: Event) => {
   const detail = (e as CustomEvent).detail;
   await renderNav();
-  if (socket) { 
-    socket.close(); 
-    socket = null; 
-    isUsernameSent = false; 
-  }
-  if (detail.username !== "anonymous") {
-    await connectWebSocket(detail.username);
-  }
+  if (socket) { socket.close(); socket = null; isUsernameSent = false; }
+  if (detail.username !== "anonymous") await connectWebSocket(detail.username);
 });
 
 async function initializeApp() {
   console.log("===== init called =================");
-  
+
   // Initialisation i18n
   await initI18n();
-  
+
   // Récupération de l'utilisateur connecté
   try {
     const res = await fetch("/api/me", { credentials: "include" });
     if (res.ok) { 
       const user = await res.json(); 
       userState.currentUsername = user.name || "anonymous"; 
-    } else {
-      userState.currentUsername = "anonymous";
-    }
-  } catch { 
-    userState.currentUsername = "anonymous"; 
-  }
+    } else userState.currentUsername = "anonymous";
+  } catch { userState.currentUsername = "anonymous"; }
 
   // Rendu de la navbar
   await renderNav();
-  
+
   // Rendu de la page actuelle
   render(window.location.pathname + window.location.search);
-  
+
   // Connexion WebSocket si utilisateur connecté
   if (userState.currentUsername !== "anonymous") {
     await connectWebSocket(userState.currentUsername);
   }
 }
 
-// Gestion améliorée de la fermeture de l'onglet/navigateur
+// Gestion fermeture onglet
 window.addEventListener("beforeunload", () => { 
-  if (socket) { 
-    // Envoyer un message de déconnexion avant de fermer
+  if (socket) {
     if (socket.readyState === WebSocket.OPEN) {
-      try {
-        socket.send(JSON.stringify({ type: "user_disconnected", username: userState.currentUsername }));
-      } catch (e) {
-        console.log("Impossible d'envoyer le message de déconnexion");
-      }
+      try { socket.send(JSON.stringify({ type: "user_disconnected", username: userState.currentUsername })); }
+      catch (e) { console.log("Impossible d'envoyer le message de déconnexion"); }
     }
     socket.close(); 
     socket = null; 
@@ -339,10 +285,7 @@ document.addEventListener("click", (e) => {
   const target = e.target as HTMLElement;
   if (target.tagName === "A") {
     const href = (target as HTMLAnchorElement).getAttribute("href");
-    if (href?.startsWith("/")) { 
-      e.preventDefault(); 
-      navigate(href); 
-    }
+    if (href?.startsWith("/")) { e.preventDefault(); navigate(href); }
   }
 });
 
@@ -355,8 +298,4 @@ document.addEventListener("click", (e) => {
 };
 (window as any).navigate = navigate;
 
-declare global { 
-  interface Window { 
-    _appInitialized?: boolean; 
-  } 
-}
+declare global { interface Window { _appInitialized?: boolean; } }
