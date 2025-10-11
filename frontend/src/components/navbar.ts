@@ -56,6 +56,7 @@ export async function navBar(): Promise<HTMLElement> {
       </div>
 
       <style>
+        /* Animations Ping-Pong */
           .ping-pong-ball { animation: pingpong 3s linear infinite; transform: translate(-50%, -50%); }
           @keyframes pingpong { 0% { left:20%; top:50%; } 25% { left:50%; top:30%; } 50% { left:80%; top:50%; } 75% { left:50%; top:70%; } 100% { left:20%; top:50%; } }
           .ping-pong-paddle-left { animation: paddleLeft 3s ease-in-out infinite; }
@@ -63,6 +64,49 @@ export async function navBar(): Promise<HTMLElement> {
           @keyframes paddleLeft { 0%,100%{transform:translateY(-50%);} 25%{transform:translateY(-30%);} 75%{transform:translateY(-70%);} }
           @keyframes paddleRight { 0%,100%{transform:translateY(-50%);} 50%{transform:translateY(-30%);} }
       </style>
+      <style>
+			/* Taille et position de la balle */
+			.ping-pong-ball {
+    			position: absolute;
+    			width: 20px;
+    			height: 20px;
+    			animation: pingpong 3s linear infinite;
+			}
+
+			/* Animation : gauche → bas → droite → haut → gauche */
+			@keyframes pingpong {
+    			0%   { left: 20%;   top: 25%; }   /* raquette gauche */
+    			25%  { left: 50%;  top: 50%; }  /* bas */
+    			50%  { left: 80%; top: 25%; }   /* raquette droite */
+    			75%  { left: 50%;  top: 0%; }    /* haut */
+    			100% { left: 20%;   top: 25%; }   /* retour raquette gauche */
+			}
+
+			/* Raquette gauche */
+			.ping-pong-paddle-left {
+    			left: 20%;
+    			animation: paddleLeft 3s ease-in-out infinite;
+			}
+
+			/* Raquette droite */
+			.ping-pong-paddle-right {
+    			left: 80%;
+    			animation: paddleRight 3s ease-in-out infinite;
+			}
+
+			/* Mouvement des raquettes synchronisé */
+			@keyframes paddleLeft {
+    			0%, 50%, 100% { transform: translateY(-50%); }
+    			25% { transform: translateY(-30%); }
+    			75% { transform: translateY(-70%); }
+			}
+
+			@keyframes paddleRight {
+    			0%, 50%, 100% { transform: translateY(-50%); }
+    			25% { transform: translateY(-30%); }
+    			75% { transform: translateY(-70%); }
+			}
+			</style>
     </nav>
   `;
 

@@ -7,6 +7,10 @@ export function renderSoloGame(): void {
     const app = document.getElementById('app');
     if (!app) return;
 
+    const url = new URL(window.location.href);
+	let playerName = url.searchParams.get("player1") || "Joueur 1";
+	const color1 = url.searchParams.get("color1") || "bleu";
+	const WIN_SCORE = parseInt(url.searchParams.get("score") || "5", 10);
     // Charge police pixel si absente
     if (!document.querySelector('link[href*="Press+Start+2P"]')) {
         const fontLink = document.createElement('link');
@@ -64,12 +68,12 @@ export function renderSoloGame(): void {
                      style="width: 30px; height: 30px;"
                      alt="ball">
                 <img id="paddle"
-                     src="/images/raquette_bleu.png"
+                     src="/images/raquette_${color1}.png"
                      class="absolute left-4"
                      style="width: 22px; height: 96px;"
                      alt="paddle1">
                 <img id="ai-paddle"
-                     src="/images/raquette_rose.png"
+                     src="/images/raquette_gris.png"
                      class="absolute right-4"
                      style="width: 22px; height: 96px;"
                      alt="paddle2">
@@ -105,10 +109,10 @@ export function renderSoloGame(): void {
     // Appliquer les traductions
     updateUI();
 
-    initSoloGame();
+    initSoloGame(WIN_SCORE);
 }
 
-function initSoloGame() {
+function initSoloGame(WIN_SCORE: number) {
     // scores
     let playerScore = 0;
     let aiScore = 0;
@@ -143,7 +147,6 @@ function initSoloGame() {
     let ballSpeedX = 0;
     let ballSpeedY = 0;
     const baseBallSpeed = 4;
-    const WIN_SCORE = 5;
 
     // états des touches
     let upKeyPressed = false;
@@ -282,7 +285,7 @@ function initSoloGame() {
                 aiScoreDisplay.textContent = String(aiScore).padStart(2, '0');
                 if (aiScore >= WIN_SCORE) endGame(t("Solo_Bot"));
                 else resetBall();
-            } else if (ballX > gameWidth) {
+            } else if (ballX > gameWidth - ballSize) {
                 playerScore++;
                 playerScoreDisplay.textContent = String(playerScore).padStart(2, '0');
                 if (playerScore >= WIN_SCORE) endGame(t("Solo_Player"));

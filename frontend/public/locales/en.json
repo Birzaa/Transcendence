@@ -21,7 +21,7 @@
   "Home": "Home",
   "Chat": "Chat",
   "Chattitle": "Chat (=^･ω･^=)",
-  "Profile": "Profil",
+  "Profile": "Profile",
   "Login": "Login",
   "Logout": "Logout",
 
@@ -32,8 +32,7 @@
   "Bienvenuedanslechat": "Welcome to the chat!",
   "Votremessage": "Your message...",
   "Envoyer": "Send",
-   "Chat_you": "You",
-
+  "Chat_you": "You",
 
   "_comment_login_signup": "Login and signup",
   "Connexion": "Login",
@@ -50,7 +49,7 @@
   "NomRequis": "Name is required",
 
   "_comment_profile": "Profile & settings page",
-   "Profil_NotFound": "Player not found (´；ω；｀)",
+  "Profil_NotFound": "Player not found (´；ω；｀)",
   "Profil_PlayerHistory": "{{playerName}}'s game history ☆",
   "Profil_MyHistory": "My game history ☆",
   "Profil_FindPlayer": "Find a player",
@@ -73,7 +72,19 @@
   "Profil_LoadingHistory": "Loading game history... ☆",
   "Profil_TryLater": "Please try again later",
 
-
+  "_comment_solo_settings": "Solo & 1v1 game settings",
+  "Raquette_Joueur1": "Player 1 Paddle",
+  "Raquette_Joueur2": "Player 2 Paddle",
+  "Score": "Score to reach",
+  "Démarrer": "Start",
+  "Couleur_Bleu": "Blue",
+  "Couleur_Vert": "Green",
+  "Couleur_Jaune": "Yellow",
+  "Couleur_Orange": "Orange",
+  "Couleur_Rose": "Pink",
+  "Couleur_Rouge": "Red",
+  "Couleur_Violet": "Purple",
+  "Couleur_Gris": "Gray",
 
   "Solo_Back": "← Back",
   "Solo_Player": "PLAYER",
@@ -81,9 +92,6 @@
   "Solo_Pause": "Pause",
   "Solo_Resume": "Resume",
   "Solo_Instructions": "Use ↑ and ↓ arrows to move your paddle",
-
-
-
 
   "Monprofil": "My profile",
   "Mesamis": "My friends",

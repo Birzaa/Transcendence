@@ -12,10 +12,15 @@ export function render1vs1(): void {
   const mode = url.searchParams.get("mode");
   let player1Name = url.searchParams.get("player1") || "Joueur 1";
   let player2Name = url.searchParams.get("player2") || "Joueur 2";
+  let color1 = url.searchParams.get("color1") || "bleu";
+	let color2 = url.searchParams.get("color2") || "rose";
+	const WIN_SCORE = parseInt(url.searchParams.get("score") || "5", 10);
 
   if (mode === "tournament") {
     player1Name = url.searchParams.get("player1") || "Joueur 1";
     player2Name = url.searchParams.get("player2") || "Joueur 2";
+    color1 = url.searchParams.get("color1") || "bleu";
+		color2 = url.searchParams.get("color2") || "rose";
   }
 
   // Charge la police pixel si absente
@@ -69,12 +74,12 @@ export function render1vs1(): void {
                style="width: 30px; height: 30px;"
                alt="ball">
           <img id="paddle1"
-               src="/images/raquette_bleu.png"
+               src="/images/raquette_${color1}.png"
                class="absolute left-4"
                style="width: 22px; height: 96px;"
                alt="paddle1">
           <img id="paddle2"
-               src="/images/raquette_rose.png"
+               src="/images/raquette_${color2}.png"
                class="absolute right-4"
                style="width: 22px; height: 96px;"
                alt="paddle2">
@@ -102,10 +107,10 @@ export function render1vs1(): void {
   `;
   document.head.appendChild(style);
 
-  init1vs1Game(player1Name, player2Name, mode);
+  init1vs1Game(player1Name, player2Name, mode, WIN_SCORE);
 }
 
-function init1vs1Game(player1Name: string, player2Name: string, mode: string | null) {
+function init1vs1Game(player1Name: string, player2Name: string, mode: string | null, WIN_SCORE: number)  {
   let player1Score = 0;
   let player2Score = 0;
   let gamePaused = false;
@@ -133,7 +138,6 @@ function init1vs1Game(player1Name: string, player2Name: string, mode: string | n
   let ballSpeedX = 0;
   let ballSpeedY = 0;
   const baseBallSpeed = 4;
-  const WIN_SCORE = 5;
 
   const keys: { [key: string]: boolean } = {};
 
@@ -343,7 +347,7 @@ function init1vs1Game(player1Name: string, player2Name: string, mode: string | n
         player2ScoreDisplay.textContent = String(player2Score).padStart(2, "0");
         if (player2Score >= WIN_SCORE) endGame(player2Name);
         else resetBall();
-      } else if (ballX > gameWidth) {
+      } else if (ballX > gameWidth - ballSize) {
         player1Score++;
         player1ScoreDisplay.textContent = String(player1Score).padStart(2, "0");
         if (player1Score >= WIN_SCORE) endGame(player1Name);
