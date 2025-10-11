@@ -129,7 +129,15 @@
   "Tournament_Title": "Tournoi Pong",
   "Tournament_Player": "Joueur",
   "Tournament_Start": "Démarrer le tournoi",
-  "Tournament_MinPlayers": "Au moins 2 joueurs sont requis pour démarrer le tournoi."
+  "Tournament_MinPlayers": "Au moins 2 joueurs sont requis pour démarrer le tournoi.",
+
+  "WinnerMessage": "☆ {{winner}} gagne la partie ! ☆",
+  "Joueur1": "Joueur 1",
+  "Joueur2": "Joueur 2",
+  "1vs1_Result_partie": "Résultat de la partie"
+
+
+
 }
 
 

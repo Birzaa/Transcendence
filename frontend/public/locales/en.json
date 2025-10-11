@@ -129,7 +129,17 @@
   "Tournament_Title": "Pong Tournament",
   "Tournament_Player": "Player",
   "Tournament_Start": "Start tournament",
-  "Tournament_MinPlayers": "At least 2 players are required to start a tournament."
+  "Tournament_MinPlayers": "At least 2 players are required to start a tournament.",
+
+
+  "WinnerMessage": "☆ {{winner}} wins the game! ☆",
+  "Joueur1": "Player 1",
+  "Joueur2": "Player 2",
+  "1vs1_Result_partie": "Match Result"
+
+
+  
+
 }
 
 

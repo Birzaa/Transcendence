@@ -13,14 +13,14 @@ export function render1vs1(): void {
   let player1Name = url.searchParams.get("player1") || "Joueur 1";
   let player2Name = url.searchParams.get("player2") || "Joueur 2";
   let color1 = url.searchParams.get("color1") || "bleu";
-	let color2 = url.searchParams.get("color2") || "rose";
-	const WIN_SCORE = parseInt(url.searchParams.get("score") || "5", 10);
+  let color2 = url.searchParams.get("color2") || "rose";
+  const WIN_SCORE = parseInt(url.searchParams.get("score") || "5", 10);
 
   if (mode === "tournament") {
     player1Name = url.searchParams.get("player1") || "Joueur 1";
     player2Name = url.searchParams.get("player2") || "Joueur 2";
     color1 = url.searchParams.get("color1") || "bleu";
-		color2 = url.searchParams.get("color2") || "rose";
+    color2 = url.searchParams.get("color2") || "rose";
   }
 
   // Charge la police pixel si absente
@@ -46,12 +46,12 @@ export function render1vs1(): void {
 
           <div class="flex-1 flex justify-center items-center gap-4 pixel-font" style="font-size: 1.25rem;">
             <div class="text-center">
-              <div class="text-purple-300 text-xs">${player1Name} (W/S)</div>
+              <div class="text-purple-300 text-xs" id="player1-label" data-i18n="Joueur1">${player1Name} (W/S)</div>
               <span id="player1-score" class="text-yellow-300">00</span>
             </div>
             <span class="text-white">:</span>
             <div class="text-center">
-              <div class="text-pink-300 text-xs">${player2Name} (↑/↓)</div>
+              <div class="text-pink-300 text-xs" id="player2-label" data-i18n="Joueur2">${player2Name} (↑/↓)</div>
               <span id="player2-score" class="text-yellow-300">00</span>
             </div>
           </div>
@@ -107,6 +107,8 @@ export function render1vs1(): void {
   `;
   document.head.appendChild(style);
 
+  updateUI(); // 🟢 applique la traduction sur les labels
+
   init1vs1Game(player1Name, player2Name, mode, WIN_SCORE);
 }
 
@@ -141,15 +143,12 @@ function init1vs1Game(player1Name: string, player2Name: string, mode: string | n
 
   const keys: { [key: string]: boolean } = {};
 
-  // Recalcul des dimensions (à appeler au début et au resize)
   function updateDimensions() {
     gameWidth = gameContainer.clientWidth;
     gameHeight = gameContainer.clientHeight;
     paddleHeight = paddle1.offsetHeight || 96;
     ballSize = ball.offsetWidth || 30;
     paddleSpeed = Math.max(6, gameHeight * 0.02);
-
-    // s'assurer que les raquettes restent dans les bornes après resize
     const limit = Math.max(0, gameHeight - paddleHeight);
     paddle1Y = Math.min(Math.max(0, paddle1Y), limit);
     paddle2Y = Math.min(Math.max(0, paddle2Y), limit);
@@ -175,13 +174,9 @@ function init1vs1Game(player1Name: string, player2Name: string, mode: string | n
   }
 
   function drawPositions() {
-    // clamp des paddles pour éviter tout dépassement
     const limit = Math.max(0, gameHeight - paddleHeight);
-    if (paddle1Y < 0) paddle1Y = 0;
-    if (paddle1Y > limit) paddle1Y = limit;
-    if (paddle2Y < 0) paddle2Y = 0;
-    if (paddle2Y > limit) paddle2Y = limit;
-
+    paddle1Y = Math.min(Math.max(0, paddle1Y), limit);
+    paddle2Y = Math.min(Math.max(0, paddle2Y), limit);
     paddle1.style.top = `${paddle1Y}px`;
     paddle2.style.top = `${paddle2Y}px`;
     ball.style.left = `${Math.round(ballX)}px`;
@@ -195,17 +190,14 @@ function init1vs1Game(player1Name: string, player2Name: string, mode: string | n
   
     overlay.innerHTML = `
       <div class="relative max-w-md w-full bg-pink-50 bg-opacity-90 shadow-lg border-2 border-purple-300 text-center">
-        <!-- Petit chat décoratif -->
         <img src="/images/logo.png" class="absolute -top-4 -right-4 w-12 h-12 rotate-12" alt="Petit chat">
 
-        <!-- Barre violette -->
         <div class="bg-purple-600 text-pink-100 p-3">
-          <h1 class="text-xl font-bold" data-i18n="1vs1_Result">Résultat du match</h1>
+          <h1 class="text-xl font-bold" data-i18n="1vs1_Result_partie">Résultat du match</h1>
         </div>
 
-        <!-- Contenu -->
         <div class="p-6">
-          <h2 class="pixel-font text-lg text-purple-700 mb-6" id="winner-text" data-winner="${winner}">
+          <h2 class="pixel-font text-lg text-purple-700 mb-6" id="winner-text" data-winner="${winner}" data-i18n="WinnerMessage">
             ☆ ${winner} gagne la partie ! ☆
           </h2>
           <button id="next-match"
@@ -220,9 +212,8 @@ function init1vs1Game(player1Name: string, player2Name: string, mode: string | n
     `;
 
     gameContainer.appendChild(overlay);
-    updateUI(); // Appliquer les traductions à l'overlay
+    updateUI();
 
-    // Mettre à jour le texte du gagnant avec la traduction
     const winnerText = document.getElementById("winner-text");
     if (winnerText) {
       winnerText.textContent = `☆ ${winner} ${t("1vs1_WinText")} ☆`;
@@ -240,20 +231,14 @@ function init1vs1Game(player1Name: string, player2Name: string, mode: string | n
   function goToNextMatch(winner: string) {
     const matches = JSON.parse(localStorage.getItem("tournamentMatches") || "[]");
     let currentMatchIndex = parseInt(localStorage.getItem("currentTournamentMatch") || "0");
-  
     matches[currentMatchIndex].winner = winner;
     localStorage.setItem("tournamentMatches", JSON.stringify(matches));
-  
     const allDone = matches.every((m: any) => m.winner);
-    
-    // Si c'est la finale (dernier match du dernier tour)
     if (allDone && matches.length === 1) {
       renderTournamentWinner(winner);
       return;
     }
-    
     if (allDone && matches.length > 1) {
-      // Nouveau round
       const winners = matches.map((m: any) => m.winner);
       const newRound = [];
       for (let i = 0; i < winners.length; i += 2) {
@@ -262,13 +247,7 @@ function init1vs1Game(player1Name: string, player2Name: string, mode: string | n
       }
       localStorage.setItem("tournamentMatches", JSON.stringify(newRound));
       localStorage.setItem("currentTournamentMatch", "0");
-      
-      // Si c'est la finale du nouveau round (il ne reste qu'un match)
-      if (newRound.length === 1) {
-        navigate(`/game?mode=tournament&player1=${encodeURIComponent(newRound[0].p1)}&player2=${encodeURIComponent(newRound[0].p2)}`);
-      } else {
-        navigate(`/game?mode=tournament&player1=${encodeURIComponent(newRound[0].p1)}&player2=${encodeURIComponent(newRound[0].p2)}`);
-      }
+      navigate(`/game?mode=tournament&player1=${encodeURIComponent(newRound[0].p1)}&player2=${encodeURIComponent(newRound[0].p2)}`);
     } else {
       currentMatchIndex++;
       localStorage.setItem("currentTournamentMatch", currentMatchIndex.toString());
@@ -287,7 +266,6 @@ function init1vs1Game(player1Name: string, player2Name: string, mode: string | n
   }
 
   function gameLoop() {
-    // Gestion des déplacements de raquettes (si pas en pause)
     if (!gamePaused) {
       if (keys["w"] && paddle1Y > 0) paddle1Y -= paddleSpeed;
       if (keys["s"] && paddle1Y < gameHeight - paddleHeight) paddle1Y += paddleSpeed;
@@ -295,12 +273,9 @@ function init1vs1Game(player1Name: string, player2Name: string, mode: string | n
       if (keys["ArrowDown"] && paddle2Y < gameHeight - paddleHeight) paddle2Y += paddleSpeed;
     }
 
-    // Mouvement de la balle uniquement si le service a été fait et que le jeu n'est pas en pause
     if (!waitingForServe && !gamePaused) {
       ballX += ballSpeedX;
       ballY += ballSpeedY;
-
-      // Collision haut/bas
       if (ballY <= 0) {
         ballY = 0;
         ballSpeedY = -ballSpeedY;
@@ -309,13 +284,11 @@ function init1vs1Game(player1Name: string, player2Name: string, mode: string | n
         ballSpeedY = -ballSpeedY;
       }
 
-      // Récupère positions raquettes en pixels
       const p1Left = paddle1.offsetLeft;
       const p1Right = p1Left + paddle1.offsetWidth;
       const p2Left = paddle2.offsetLeft;
       const p2Right = p2Left + paddle2.offsetWidth;
 
-      // Collision avec raquette gauche
       if (
         ballX <= p1Right &&
         ballX + ballSize >= p1Left &&
@@ -328,7 +301,6 @@ function init1vs1Game(player1Name: string, player2Name: string, mode: string | n
         ballSpeedY = hit * Math.max(3, Math.abs(ballSpeedX));
       }
 
-      // Collision avec raquette droite
       if (
         ballX + ballSize >= p2Left &&
         ballX <= p2Right &&
@@ -341,7 +313,6 @@ function init1vs1Game(player1Name: string, player2Name: string, mode: string | n
         ballSpeedY = hit * Math.max(3, Math.abs(ballSpeedX));
       }
 
-      // Gérer les scores
       if (ballX < 0) {
         player2Score++;
         player2ScoreDisplay.textContent = String(player2Score).padStart(2, "0");
@@ -363,7 +334,7 @@ function init1vs1Game(player1Name: string, player2Name: string, mode: string | n
     keys[e.key] = true;
     if (waitingForServe && ["w", "s", "ArrowUp", "ArrowDown"].includes(e.key)) serveBall();
   });
-  
+
   document.addEventListener("keyup", (e) => (keys[e.key] = false));
 
   pauseBtn.addEventListener("click", () => {
@@ -372,7 +343,6 @@ function init1vs1Game(player1Name: string, player2Name: string, mode: string | n
     pauseBtn.setAttribute('data-i18n', gamePaused ? "Resume" : "Pause");
   });
 
-  // Gestion du resize
   window.addEventListener("resize", () => {
     updateDimensions();
     if (waitingForServe) {
@@ -382,7 +352,6 @@ function init1vs1Game(player1Name: string, player2Name: string, mode: string | n
     drawPositions();
   });
 
-  // Initialisation
   player1ScoreDisplay.textContent = String(player1Score).padStart(2, "0");
   player2ScoreDisplay.textContent = String(player2Score).padStart(2, "0");
   updateDimensions();
