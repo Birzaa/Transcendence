@@ -10,15 +10,15 @@ export function render1vs1(): void {
 
   const url = new URL(window.location.href);
   const mode = url.searchParams.get("mode");
-  let player1Name = url.searchParams.get("player1") || "Joueur 1";
-  let player2Name = url.searchParams.get("player2") || "Joueur 2";
+  let player1Name = url.searchParams.get("player1") || t("Joueur1");
+  let player2Name = url.searchParams.get("player2") || t("Joueur2");
   let color1 = url.searchParams.get("color1") || "bleu";
   let color2 = url.searchParams.get("color2") || "rose";
   const WIN_SCORE = parseInt(url.searchParams.get("score") || "5", 10);
 
   if (mode === "tournament") {
-    player1Name = url.searchParams.get("player1") || "Joueur 1";
-    player2Name = url.searchParams.get("player2") || "Joueur 2";
+    player1Name = url.searchParams.get("player1") || t("Joueur1");
+    player2Name = url.searchParams.get("player2") || t("Joueur2");
     color1 = url.searchParams.get("color1") || "bleu";
     color2 = url.searchParams.get("color2") || "rose";
   }
