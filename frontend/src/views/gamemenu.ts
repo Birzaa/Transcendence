@@ -1,5 +1,4 @@
 import { navigate, userState } from "../main.js";
-import { updateUI } from "../utils/i18n.js";
 
 export function renderGameMenu(): string {
     const html = `

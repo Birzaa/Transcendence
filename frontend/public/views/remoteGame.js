@@ -1,4 +1,5 @@
 import { navigate } from "../main.js";
+import { t, updateUI } from "../utils/i18n.js";
 const WIN_SCORE = 5;
 export function renderRemoteGame(ws, role, roomId) {
     // Nettoyer la room précédente si elle existe
@@ -14,6 +15,7 @@ export function renderRemoteGame(ws, role, roomId) {
       <div class="flex flex-col items-center mx-auto px-4" style="max-width: 800px;">
         <div class="flex justify-between items-center w-full mb-3 gap-2">
           <button id="back-btn"
+              data-i18n="Remote_Back"
               class="flex-1 px-3 py-1 bg-purple-200 border-2 border-t-purple-400 border-l-purple-400 border-r-white border-b-white
                      text-purple-800 font-bold text-sm shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
                      active:border-t-white active:border-l-white active:border-r-purple-400 active:border-b-purple-400
@@ -33,8 +35,9 @@ export function renderRemoteGame(ws, role, roomId) {
             </div>
           </div>
 
-          <button id="pause-btn" 
-              class="flex-1 px-3 py-1 bg-purple-200 border-2 border-t-purple-400 border-l-purple-400 border-r-white border-b-white 
+          <button id="pause-btn"
+              data-i18n="Remote_Pause"
+              class="flex-1 px-3 py-1 bg-purple-200 border-2 border-t-purple-400 border-l-purple-400 border-r-white border-b-white
                      text-purple-800 font-bold text-sm shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
                      active:border-t-white active:border-l-white active:border-r-purple-400 active:border-b-purple-400
                      active:shadow-none active:translate-y-[2px] transition-all duration-100">
@@ -70,6 +73,8 @@ export function renderRemoteGame(ws, role, roomId) {
       <img src="/images/logo.png" class="fixed left-4 bottom-4 w-14 h-14 animate-float" alt="Chat kawaii">
     </div>
   `;
+    // Appliquer les traductions
+    updateUI();
     const style = document.createElement('style');
     style.textContent = `
     .pixel-font { font-family: 'Press Start 2P', cursive; letter-spacing: 1px; }
@@ -138,19 +143,19 @@ function initRemoteGame(ws, role, roomId) {
     ws.addEventListener('error', (e) => {
         console.error('WS error', e);
         if (!gameEnded) {
-            endGame('Personne');
-            alert('Connexion perdue avec le serveur.');
+            endGame(t('Remote_Nobody'));
+            alert(t('Remote_ConnectionLostAlert'));
         }
     });
     ws.addEventListener('close', (e) => {
         console.warn('WS closed', e);
         if (!gameEnded) {
-            endGame('Personne');
+            endGame(t('Remote_Nobody'));
             const overlay = document.querySelector('.fixed.inset-0');
             if (overlay) {
                 const message = overlay.querySelector('.text-lg');
                 if (message) {
-                    message.textContent = '⚠ La connexion a été interrompue';
+                    message.textContent = t('Remote_ConnectionLost');
                 }
             }
         }
@@ -198,7 +203,8 @@ function initRemoteGame(ws, role, roomId) {
   </div>
 </div>
           <button id="back-to-menu"
-            class="relative px-8 py-2 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400 
+            data-i18n="Remote_BackToMenu"
+            class="relative px-8 py-2 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400
                    text-purple-800 font-bold
                    shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
                    active:shadow-none active:translate-y-[2px] active:border-purple-300
@@ -209,6 +215,7 @@ function initRemoteGame(ws, role, roomId) {
       </div>
     `;
         document.body.appendChild(overlay);
+        updateUI(); // Appliquer les traductions au modal
         const backBtn = overlay.querySelector('#back-to-menu');
         backBtn.addEventListener('click', () => {
             overlay.remove();
@@ -330,7 +337,8 @@ function initRemoteGame(ws, role, roomId) {
     pauseBtn.addEventListener('click', () => {
         if (!gameEnded) {
             gamePaused = !gamePaused;
-            pauseBtn.textContent = gamePaused ? 'Resume' : 'Pause';
+            pauseBtn.textContent = gamePaused ? t('Remote_Resume') : t('Remote_Pause');
+            pauseBtn.setAttribute('data-i18n', gamePaused ? 'Remote_Resume' : 'Remote_Pause');
         }
     });
     // Fonction de nettoyage qui sera appelée quand on quitte la page
