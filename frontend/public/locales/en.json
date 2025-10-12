@@ -92,6 +92,9 @@
   "Solo_Pause": "Pause",
   "Solo_Resume": "Resume",
   "Solo_Instructions": "Use ↑ and ↓ arrows to move your paddle",
+  "Solo_GameResult": "Game Result",
+  "Solo_Wins": "wins the game!",
+  "Solo_BackToMenu": "← Back to menu",
 
   "Monprofil": "My profile",
   "Mesamis": "My friends",

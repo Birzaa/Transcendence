@@ -1,5 +1,6 @@
 import { renderGameMenu } from "./gamemenu.js";
 import { navigate } from "../main.js";
+import { updateUI } from "../utils/i18n.js";
 
 export function renderHome(): void {
   const app = document.getElementById('app')!;
@@ -81,6 +82,7 @@ export function renderHome(): void {
       menuContainer.id = 'game-menu-container';
       menuContainer.innerHTML = renderGameMenu();
       document.body.appendChild(menuContainer);
+      updateUI(); // Applique les traductions au menu nouvellement créé
     }
   });
 

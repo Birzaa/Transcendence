@@ -1,5 +1,6 @@
 import { renderGameMenu } from "./gamemenu.js";
 import { navigate } from "../main.js";
+import { updateUI } from "../utils/i18n.js";
 export function renderHome() {
     const app = document.getElementById('app');
     app.innerHTML = `
@@ -78,6 +79,7 @@ export function renderHome() {
             menuContainer.id = 'game-menu-container';
             menuContainer.innerHTML = renderGameMenu();
             document.body.appendChild(menuContainer);
+            updateUI(); // Applique les traductions au menu nouvellement créé
         }
     });
     document.getElementById('chat-button')?.addEventListener('click', () => {

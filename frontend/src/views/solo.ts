@@ -190,25 +190,25 @@ function initSoloGame(WIN_SCORE: number) {
         const overlay = document.createElement("div");
         overlay.className =
           "absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50";
-      
+
         overlay.innerHTML = `
           <div class="relative max-w-md w-full bg-pink-50 bg-opacity-90 shadow-lg border-2 border-purple-300 text-center">
             <!-- Petit chat décoratif -->
             <img src="/images/logo.png" class="absolute -top-4 -right-4 w-12 h-12 rotate-12" alt="Petit chat">
-      
+
             <!-- Barre violette -->
             <div class="bg-purple-600 text-pink-100 p-3">
               <h1 class="text-xl font-bold" data-i18n="Solo_GameResult">Résultat de la partie</h1>
             </div>
-      
+
             <!-- Contenu -->
             <div class="p-6">
               <h2 class="pixel-font text-lg text-purple-700 mb-6">
-                ☆ <span data-i18n="Solo_Winner">${winner}</span> <span data-i18n="Solo_Wins">gagne la partie !</span> ☆
+                ☆ ${winner} <span data-i18n="Solo_Wins">gagne la partie !</span> ☆
               </h2>
               <button id="back-menu"
                 data-i18n="Solo_BackToMenu"
-                class="px-6 py-2 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400 
+                class="px-6 py-2 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400
                        text-purple-800 font-bold shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
                        active:shadow-none active:translate-y-[2px] active:border-purple-300 transition-all duration-100">
                 ← Retour au menu
@@ -216,10 +216,10 @@ function initSoloGame(WIN_SCORE: number) {
             </div>
           </div>
         `;
-      
+
         gameContainer.appendChild(overlay);
         updateUI(); // Appliquer les traductions sur le modal
-      
+
         document.getElementById("back-menu")?.addEventListener("click", () => {
             navigate("/");
         });

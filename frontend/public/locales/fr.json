@@ -92,6 +92,9 @@
   "Solo_Pause": "Pause",
   "Solo_Resume": "Reprendre",
   "Solo_Instructions": "Utilisez ↑ et ↓ pour déplacer votre raquette",
+  "Solo_GameResult": "Résultat de la partie",
+  "Solo_Wins": "gagne la partie !",
+  "Solo_BackToMenu": "← Retour au menu",
 
   "Monprofil": "Mon profil",
   "Mesamis": "Mes amis",

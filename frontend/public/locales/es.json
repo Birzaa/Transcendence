@@ -92,6 +92,9 @@
   "Solo_Pause": "Pausa",
   "Solo_Resume": "Continuar",
   "Solo_Instructions": "Usa ↑ y ↓ para mover tu raqueta",
+  "Solo_GameResult": "Resultado de la partida",
+  "Solo_Wins": "gana la partida!",
+  "Solo_BackToMenu": "← Volver al menú",
 
   "Monprofil": "Mi perfil",
   "Mesamis": "Mis amigos",
