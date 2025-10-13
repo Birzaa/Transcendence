@@ -1,4 +1,4 @@
-import { navigate } from "../main.js";
+import { navigate, userState } from "../main.js";
 import { t, updateUI } from "../utils/i18n.js";
 export function renderRemoteGame(ws, role, roomId) {
     // Nettoyer la room précédente si elle existe
@@ -12,6 +12,7 @@ export function renderRemoteGame(ws, role, roomId) {
     // Récupérer les options depuis localStorage
     const myColor = localStorage.getItem("myRemoteColor") || "bleu";
     const WIN_SCORE = parseInt(localStorage.getItem("remoteScore") || "5", 10);
+    const myUsername = userState.currentUsername || "Joueur";
     // L'hôte est paddle1 (gauche), le guest est paddle2 (droite)
     const color1 = role === 'host' ? myColor : "rose"; // Host utilise sa couleur
     const color2 = role === 'guest' ? myColor : "bleu"; // Guest utilise sa couleur
@@ -30,12 +31,12 @@ export function renderRemoteGame(ws, role, roomId) {
 
           <div class="flex-1 flex justify-center items-center gap-4 pixel-font" style="font-size: 1.25rem;">
             <div class="text-center">
-              <div class="text-purple-300 text-xs">JOUEUR 1 (W/S)</div>
+              <div id="player1-name" class="text-purple-300 text-xs">${role === 'host' ? myUsername : '...'} (W/S)</div>
               <span id="player1-score" class="text-yellow-300">00</span>
             </div>
             <span class="text-white">:</span>
             <div class="text-center">
-              <div class="text-pink-300 text-xs">JOUEUR 2 (↑/↓)</div>
+              <div id="player2-name" class="text-pink-300 text-xs">${role === 'guest' ? myUsername : '...'} (↑/↓)</div>
               <span id="player2-score" class="text-yellow-300">00</span>
             </div>
           </div>
@@ -90,9 +91,9 @@ export function renderRemoteGame(ws, role, roomId) {
     #net { z-index: 1; }
   `;
     document.head.appendChild(style);
-    initRemoteGame(ws, role, roomId, WIN_SCORE);
+    initRemoteGame(ws, role, roomId, WIN_SCORE, myUsername);
 }
-function initRemoteGame(ws, role, roomId, WIN_SCORE) {
+function initRemoteGame(ws, role, roomId, WIN_SCORE, myUsername) {
     const gameContainer = document.getElementById('game-container');
     const paddle1 = document.getElementById('paddle1');
     const paddle2 = document.getElementById('paddle2');
@@ -100,6 +101,11 @@ function initRemoteGame(ws, role, roomId, WIN_SCORE) {
     const score1El = document.getElementById('player1-score');
     const score2El = document.getElementById('player2-score');
     const pauseBtn = document.getElementById('pause-btn');
+    const player1NameEl = document.getElementById('player1-name');
+    const player2NameEl = document.getElementById('player2-name');
+    // Stocker les noms des joueurs
+    let hostUsername = role === 'host' ? myUsername : '';
+    let guestUsername = role === 'guest' ? myUsername : '';
     let gameWidth = gameContainer.clientWidth;
     let gameHeight = gameContainer.clientHeight;
     let paddleHeight = paddle1.offsetHeight;
@@ -141,6 +147,23 @@ function initRemoteGame(ws, role, roomId, WIN_SCORE) {
     };
     // Envoyer la couleur avec un petit délai pour s'assurer que la room est bien établie
     setTimeout(sendMyColor, 200);
+    // Fonction pour envoyer le username
+    const sendMyUsername = () => {
+        if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
+                type: 'player_info',
+                roomId,
+                player: role,
+                username: myUsername
+            }));
+            console.log(`[remoteGame] Username envoyé: ${role} = ${myUsername}`);
+        }
+        else {
+            setTimeout(sendMyUsername, 100);
+        }
+    };
+    // Envoyer le username après la couleur
+    setTimeout(sendMyUsername, 250);
     // 📡 Réception messages WS
     ws.addEventListener('message', (event) => {
         try {
@@ -168,6 +191,20 @@ function initRemoteGame(ws, role, roomId, WIN_SCORE) {
                     // L'hôte reçoit la couleur du guest
                     console.log(`[remoteGame] Host met à jour paddle2 (droite) avec couleur ${msg.color}`);
                     paddle2.src = `/images/raquette_${msg.color}.png`;
+                }
+            }
+            // Réception du username de l'adversaire
+            if (msg.type === 'player_info') {
+                console.log(`[remoteGame] Username reçu: ${msg.player} = ${msg.username}, je suis ${role}`);
+                if (msg.player === 'host' && role === 'guest') {
+                    // Le guest reçoit le username de l'hôte
+                    hostUsername = msg.username;
+                    player1NameEl.textContent = `${hostUsername} (W/S)`;
+                }
+                else if (msg.player === 'guest' && role === 'host') {
+                    // L'hôte reçoit le username du guest
+                    guestUsername = msg.username;
+                    player2NameEl.textContent = `${guestUsername} (↑/↓)`;
                 }
             }
             // Le guest reçoit la notification de fin de partie
@@ -303,15 +340,16 @@ function initRemoteGame(ws, role, roomId, WIN_SCORE) {
             s2++;
             if (s2 >= WIN_SCORE) {
                 // AJOUT: Le host envoie la notification au guest
+                const winnerName = guestUsername || "Joueur 2";
                 if (role === 'host' && ws.readyState === WebSocket.OPEN) {
                     const endMsg = {
                         type: 'game_end',
                         roomId,
-                        winner: "Joueur 2"
+                        winner: winnerName
                     };
                     ws.send(JSON.stringify(endMsg));
                 }
-                endGame("Joueur 2");
+                endGame(winnerName);
             }
             else
                 resetBall();
@@ -320,15 +358,16 @@ function initRemoteGame(ws, role, roomId, WIN_SCORE) {
             s1++;
             if (s1 >= WIN_SCORE) {
                 // AJOUT: Le host envoie la notification au guest
+                const winnerName = hostUsername || "Joueur 1";
                 if (role === 'host' && ws.readyState === WebSocket.OPEN) {
                     const endMsg = {
                         type: 'game_end',
                         roomId,
-                        winner: "Joueur 1"
+                        winner: winnerName
                     };
                     ws.send(JSON.stringify(endMsg));
                 }
-                endGame("Joueur 1");
+                endGame(winnerName);
             }
             else
                 resetBall();

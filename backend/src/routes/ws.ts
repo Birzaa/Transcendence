@@ -486,6 +486,27 @@ export default async function setupWebSocket(fastify: FastifyInstance) {
           return;
         }
 
+        // Gestion de l'échange des noms d'utilisateurs
+        if (data.type === "player_info") {
+          const room = gameRooms.get(data.roomId || currentRoomId);
+          if (room) {
+            // Retransmettre le username à l'autre joueur dans la room
+            for (const player of room.players) {
+              if (player.socket !== socket && player.socket.readyState === WebSocket.OPEN) {
+                player.socket.send(JSON.stringify({
+                  type: "player_info",
+                  roomId: room.id,
+                  player: data.player,
+                  username: data.username
+                }));
+                console.log(`[ws] Username relayé: ${data.player} = ${data.username}`);
+                break;
+              }
+            }
+          }
+          return;
+        }
+
         if (data.type === "game_end") {
           const room = gameRooms.get(data.roomId || currentRoomId);
           if (room && room.host === username) {
