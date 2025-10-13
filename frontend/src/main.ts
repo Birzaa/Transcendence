@@ -176,7 +176,7 @@ function render(pathWithQuery: string) {
     case "/game": {
       const mode = params.get("mode");
       if (!mode) renderGameMenu();
-      else if (mode === "solo" || mode === "1v1") renderGameSettings();
+      else if (mode === "solo" || mode === "1v1" || mode === "tournament") renderGameSettings();
       else if (mode === "remote") {
         const roomId = params.get("roomId");
         const role = params.get('role') as 'host' | 'guest';
@@ -185,7 +185,6 @@ function render(pathWithQuery: string) {
           else renderRemoteRoom();
         } else renderRemoteRoom();
       }
-      else if (mode === "tournament") renderTournament();
       else document.getElementById("app")!.innerHTML = `<h1 class="text-center mt-10">Mode "${mode}" non supporté.</h1>`;
       break;
     }

@@ -8,6 +8,7 @@ export function renderSoloGame() {
     const url = new URL(window.location.href);
     let playerName = url.searchParams.get("player1") || "Joueur 1";
     const color1 = url.searchParams.get("color1") || "bleu";
+    const color2 = url.searchParams.get("color2") || "gris";
     const WIN_SCORE = parseInt(url.searchParams.get("score") || "5", 10);
     // Charge police pixel si absente
     if (!document.querySelector('link[href*="Press+Start+2P"]')) {
@@ -70,7 +71,7 @@ export function renderSoloGame() {
                      style="width: 22px; height: 96px;"
                      alt="paddle1">
                 <img id="ai-paddle"
-                     src="/images/raquette_gris.png"
+                     src="/images/raquette_${color2}.png"
                      class="absolute right-4"
                      style="width: 22px; height: 96px;"
                      alt="paddle2">

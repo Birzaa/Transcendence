@@ -1,4 +1,5 @@
 import { navigate } from "../main.js";
+import { updateUI } from "../utils/i18n.js";
 
 export function renderGameSettings(): void {
     const app = document.getElementById("app");
@@ -11,16 +12,18 @@ export function renderGameSettings(): void {
     const color2 = url.searchParams.get("color2");
     const score = url.searchParams.get("score");
 
+    // Pour le tournoi, rediriger directement vers la page d'inscription des joueurs
+    if (mode === "tournament") {
+        import("./tournament.js").then((m) => m.renderTournament());
+        return;
+    }
+
     if (mode === "1v1" && color1 && color2 && score) {
         import("./1vs1.js").then((m) => m.render1vs1());
         return;
     }
-    if (mode === "solo" && color1 && score) {
+    if (mode === "solo" && color1 && color2 && score) {
         import("./solo.js").then((m) => m.renderSoloGame());
-        return;
-    }
-    if (mode === "tournament" && color1 && color2) {
-        import("./tournament.js").then((m) => m.renderTournament());
         return;
     }
 
@@ -29,16 +32,16 @@ export function renderGameSettings(): void {
         <div class="min-h-screen flex items-center justify-center">
             <div class="max-w-lg w-full bg-pink-50 bg-opacity-95 shadow-lg border-2 border-purple-300">
                 <div class="bg-purple-600 text-pink-100 p-3">
-                    <h1 class="text-xl font-bold text-center" data-i18n="${mode === "1v1" ? "1vs1" : "ModeSolo"}">
-                        ${mode === "1v1" ? "1 vs 1" : "Solo Mode"}
+                    <h1 class="text-xl font-bold text-center" data-i18n="${mode === "1v1" ? "1vs1" : mode === "tournament" ? "Tournoi" : "ModeSolo"}">
+                        ${mode === "1v1" ? "1 vs 1" : mode === "tournament" ? "Tournoi" : "Solo Mode"}
                     </h1>
                 </div>
                 <div class="p-6">
                     <form id="settings-form" class="space-y-6">
 
                         <!-- Raquette joueur 1 -->
-                        <div> 
-                            <h3 class="text-purple-600 font-bold text-center mb-2" data-i18n="Solo_Player">PLAYER</h3>
+                        <div>
+                            <h3 class="text-purple-600 font-bold text-center mb-2" data-i18n="${mode==="solo"?"Solo_Player":"Joueur1"}">${mode==="solo"?"JOUEUR":"Joueur 1"}</h3>
                             <div class="pt-4 flex justify-center gap-2 flex-wrap">
                                 ${["bleu","vert","jaune","orange","rose","rouge","violet","gris"].map(c => `
                                     <label>
@@ -49,11 +52,11 @@ export function renderGameSettings(): void {
                             </div>
                         </div>
 
-                        <!-- Raquette joueur 2 (seulement en 1v1) -->
-                        ${mode==="1v1"?`
+                        <!-- Raquette joueur 2 (en 1v1 ou solo) -->
+                        ${mode==="1v1" || mode==="solo"?`
                         <div>
-                            <h3 class="text-purple-600 font-bold text-center mb-2" data-i18n="Solo_Bot">BOT</h3>
-                            <div class="pt-4 flex justify-center gap-2">
+                            <h3 class="text-purple-600 font-bold text-center mb-2" data-i18n="${mode==="solo"?"Solo_Bot":"Joueur2"}">${mode==="solo"?"BOT":"Joueur 2"}</h3>
+                            <div class="pt-4 flex justify-center gap-2 flex-wrap">
                                 ${["bleu","vert","jaune","orange","rose","rouge","violet","gris"].map(c => `
                                     <label>
                                         <input type="radio" name="color2" value="${c}" ${c==="gris"?"checked":""} class="hidden">
@@ -64,7 +67,8 @@ export function renderGameSettings(): void {
                         </div>
                         `:""}
 
-                        <!-- Score limite -->
+                        <!-- Score limite (pas pour le tournoi) -->
+                        ${mode !== "tournament" ? `
                         <div class="flex items-center justify-center gap-3">
                             <label for="score" class="text-purple-600 font-bold text-center" data-i18n="Score">Score to reach</label>
                             <input id="score" name="score" type="number" value="5" min="1" max="20"
@@ -72,6 +76,7 @@ export function renderGameSettings(): void {
                                 text-purple-800 font-bold shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
                                 active:shadow-none active:translate-y-[2px] active:border-purple-300 transition-all duration-100" />
                         </div>
+                        ` : ""}
 
                         <div class="pt-4 flex justify-center">
                             <button type="submit" class="relative px-8 py-2 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400
@@ -86,6 +91,9 @@ export function renderGameSettings(): void {
         </div>
     </div>
     `;
+
+    // Appliquer les traductions
+    updateUI();
 
     // gestion visuelle
     const updateHighlight = (name: string) => {
@@ -104,12 +112,12 @@ export function renderGameSettings(): void {
         e.preventDefault();
         const formData = new FormData(form);
         const color1 = (formData.get("color1") as string) || "rose";
-        const color2 = mode === "1v1" || mode === "tournament" ? ((formData.get("color2") as string) || "bleu") : "";
+        const color2 = mode === "1v1" || mode === "solo" ? ((formData.get("color2") as string) || "gris") : "";
         const score = (formData.get("score") as string) || "5";
         if (mode === "1v1") {
             navigate(`/game?mode=1v1&color1=${color1}&color2=${color2}&score=${score}`);
         } else if (mode === "solo") {
-            navigate(`/game?mode=solo&color1=${color1}&score=${score}`);
+            navigate(`/game?mode=solo&color1=${color1}&color2=${color2}&score=${score}`);
         }
     });
 }

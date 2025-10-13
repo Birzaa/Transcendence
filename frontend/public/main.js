@@ -170,7 +170,7 @@ function render(pathWithQuery) {
             const mode = params.get("mode");
             if (!mode)
                 renderGameMenu();
-            else if (mode === "solo" || mode === "1v1")
+            else if (mode === "solo" || mode === "1v1" || mode === "tournament")
                 renderGameSettings();
             else if (mode === "remote") {
                 const roomId = params.get("roomId");
@@ -184,8 +184,6 @@ function render(pathWithQuery) {
                 else
                     renderRemoteRoom();
             }
-            else if (mode === "tournament")
-                renderTournament();
             else
                 document.getElementById("app").innerHTML = `<h1 class="text-center mt-10">Mode "${mode}" non supporté.</h1>`;
             break;

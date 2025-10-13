@@ -884,6 +884,10 @@ video {
   width: 100%;
 }
 
+.w-6 {
+  width: 1.5rem;
+}
+
 .max-w-2xl {
   max-width: 42rem;
 }
@@ -1560,6 +1564,10 @@ video {
 
 .pt-\[190px\] {
   padding-top: 190px;
+}
+
+.pl-28 {
+  padding-left: 7rem;
 }
 
 .text-center {

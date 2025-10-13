@@ -8,17 +8,12 @@ export function render1vs1() {
         return;
     const url = new URL(window.location.href);
     const mode = url.searchParams.get("mode");
+    const hasCustomNames = url.searchParams.has("player1") || url.searchParams.has("player2");
     let player1Name = url.searchParams.get("player1") || t("Joueur1");
     let player2Name = url.searchParams.get("player2") || t("Joueur2");
     let color1 = url.searchParams.get("color1") || "bleu";
     let color2 = url.searchParams.get("color2") || "rose";
     const WIN_SCORE = parseInt(url.searchParams.get("score") || "5", 10);
-    if (mode === "tournament") {
-        player1Name = url.searchParams.get("player1") || t("Joueur1");
-        player2Name = url.searchParams.get("player2") || t("Joueur2");
-        color1 = url.searchParams.get("color1") || "bleu";
-        color2 = url.searchParams.get("color2") || "rose";
-    }
     // Charge la police pixel si absente
     if (!document.querySelector('link[href*="Press+Start+2P"]')) {
         const fontLink = document.createElement("link");
@@ -41,12 +36,12 @@ export function render1vs1() {
 
           <div class="flex-1 flex justify-center items-center gap-4 pixel-font" style="font-size: 1.25rem;">
             <div class="text-center">
-              <div class="text-purple-300 text-xs" id="player1-label" data-i18n="Joueur1">${player1Name} (W/S)</div>
+              <div class="text-purple-300 text-xs" id="player1-label" ${hasCustomNames ? '' : 'data-i18n="Joueur1"'}>${player1Name} (W/S)</div>
               <span id="player1-score" class="text-yellow-300">00</span>
             </div>
             <span class="text-white">:</span>
             <div class="text-center">
-              <div class="text-pink-300 text-xs" id="player2-label" data-i18n="Joueur2">${player2Name} (↑/↓)</div>
+              <div class="text-pink-300 text-xs" id="player2-label" ${hasCustomNames ? '' : 'data-i18n="Joueur2"'}>${player2Name} (↑/↓)</div>
               <span id="player2-score" class="text-yellow-300">00</span>
             </div>
           </div>
@@ -211,6 +206,9 @@ function init1vs1Game(player1Name, player2Name, mode, WIN_SCORE) {
         matches[currentMatchIndex].winner = winner;
         localStorage.setItem("tournamentMatches", JSON.stringify(matches));
         const allDone = matches.every((m) => m.winner);
+        // Récupérer la map des joueurs avec leurs couleurs et le score
+        const playersMap = JSON.parse(localStorage.getItem("tournamentPlayers") || "{}");
+        const score = localStorage.getItem("tournamentScore") || "5";
         if (allDone && matches.length === 1) {
             renderTournamentWinner(winner);
             return;
@@ -219,21 +217,33 @@ function init1vs1Game(player1Name, player2Name, mode, WIN_SCORE) {
             const winners = matches.map((m) => m.winner);
             const newRound = [];
             for (let i = 0; i < winners.length; i += 2) {
-                if (i + 1 < winners.length)
-                    newRound.push({ p1: winners[i], p2: winners[i + 1] });
-                else
-                    newRound.push({ p1: winners[i], p2: "— (qualifié d'office)" });
+                if (i + 1 < winners.length) {
+                    newRound.push({
+                        p1: { name: winners[i], color: playersMap[winners[i]] || "bleu" },
+                        p2: { name: winners[i + 1], color: playersMap[winners[i + 1]] || "rose" }
+                    });
+                }
+                else {
+                    newRound.push({
+                        p1: { name: winners[i], color: playersMap[winners[i]] || "bleu" },
+                        p2: null
+                    });
+                }
             }
             localStorage.setItem("tournamentMatches", JSON.stringify(newRound));
             localStorage.setItem("currentTournamentMatch", "0");
-            navigate(`/game?mode=tournament&player1=${encodeURIComponent(newRound[0].p1)}&player2=${encodeURIComponent(newRound[0].p2)}`);
+            navigate(`/game?mode=tournament&player1=${encodeURIComponent(newRound[0].p1.name)}&player2=${encodeURIComponent(newRound[0].p2?.name || "— (qualifié d'office)")}&color1=${newRound[0].p1.color}&color2=${newRound[0].p2?.color || "gris"}&score=${score}`);
         }
         else {
             currentMatchIndex++;
             localStorage.setItem("currentTournamentMatch", currentMatchIndex.toString());
             if (currentMatchIndex < matches.length) {
                 const next = matches[currentMatchIndex];
-                navigate(`/game?mode=tournament&player1=${encodeURIComponent(next.p1)}&player2=${encodeURIComponent(next.p2)}`);
+                const p1Name = typeof next.p1 === "object" ? next.p1.name : next.p1;
+                const p2Name = next.p2 ? (typeof next.p2 === "object" ? next.p2.name : next.p2) : "— (qualifié d'office)";
+                const color1 = playersMap[p1Name] || "bleu";
+                const color2 = playersMap[p2Name] || "rose";
+                navigate(`/game?mode=tournament&player1=${encodeURIComponent(p1Name)}&player2=${encodeURIComponent(p2Name)}&color1=${color1}&color2=${color2}&score=${score}`);
             }
             else {
                 renderTournamentWinner(winner);
