@@ -1,5 +1,5 @@
 import { renderRemoteGame } from "./remoteGame.js";
-import { userState } from "../main.js";
+import { userState, navigate } from "../main.js";
 import { t, updateUI } from "../utils/i18n.js";
 
 // Déclaration globale pour accéder à la socket et au rôle
@@ -13,7 +13,7 @@ export function renderRemoteRoom(): void {
   const existingMenu = document.getElementById("game-menu-container");
   if (existingMenu) existingMenu.remove();
 
-  // Construire l’URL WS
+  // Construire l'URL WS
   const WS_URL = (() => {
     const u = new URL(window.location.href);
     const proto = u.protocol === "https:" ? "wss:" : "ws:";
@@ -22,6 +22,19 @@ export function renderRemoteRoom(): void {
 
   const app = document.getElementById("app");
   if (!app) return;
+
+  // Vérifier si le joueur a configuré sa raquette
+  const url = new URL(window.location.href);
+  const myColor = url.searchParams.get("myColor");
+
+  // Si la couleur n'est pas configurée, afficher la page de sélection
+  if (!myColor) {
+    renderRemoteColorPicker();
+    return;
+  }
+
+  // Sauvegarder la couleur du joueur dans localStorage
+  localStorage.setItem("myRemoteColor", myColor);
 
   app.innerHTML = `
     <div class="min-h-screen bg-[url('/images/background.png')] bg-cover bg-center bg-no-repeat bg-fixed p-4 pt-[110px]">
@@ -37,6 +50,13 @@ export function renderRemoteRoom(): void {
               <h3 class="font-bold text-purple-800 flex items-center">
                 <span class="text-purple-300 mr-2">☆</span> <span data-i18n="Remote_CreateGame">Créer une partie</span>
               </h3>
+              <div class="flex items-center justify-center gap-3 mb-2">
+                <label for="win-score" class="text-purple-600 font-bold text-center" data-i18n="Score">Score à atteindre</label>
+                <input id="win-score" name="score" type="number" value="5" min="1" max="20"
+                  class="px-2 py-1 relative bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400
+                  text-purple-800 font-bold shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
+                  active:shadow-none active:translate-y-[2px] active:border-purple-300 transition-all duration-100 w-20" />
+              </div>
               <button id="create-room"
                 data-i18n="Remote_CreateRoom"
                 class="relative px-6 py-3 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400
@@ -208,6 +228,11 @@ export function renderRemoteRoom(): void {
       return;
     }
 
+    // Récupérer et sauvegarder le score choisi par l'hôte
+    const scoreInput = document.getElementById("win-score") as HTMLInputElement;
+    const score = scoreInput?.value || "5";
+    localStorage.setItem("remoteScore", score);
+
     const w = getWebSocket();
     w.send(JSON.stringify({ type: "create_room" }));
   };
@@ -244,6 +269,9 @@ export function renderRemoteRoom(): void {
     u.searchParams.set("mode", "remote");
     u.searchParams.set("roomId", currentRoomId);
     u.searchParams.set("role", "guest");
+    // Ajouter le score défini par l'hôte
+    const score = localStorage.getItem("remoteScore") || "5";
+    u.searchParams.set("score", score);
     await navigator.clipboard.writeText(u.toString());
     copyLinkBtn.textContent = t("Remote_LinkCopied");
     setTimeout(
@@ -251,4 +279,82 @@ export function renderRemoteRoom(): void {
       2000
     );
   };
+}
+
+function renderRemoteColorPicker(): void {
+  const app = document.getElementById("app");
+  if (!app) return;
+
+  // Vérifier si on arrive depuis un lien d'invitation avec le score
+  const url = new URL(window.location.href);
+  const scoreFromUrl = url.searchParams.get("score");
+  if (scoreFromUrl) {
+    localStorage.setItem("remoteScore", scoreFromUrl);
+  }
+
+  app.innerHTML = `
+    <div class="min-h-screen bg-[url('/images/background.png')] bg-cover bg-center bg-no-repeat bg-fixed p-4">
+      <div class="min-h-screen flex items-center justify-center">
+        <div class="max-w-lg w-full bg-pink-50 bg-opacity-95 shadow-lg border-2 border-purple-300">
+          <div class="bg-purple-600 text-pink-100 p-3">
+            <h1 class="text-xl font-bold text-center" data-i18n="Remote_Title">Pong Remote</h1>
+          </div>
+          <div class="p-6">
+            <form id="color-picker-form" class="space-y-6">
+
+              <!-- Choix de raquette -->
+              <div>
+                <h3 class="text-purple-600 font-bold text-center mb-2">Choisissez votre raquette</h3>
+                <div class="pt-4 flex justify-center gap-2 flex-wrap">
+                  ${["bleu","vert","jaune","orange","rose","rouge","violet","gris"].map(c => `
+                    <label>
+                      <input type="radio" name="myColor" value="${c}" ${c==="bleu"?"checked":""} class="hidden">
+                      <img src="/images/raquette_${c}.png" class="paddle-option cursor-pointer w-7 h-24 border-2 ${c==="bleu"?"border-purple-400":"border-transparent"} rounded" />
+                    </label>
+                  `).join("")}
+                </div>
+              </div>
+
+              <div class="pt-4 flex justify-center">
+                <button type="submit" class="relative px-8 py-2 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400
+                  text-purple-800 font-bold shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
+                  active:shadow-none active:translate-y-[2px] active:border-purple-300 transition-all duration-100" data-i18n="Start">
+                  Continuer
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Appliquer les traductions
+  updateUI();
+
+  // Gestion visuelle des sélections de raquettes
+  const updateHighlight = () => {
+    document.querySelectorAll<HTMLInputElement>('input[name="myColor"]').forEach(r => {
+      const img = r.nextElementSibling as HTMLImageElement;
+      if (img) img.style.borderColor = r.checked ? "#9e8bb0ff" : "transparent";
+    });
+  };
+
+  document.querySelectorAll<HTMLInputElement>('input[name="myColor"]').forEach(input => {
+    input.addEventListener("change", () => updateHighlight());
+  });
+
+  // Soumission du formulaire
+  const form = document.getElementById("color-picker-form") as HTMLFormElement;
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const formData = new FormData(form);
+    const myColor = (formData.get("myColor") as string) || "bleu";
+
+    // Rediriger vers la page remote avec la couleur choisie
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.set("myColor", myColor);
+    window.history.pushState({}, "", newUrl.toString());
+    renderRemoteRoom();
+  });
 }

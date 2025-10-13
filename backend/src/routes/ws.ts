@@ -454,13 +454,33 @@ export default async function setupWebSocket(fastify: FastifyInstance) {
         if (data.type === "paddle_move") {
           const room = gameRooms.get(data.roomId || currentRoomId);
           // Seul le GUEST est censé envoyer paddle_move (car il contrôle P2)
-          if (room && room.host !== username) { 
+          if (room && room.host !== username) {
             // Relayer le mouvement uniquement au HOST
             for (const player of room.players) {
                 if (player.username === room.host && player.socket.readyState === WebSocket.OPEN) {
                     player.socket.send(JSON.stringify({ type: "paddle_move", roomId: room.id, player: "guest", y: data.y }));
                     break;
                 }
+            }
+          }
+          return;
+        }
+
+        // Gestion de l'échange des couleurs de raquettes
+        if (data.type === "player_color") {
+          const room = gameRooms.get(data.roomId || currentRoomId);
+          if (room) {
+            // Retransmettre la couleur à l'autre joueur dans la room
+            for (const player of room.players) {
+              if (player.socket !== socket && player.socket.readyState === WebSocket.OPEN) {
+                player.socket.send(JSON.stringify({
+                  type: "player_color",
+                  roomId: room.id,
+                  player: data.player,
+                  color: data.color
+                }));
+                break;
+              }
             }
           }
           return;

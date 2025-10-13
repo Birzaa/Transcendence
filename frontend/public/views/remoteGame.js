@@ -1,6 +1,5 @@
 import { navigate } from "../main.js";
 import { t, updateUI } from "../utils/i18n.js";
-const WIN_SCORE = 5;
 export function renderRemoteGame(ws, role, roomId) {
     // Nettoyer la room précédente si elle existe
     const previousCleanup = window.__remoteGameCleanup;
@@ -10,6 +9,12 @@ export function renderRemoteGame(ws, role, roomId) {
     const app = document.getElementById('app');
     if (!app)
         return;
+    // Récupérer les options depuis localStorage
+    const myColor = localStorage.getItem("myRemoteColor") || "bleu";
+    const WIN_SCORE = parseInt(localStorage.getItem("remoteScore") || "5", 10);
+    // L'hôte est paddle1 (gauche), le guest est paddle2 (droite)
+    const color1 = role === 'host' ? myColor : "rose"; // Host utilise sa couleur
+    const color2 = role === 'guest' ? myColor : "bleu"; // Guest utilise sa couleur
     app.innerHTML = `
     <div class="min-h-screen bg-[url('/images/background.png')] bg-cover bg-fixed pt-[190px] pb-4">
       <div class="flex flex-col items-center mx-auto px-4" style="max-width: 800px;">
@@ -53,12 +58,12 @@ export function renderRemoteGame(ws, role, roomId) {
                style="width: 30px; height: 30px;"
                alt="ball">
           <img id="paddle1"
-               src="/images/raquette_bleu.png"
+               src="/images/raquette_${color1}.png"
                class="absolute left-4"
                style="width: 22px; height: 96px;"
                alt="paddle1">
           <img id="paddle2"
-               src="/images/raquette_rose.png"
+               src="/images/raquette_${color2}.png"
                class="absolute right-4"
                style="width: 22px; height: 96px;"
                alt="paddle2">
@@ -85,9 +90,9 @@ export function renderRemoteGame(ws, role, roomId) {
     #net { z-index: 1; }
   `;
     document.head.appendChild(style);
-    initRemoteGame(ws, role, roomId);
+    initRemoteGame(ws, role, roomId, WIN_SCORE);
 }
-function initRemoteGame(ws, role, roomId) {
+function initRemoteGame(ws, role, roomId, WIN_SCORE) {
     const gameContainer = document.getElementById('game-container');
     const paddle1 = document.getElementById('paddle1');
     const paddle2 = document.getElementById('paddle2');
@@ -116,6 +121,26 @@ function initRemoteGame(ws, role, roomId) {
     document.addEventListener('keyup', e => keys[e.key] = false);
     let lastSentP2Y = p2Y;
     const PADDLE_MOVE_THRESHOLD = 2;
+    // Envoyer ma couleur à l'autre joueur via WebSocket
+    const myColor = localStorage.getItem("myRemoteColor") || "bleu";
+    // Fonction pour envoyer la couleur
+    const sendMyColor = () => {
+        if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
+                type: 'player_color',
+                roomId,
+                player: role,
+                color: myColor
+            }));
+            console.log(`[remoteGame] Couleur envoyée: ${role} = ${myColor}`);
+        }
+        else {
+            // Réessayer si le WebSocket n'est pas encore ouvert
+            setTimeout(sendMyColor, 100);
+        }
+    };
+    // Envoyer la couleur avec un petit délai pour s'assurer que la room est bien établie
+    setTimeout(sendMyColor, 200);
     // 📡 Réception messages WS
     ws.addEventListener('message', (event) => {
         try {
@@ -131,7 +156,21 @@ function initRemoteGame(ws, role, roomId) {
             if (msg.type === 'paddle_move' && role === 'host' && msg.player === 'guest') {
                 p2Y = p2Y + (clampY(msg.y) - p2Y) * 0.7;
             }
-            // AJOUT: Le guest reçoit la notification de fin de partie
+            // Réception de la couleur de l'adversaire
+            if (msg.type === 'player_color') {
+                console.log(`[remoteGame] Couleur reçue: ${msg.player} = ${msg.color}, je suis ${role}`);
+                if (msg.player === 'host' && role === 'guest') {
+                    // Le guest reçoit la couleur de l'hôte
+                    console.log(`[remoteGame] Guest met à jour paddle1 (gauche) avec couleur ${msg.color}`);
+                    paddle1.src = `/images/raquette_${msg.color}.png`;
+                }
+                else if (msg.player === 'guest' && role === 'host') {
+                    // L'hôte reçoit la couleur du guest
+                    console.log(`[remoteGame] Host met à jour paddle2 (droite) avec couleur ${msg.color}`);
+                    paddle2.src = `/images/raquette_${msg.color}.png`;
+                }
+            }
+            // Le guest reçoit la notification de fin de partie
             if (msg.type === 'game_end') {
                 endGame(msg.winner);
             }
@@ -186,22 +225,19 @@ function initRemoteGame(ws, role, roomId) {
         const overlay = document.createElement('div');
         overlay.className = "fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center";
         overlay.innerHTML = `
-     <div class="max-w-md w-full bg-pink-50 bg-opacity-90 shadow-lg border-2 border-purple-300">
-  
-    <!-- Barre violette avec titre -->
-    <div class="bg-purple-600 text-pink-100 p-3">
-    <h1 class="text-xl font-bold text-center" data-i18n="1vs1_Result_partie">
-      Résultat de la partie
-    </h1>
-  </div>
+      <div class="max-w-md w-full bg-pink-50 bg-opacity-90 shadow-lg border-2 border-purple-300">
+        <!-- Barre violette avec titre -->
+        <div class="bg-purple-600 text-pink-100 p-3">
+          <h1 class="text-xl font-bold text-center" data-i18n="1vs1_Result_partie">
+            Résultat de la partie
+          </h1>
+        </div>
 
-  <!-- Contenu principal -->
-  <div class="p-6 text-center">
-    <h2 class="text-lg font-semibold text-purple-700 mb-6" id="winner-text" data-winner="${winner}" data-i18n="WinnerMessage">
-      ☆ ${winner} gagne la partie ! ☆
-    </h2>
-  </div>
-</div>
+        <!-- Contenu principal -->
+        <div class="p-6 text-center">
+          <h2 class="text-lg font-semibold text-purple-700 mb-6" id="winner-text" data-winner="${winner}" data-i18n="WinnerMessage">
+            ☆ ${winner} gagne la partie ! ☆
+          </h2>
           <button id="back-to-menu"
             data-i18n="Remote_BackToMenu"
             class="relative px-8 py-2 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400
