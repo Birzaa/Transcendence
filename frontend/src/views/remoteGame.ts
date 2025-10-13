@@ -54,6 +54,14 @@ export function renderRemoteGame(ws: WebSocket, role: Role, roomId: string): voi
   const app = document.getElementById('app');
   if (!app) return;
 
+  // Charger la police pixel si absente
+  if (!document.querySelector('link[href*="Press+Start+2P"]')) {
+    const fontLink = document.createElement('link');
+    fontLink.href = 'https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap';
+    fontLink.rel = 'stylesheet';
+    document.head.appendChild(fontLink);
+  }
+
   // Récupérer les options depuis localStorage
   const myColor = localStorage.getItem("myRemoteColor") || "bleu";
   const WIN_SCORE = parseInt(localStorage.getItem("remoteScore") || "5", 10);
@@ -345,7 +353,7 @@ function initRemoteGame(ws: WebSocket, role: Role, roomId: string, WIN_SCORE: nu
 
         <!-- Contenu principal -->
         <div class="p-6 text-center">
-          <h2 class="text-lg font-semibold text-purple-700 mb-6" id="winner-text" data-winner="${winner}" data-i18n="WinnerMessage">
+          <h2 class="pixel-font text-lg text-purple-700 mb-6" id="winner-text" data-winner="${winner}" data-i18n="WinnerMessage">
             ☆ ${winner} gagne la partie ! ☆
           </h2>
           <button id="back-to-menu"
@@ -364,9 +372,18 @@ function initRemoteGame(ws: WebSocket, role: Role, roomId: string, WIN_SCORE: nu
     document.body.appendChild(overlay);
     updateUI(); // Appliquer les traductions au modal
 
-    const backBtn = overlay.querySelector('#back-to-menu') as HTMLButtonElement;
-    backBtn.addEventListener('click', () => {
-      overlay.remove();
+    const modalBackBtn = overlay.querySelector('#back-to-menu') as HTMLButtonElement;
+    modalBackBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Nettoyer d'abord
+      cleanup();
+
+      // Supprimer tous les overlays/modals
+      document.querySelectorAll('.fixed.inset-0').forEach(el => el.remove());
+
+      // Naviguer vers le menu
       navigate('/');
     });
   }   
