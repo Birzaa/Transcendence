@@ -242,6 +242,14 @@ function initRemoteGame(ws: WebSocket, role: Role, roomId: string, WIN_SCORE: nu
         ({ s1, s2, waitingForServe } = msg.state);
         ballX = ballX + (msg.state.ballX - ballX) * 0.4;
         ballY = ballY + (msg.state.ballY - ballY) * 0.4;
+
+        // Appliquer les limites des murs côté guest aussi
+        if (ballY <= 0) {
+          ballY = 0;
+        } else if (ballY + ballSize >= gameHeight) {
+          ballY = gameHeight - ballSize;
+        }
+
         p1Y = p1Y + (msg.state.p1Y - p1Y) * 0.6;
         p2Y = p2Y + (msg.state.p2Y - p2Y) * 0.6;
         updatePositions();
@@ -414,15 +422,6 @@ function initRemoteGame(ws: WebSocket, role: Role, roomId: string, WIN_SCORE: nu
   }
 
 function handleCollisions() {
-    // Collisions avec les murs haut et bas
-    if (ballY <= 0) {
-      ballY = 0;
-      ballVY = -ballVY;
-    } else if (ballY + ballSize >= gameHeight) {
-      ballY = gameHeight - ballSize;
-      ballVY = -ballVY;
-    }
-
     // Positions des raquettes
     const p1Left = paddle1.offsetLeft;
     const p1Right = p1Left + paddle1.offsetWidth;
@@ -492,6 +491,10 @@ function handleCollisions() {
   }
 
   function updatePositions() {
+    // Toujours appliquer les limites des murs avant d'afficher
+    if (ballY < 0) ballY = 0;
+    if (ballY + ballSize > gameHeight) ballY = gameHeight - ballSize;
+
     paddle1.style.top = `${p1Y}px`;
     paddle2.style.top = `${p2Y}px`;
     ball.style.left = `${Math.round(ballX)}px`;
@@ -511,6 +514,16 @@ function handleCollisions() {
         if (!waitingForServe) {
           ballX += ballVX;
           ballY += ballVY;
+
+          // Collisions avec les murs haut et bas
+          if (ballY <= 0) {
+            ballY = 0;
+            ballVY = -ballVY;
+          } else if (ballY + ballSize >= gameHeight) {
+            ballY = gameHeight - ballSize;
+            ballVY = -ballVY;
+          }
+
           handleCollisions();
         }
         sendStateFromHost();
