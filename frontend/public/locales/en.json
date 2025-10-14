@@ -71,6 +71,8 @@
   "Profil_Duration": "Duration",
   "Profil_LoadingHistory": "Loading game history... ☆",
   "Profil_TryLater": "Please try again later",
+  "Profil_NotFoundSuffix": "not found",
+  "Profil_PlayerHistoryPrefix": "History of",
 
   "_comment_solo_settings": "Solo & 1v1 game settings",
   "Raquette_Joueur1": "Player 1 Paddle",

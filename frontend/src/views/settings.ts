@@ -13,28 +13,31 @@ export async function renderSettings(): Promise<void> {
 
   const app = document.getElementById("app")!;
   app.innerHTML = `
-  <!-- Conteneur principal avec le fond -->
+  <!-- Fond -->
   <div class="min-h-screen bg-[url('/images/background.png')] bg-cover bg-center bg-no-repeat bg-fixed p-4">
     <div class="min-h-screen flex items-center justify-center">
-      <!-- Bloc centré -->
       <div class="max-w-md w-full bg-pink-50 bg-opacity-90 shadow-lg border-2 border-purple-300">
         
-        <!-- Barre violette -->
+        <!-- Barre de titre -->
         <div class="bg-purple-600 text-pink-100 p-3">
-          <h1 class="text-xl font-bold text-center">🌸 Paramètres du compte 🌸</h1>
+          <h1 class="text-xl font-bold text-center">Paramètres du compte</h1>
         </div>
 
-        <!-- Formulaire -->
+        <!-- Contenu -->
         <div class="p-6">
           <form id="settingsForm" enctype="multipart/form-data" class="space-y-5">
-            
-            <!-- Avatar -->
-            <div class="text-center">
-              <img src="${avatarUrl}" alt="Avatar actuel"
-                   class="w-24 h-24 mx-auto rounded-full border-4 border-purple-300 shadow-md object-cover mb-3" />
-              <label class="block font-semibold text-purple-700 mb-1">✨ Changer d'avatar</label>
-              <input type="file" name="avatar"
-                     class="w-full border-3 border-purple-300 px-3 py-2 bg-white focus:border-purple-400 file:mr-3 file:py-1 file:px-3 file:rounded-none file:border-2 file:border-purple-300 file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200 transition" />
+
+            <!-- Avatar stylé -->
+            <div class="flex flex-col items-center">
+              <div class="relative group cursor-pointer">
+                <img src="${avatarUrl}" alt="Avatar actuel"
+                     class="w-28 h-28 rounded-full border-4 border-purple-300 shadow-md object-cover transition duration-300 group-hover:shadow-[0_0_15px_rgba(192,132,252,0.7)] group-hover:scale-105" />
+                <div class="absolute inset-0 bg-purple-600/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300 rounded-full">
+                  <span class="text-pink-100 text-sm font-semibold">Changer</span>
+                </div>
+              </div>
+              <input id="avatarInput" type="file" name="avatar" accept="image/*" class="hidden" />
+              <p class="text-xs text-purple-500 mt-2 italic">Clique sur ton avatar pour le changer ✨</p>
             </div>
 
             <!-- Nom -->
@@ -42,7 +45,7 @@ export async function renderSettings(): Promise<void> {
               <label for="name" class="whitespace-nowrap font-semibold mr-2 text-purple-600 w-32">🧸 Nom</label>
               <span class="text-purple-300 mx-1 text-lg">☆</span>
               <input id="name" name="name" value="${user.name}"
-                     class="flex-1 border-3 border-purple-300 px-3 py-2 bg-white focus:border-purple-400" />
+                     class="flex-1 border-3 border-purple-300 px-3 py-2 bg-white focus:border-purple-400 focus:outline-none transition rounded-none" />
             </div>
 
             <!-- Email -->
@@ -50,15 +53,15 @@ export async function renderSettings(): Promise<void> {
               <label for="email" class="whitespace-nowrap font-semibold mr-2 text-purple-600 w-32">📧 Email</label>
               <span class="text-purple-300 mx-1 text-lg">☆</span>
               <input type="email" id="email" name="email" value="${user.email}"
-                     class="flex-1 border-3 border-purple-300 px-3 py-2 bg-white focus:border-purple-400" />
+                     class="flex-1 border-3 border-purple-300 px-3 py-2 bg-white focus:border-purple-400 focus:outline-none transition rounded-none" />
             </div>
 
-            <!-- Password -->
+            <!-- Mot de passe -->
             <div class="flex items-center">
               <label for="password" class="whitespace-nowrap font-semibold mr-2 text-purple-600 w-32">🔒 Mot de passe</label>
               <span class="text-purple-300 mx-1 text-lg">☆</span>
               <input type="password" id="password" name="password" placeholder="••••••••"
-                     class="flex-1 border-3 border-purple-300 px-3 py-2 bg-white focus:border-purple-400" />
+                     class="flex-1 border-3 border-purple-300 px-3 py-2 bg-white focus:border-purple-400 focus:outline-none transition rounded-none" />
             </div>
 
             <!-- Bouton -->
@@ -79,12 +82,33 @@ export async function renderSettings(): Promise<void> {
   </div>
 `;
 
+  // Sélecteur du conteneur de l'avatar
+  const avatarContainer = document.querySelector(".relative.group") as HTMLDivElement;
+  const avatarInput = document.getElementById("avatarInput") as HTMLInputElement;
+  const avatarImg = avatarContainer.querySelector("img") as HTMLImageElement;
+
+  // Ouvre le sélecteur de fichier en cliquant sur le container (image + overlay)
+  avatarContainer.addEventListener("click", () => avatarInput.click());
+
+  // Prévisualisation immédiate
+  avatarInput.addEventListener("change", (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        avatarImg.src = reader.result as string;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  // Soumission du formulaire
   document.getElementById("settingsForm")?.addEventListener("submit", async (e) => {
     e.preventDefault();
     const form = e.target as HTMLFormElement;
     const formData = new FormData(form);
 
-    // Upload avatar si nécessaire
+    // Upload avatar
     if (formData.get("avatar") && (formData.get("avatar") as File).name !== "") {
       const avatarUpload = new FormData();
       avatarUpload.append("avatar", formData.get("avatar")!);
@@ -118,7 +142,7 @@ export async function renderSettings(): Promise<void> {
     });
 
     if (settingsRes.ok) {
-      alert("Paramètres mis à jour !");
+      alert("🌸 Paramètres mis à jour !");
       renderSettings();
     } else {
       const error = await settingsRes.json();

@@ -125,9 +125,12 @@ export async function renderProfil(playerName) {
     }
     const app = document.getElementById("app");
     const title = invalidUser
-        ? `<span data-i18n="Profil_NotFound">${playerName} not found</span>`
+        // Texte par défaut : PlayerName + " not found"
+        ? `${playerName} <span data-i18n="Profil_NotFoundSuffix">not found</span>`
+        // Texte par défaut : "History of" + PlayerName
         : playerName
-            ? `<span data-i18n="Profil_PlayerHistory">${playerName}'s game history</span>`
+            ? `<span data-i18n="Profil_PlayerHistoryPrefix">History of</span> ${playerName} <span class="ml-1">★</span>`
+            // Texte par défaut : "My game history"
             : `<span data-i18n="Profil_MyHistory">My game history</span>`;
     app.innerHTML = `
     <div class="min-h-screen mt-[128px] bg-[url('/images/background.png')] bg-cover bg-center bg-no-repeat bg-fixed flex">
@@ -252,7 +255,7 @@ export async function renderProfil(playerName) {
         const addFriendBtn = document.createElement("button");
         addFriendBtn.textContent = "➕ Add Friend";
         addFriendBtn.setAttribute("data-i18n", "Profil_AddFriend");
-        addFriendBtn.className = "relative px-6 py-2 bg-blue-200 border-2 border-t-white border-l-white border-r-blue-400 border-b-blue-400 text-blue-900 font-bold shadow-[2px_2px_0px_0px_rgba(59,130,246,0.3)] active:shadow-none active:translate-y-[2px] active:border-blue-300 transition-all duration-100 block mx-auto mb-6";
+        addFriendBtn.className = "relative mt-4 px-6 py-2 bg-blue-200 border-2 border-t-white border-l-white border-r-blue-400 border-b-blue-400 text-blue-900 font-bold shadow-[2px_2px_0px_0px_rgba(59,130,246,0.3)] active:shadow-none active:translate-y-[2px] active:border-blue-300 transition-all duration-100 block mx-auto mb-6";
         addFriendBtn.onclick = async () => {
             const res = await fetch("/api/addFriend", {
                 method: "POST",

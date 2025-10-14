@@ -192,6 +192,9 @@ function initRemoteGame(ws: WebSocket, role: Role, roomId: string, WIN_SCORE: nu
 
   let lastSentP2Y = p2Y;
   const PADDLE_MOVE_THRESHOLD = 2;
+  
+  // Constante pour le lissage de la balle (plus élevé pour le guest)
+  const BALL_LERP_FACTOR_GUEST = 0.8; 
 
   // Envoyer ma couleur à l'autre joueur via WebSocket
   const myColor = localStorage.getItem("myRemoteColor") || "bleu";
@@ -240,8 +243,10 @@ function initRemoteGame(ws: WebSocket, role: Role, roomId: string, WIN_SCORE: nu
 
       if (msg.type === 'game_state' && role === 'guest') {
         ({ s1, s2, waitingForServe } = msg.state);
-        ballX = ballX + (msg.state.ballX - ballX) * 0.4;
-        ballY = ballY + (msg.state.ballY - ballY) * 0.4;
+        
+        // 1. CORRECTION : Lissage plus agressif (0.8) pour réduire le décalage visuel
+        ballX = ballX + (msg.state.ballX - ballX) * BALL_LERP_FACTOR_GUEST;
+        ballY = ballY + (msg.state.ballY - ballY) * BALL_LERP_FACTOR_GUEST;
 
         // Appliquer les limites des murs côté guest aussi
         if (ballY <= 0) {
@@ -249,13 +254,21 @@ function initRemoteGame(ws: WebSocket, role: Role, roomId: string, WIN_SCORE: nu
         } else if (ballY + ballSize >= gameHeight) {
           ballY = gameHeight - ballSize;
         }
-
+        
+        // Lissage du paddle Host (p1Y)
         p1Y = p1Y + (msg.state.p1Y - p1Y) * 0.6;
-        p2Y = p2Y + (msg.state.p2Y - p2Y) * 0.6;
+        
+        // 2. CORRECTION : Ne PAS lisser le propre paddle du Guest (p2Y) 
+        // L'Host reçoit le mouvement du Guest, le renvoie, ce qui crée un conflit de position
+        // On ne met à jour p2Y que si le Guest NE le contrôle PAS localement, mais ici il le contrôle.
+        // On garde la ligne pour p2Y uniquement pour les murs (même si ce n'est pas utilisé)
+        // p2Y = p2Y + (msg.state.p2Y - p2Y) * 0.6; // Ligne retirée
+
         updatePositions();
       }
 
       if (msg.type === 'paddle_move' && role === 'host' && msg.player === 'guest') {
+        // L'Host reçoit le paddle du Guest et le lisse
         p2Y = p2Y + (clampY(msg.y) - p2Y) * 0.7;
       }
 
@@ -352,14 +365,12 @@ function initRemoteGame(ws: WebSocket, role: Role, roomId: string, WIN_SCORE: nu
   
     overlay.innerHTML = `
       <div class="max-w-md w-full bg-pink-50 bg-opacity-90 shadow-lg border-2 border-purple-300">
-        <!-- Barre violette avec titre -->
         <div class="bg-purple-600 text-pink-100 p-3">
           <h1 class="text-xl font-bold text-center" data-i18n="1vs1_Result_partie">
             Résultat de la partie
           </h1>
         </div>
 
-        <!-- Contenu principal -->
         <div class="p-6 text-center">
           <h2 class="pixel-font text-lg text-purple-700 mb-6" id="winner-text" data-winner="${winner}" data-i18n="WinnerMessage">
             ☆ ${winner} gagne la partie ! ☆

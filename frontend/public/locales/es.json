@@ -71,6 +71,8 @@
   "Profil_Duration": "Duración",
   "Profil_LoadingHistory": "Cargando historial de juegos... ☆",
   "Profil_TryLater": "Por favor, inténtalo más tarde",
+  "Profil_NotFoundSuffix": "no encontrado",
+  "Profil_PlayerHistoryPrefix": "Historial de",
 
   "_comment_solo_settings": "Configuración Solo & 1v1",
   "Raquette_Joueur1": "Raqueta Jugador 1",
