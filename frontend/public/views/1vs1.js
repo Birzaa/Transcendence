@@ -34,15 +34,18 @@ export function render1vs1() {
             ← Retour
           </button>
 
-          <div class="flex-1 flex justify-center items-center gap-4 pixel-font" style="font-size: 1.25rem;">
-            <div class="text-center">
-              <div class="text-purple-300 text-xs" id="player1-label" ${hasCustomNames ? '' : 'data-i18n="Joueur1"'}>${player1Name} (W/S)</div>
-              <span id="player1-score" class="text-yellow-300">00</span>
-            </div>
-            <span class="text-white">:</span>
-            <div class="text-center">
-              <div class="text-pink-300 text-xs" id="player2-label" ${hasCustomNames ? '' : 'data-i18n="Joueur2"'}>${player2Name} (↑/↓)</div>
-              <span id="player2-score" class="text-yellow-300">00</span>
+          <div class="flex-1 flex flex-col justify-center items-center gap-1">
+            ${mode === "tournament" ? `<div id="tournament-progress" class="text-xs text-purple-300 font-bold"></div>` : ''}
+            <div class="flex justify-center items-center gap-4 pixel-font" style="font-size: 1.25rem;">
+              <div class="text-center">
+                <div class="text-purple-300 text-xs" id="player1-label" ${hasCustomNames ? '' : 'data-i18n="Joueur1"'}>${player1Name} (W/S)</div>
+                <span id="player1-score" class="text-yellow-300">00</span>
+              </div>
+              <span class="text-white">:</span>
+              <div class="text-center">
+                <div class="text-pink-300 text-xs" id="player2-label" ${hasCustomNames ? '' : 'data-i18n="Joueur2"'}>${player2Name} (↑/↓)</div>
+                <span id="player2-score" class="text-yellow-300">00</span>
+              </div>
             </div>
           </div>
 
@@ -96,7 +99,32 @@ export function render1vs1() {
   `;
     document.head.appendChild(style);
     updateUI(); // 🟢 applique la traduction sur les labels
+    // Afficher la progression du tournoi si mode tournament
+    if (mode === "tournament") {
+        updateTournamentProgress();
+    }
     init1vs1Game(player1Name, player2Name, mode, WIN_SCORE);
+}
+function updateTournamentProgress() {
+    const progressDiv = document.getElementById("tournament-progress");
+    if (!progressDiv)
+        return;
+    const matches = JSON.parse(localStorage.getItem("tournamentMatches") || "[]");
+    const currentMatchIndex = parseInt(localStorage.getItem("currentTournamentMatch") || "0");
+    if (matches.length === 0)
+        return;
+    const roundName = getRoundNameForProgress(matches.length);
+    const matchPosition = `${currentMatchIndex + 1}/${matches.length}`;
+    progressDiv.textContent = `${roundName} - Match ${matchPosition}`;
+}
+function getRoundNameForProgress(matchCount) {
+    if (matchCount === 1)
+        return t("Tournament_Progress_Final");
+    if (matchCount === 2)
+        return t("Tournament_Progress_SemiFinal");
+    if (matchCount === 4)
+        return t("Tournament_Progress_QuarterFinal");
+    return `${t("Tournament_Progress_Round")} (${matchCount} ${t("Tournament_Matches")})`;
 }
 function init1vs1Game(player1Name, player2Name, mode, WIN_SCORE) {
     let player1Score = 0;
@@ -160,6 +188,19 @@ function init1vs1Game(player1Name, player2Name, mode, WIN_SCORE) {
         ball.style.top = `${Math.round(ballY)}px`;
     }
     function showEndMatchScreen(winner) {
+        // Si c'est le mode tournoi, vérifier si c'est le dernier match (finale)
+        if (mode === "tournament") {
+            const matches = JSON.parse(localStorage.getItem("tournamentMatches") || "[]");
+            const currentMatchIndex = parseInt(localStorage.getItem("currentTournamentMatch") || "0");
+            // Si c'est le dernier match du dernier round (finale), aller directement au champion
+            if (matches.length === 1 && currentMatchIndex === 0) {
+                // Petit délai pour l'effet dramatique
+                setTimeout(() => {
+                    renderTournamentWinner(winner);
+                }, 1500);
+                return;
+            }
+        }
         const overlay = document.createElement("div");
         overlay.className =
             "absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50";
@@ -214,7 +255,91 @@ function init1vs1Game(player1Name, player2Name, mode, WIN_SCORE) {
             return;
         }
         if (allDone && matches.length > 1) {
+            // Tous les matchs du round sont finis, afficher le récapitulatif
             const winners = matches.map((m) => m.winner);
+            showRoundSummary(matches, winners, playersMap, score);
+        }
+        else {
+            currentMatchIndex++;
+            localStorage.setItem("currentTournamentMatch", currentMatchIndex.toString());
+            if (currentMatchIndex < matches.length) {
+                const next = matches[currentMatchIndex];
+                const p1Name = typeof next.p1 === "object" ? next.p1.name : next.p1;
+                const p2Name = next.p2 ? (typeof next.p2 === "object" ? next.p2.name : next.p2) : "— (qualifié d'office)";
+                const color1 = playersMap[p1Name] || "bleu";
+                const color2 = playersMap[p2Name] || "rose";
+                navigate(`/game?mode=tournament&player1=${encodeURIComponent(p1Name)}&player2=${encodeURIComponent(p2Name)}&color1=${color1}&color2=${color2}&score=${score}`);
+            }
+            else {
+                renderTournamentWinner(winner);
+            }
+        }
+    }
+    function showRoundSummary(matches, winners, playersMap, score) {
+        const app = document.getElementById("app");
+        if (!app)
+            return;
+        const roundName = getRoundNameForProgress(matches.length);
+        app.innerHTML = `
+      <div class="min-h-screen bg-[url('/images/background.png')] bg-cover bg-center bg-no-repeat bg-fixed p-4">
+        <div class="min-h-screen flex items-center justify-center">
+          <div class="max-w-3xl w-full bg-pink-50 bg-opacity-90 shadow-lg border-2 border-purple-300">
+            <div class="bg-purple-600 text-pink-100 p-3">
+              <h1 class="text-xl font-bold text-center"><span data-i18n="Tournament_RoundResults">Résultats du</span> ${roundName}</h1>
+            </div>
+            <div class="p-6">
+              <div class="space-y-4 mb-6">
+                ${matches.map((match, idx) => `
+                  <div class="border-2 border-purple-300 p-4 rounded bg-white">
+                    <div class="text-sm text-purple-500 mb-2 text-center font-bold"><span data-i18n="Tournament_Match">Match</span> ${idx + 1}</div>
+                    <div class="flex items-center justify-between gap-4">
+                      <div class="flex-1 flex items-center gap-2 ${match.winner === (typeof match.p1 === "object" ? match.p1.name : match.p1) ? 'font-bold' : 'opacity-50'}">
+                        <img src="/images/raquette_${typeof match.p1 === "object" ? match.p1.color : playersMap[match.p1]}.png" class="w-4 h-12" alt="">
+                        <span class="text-purple-800">${typeof match.p1 === "object" ? match.p1.name : match.p1}</span>
+                        ${match.winner === (typeof match.p1 === "object" ? match.p1.name : match.p1) ? '<span class="text-green-600 ml-2" data-i18n="Tournament_Winner">✓ Gagnant</span>' : ''}
+                      </div>
+                      <div class="flex-1 flex items-center gap-2 justify-end ${match.p2 && match.winner === (typeof match.p2 === "object" ? match.p2.name : match.p2) ? 'font-bold' : 'opacity-50'}">
+                        ${match.p2
+            ? `${match.winner === (typeof match.p2 === "object" ? match.p2.name : match.p2) ? '<span class="text-green-600 mr-2" data-i18n="Tournament_Winner">✓ Gagnant</span>' : ''}
+                             <span class="text-purple-800">${typeof match.p2 === "object" ? match.p2.name : match.p2}</span>
+                             <img src="/images/raquette_${typeof match.p2 === "object" ? match.p2.color : playersMap[match.p2]}.png" class="w-4 h-12" alt="">`
+            : '<span class="text-purple-400 italic" data-i18n="Tournament_QualifiedByDefault">Qualifié d\'office</span>'}
+                      </div>
+                    </div>
+                  </div>
+                `).join("")}
+              </div>
+
+              <div class="bg-purple-100 border-2 border-purple-300 p-4 mb-6 rounded text-center">
+                <h3 class="font-bold text-purple-600 mb-2" data-i18n="Tournament_QualifiedNext">Qualifiés pour le prochain round</h3>
+                <div class="flex flex-wrap justify-center gap-3">
+                  ${winners.map(w => `
+                    <div class="flex items-center gap-2 bg-white px-3 py-2 rounded border border-purple-200">
+                      <img src="/images/raquette_${playersMap[w]}.png" class="w-3 h-8" alt="">
+                      <span class="font-semibold text-purple-800">${w}</span>
+                    </div>
+                  `).join("")}
+                </div>
+              </div>
+
+              <div class="flex justify-center">
+                <button id="continue-tournament"
+                        class="relative px-8 py-2 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400
+                              text-purple-800 font-bold
+                              shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
+                              active:shadow-none active:translate-y-[2px] active:border-purple-300
+                              transition-all duration-100"
+                        data-i18n="Tournament_Continue">
+                  Continuer le tournoi →
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+        updateUI();
+        document.getElementById("continue-tournament")?.addEventListener("click", () => {
             const newRound = [];
             for (let i = 0; i < winners.length; i += 2) {
                 if (i + 1 < winners.length) {
@@ -233,22 +358,7 @@ function init1vs1Game(player1Name, player2Name, mode, WIN_SCORE) {
             localStorage.setItem("tournamentMatches", JSON.stringify(newRound));
             localStorage.setItem("currentTournamentMatch", "0");
             navigate(`/game?mode=tournament&player1=${encodeURIComponent(newRound[0].p1.name)}&player2=${encodeURIComponent(newRound[0].p2?.name || "— (qualifié d'office)")}&color1=${newRound[0].p1.color}&color2=${newRound[0].p2?.color || "gris"}&score=${score}`);
-        }
-        else {
-            currentMatchIndex++;
-            localStorage.setItem("currentTournamentMatch", currentMatchIndex.toString());
-            if (currentMatchIndex < matches.length) {
-                const next = matches[currentMatchIndex];
-                const p1Name = typeof next.p1 === "object" ? next.p1.name : next.p1;
-                const p2Name = next.p2 ? (typeof next.p2 === "object" ? next.p2.name : next.p2) : "— (qualifié d'office)";
-                const color1 = playersMap[p1Name] || "bleu";
-                const color2 = playersMap[p2Name] || "rose";
-                navigate(`/game?mode=tournament&player1=${encodeURIComponent(p1Name)}&player2=${encodeURIComponent(p2Name)}&color1=${color1}&color2=${color2}&score=${score}`);
-            }
-            else {
-                renderTournamentWinner(winner);
-            }
-        }
+        });
     }
     function endGame(winner) {
         gamePaused = true;

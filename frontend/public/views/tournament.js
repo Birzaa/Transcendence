@@ -1,5 +1,5 @@
 import { navigate } from "../main.js";
-import { updateUI } from "../utils/i18n.js";
+import { updateUI, t } from "../utils/i18n.js";
 export function renderTournament() {
     const app = document.getElementById("app");
     if (!app)
@@ -123,7 +123,100 @@ export function renderTournament() {
         localStorage.setItem("tournamentScore", score);
         localStorage.setItem("tournamentMatches", JSON.stringify(matches));
         localStorage.setItem("currentTournamentMatch", "0");
+        // Afficher le bracket avant de commencer
+        showTournamentBracket(matches, players.length, score);
+    });
+}
+function showTournamentBracket(matches, totalPlayers, score) {
+    const app = document.getElementById("app");
+    if (!app)
+        return;
+    // Calculer le nombre de rounds nécessaires
+    const roundsNeeded = Math.ceil(Math.log2(totalPlayers));
+    app.innerHTML = `
+    <div class="min-h-screen bg-[url('/images/background.png')] bg-cover bg-center bg-no-repeat bg-fixed p-4">
+      <div class="min-h-screen flex items-center justify-center">
+        <div class="max-w-4xl w-full bg-pink-50 bg-opacity-90 shadow-lg border-2 border-purple-300">
+          <div class="bg-purple-600 text-pink-100 p-3">
+            <h1 class="text-xl font-bold text-center" data-i18n="Tournament_Bracket">Bracket du Tournoi</h1>
+          </div>
+          <div class="p-6">
+            <div class="mb-4 text-center text-purple-700">
+              <p class="font-bold">${totalPlayers} <span data-i18n="Tournament_Players">joueurs</span> - ${roundsNeeded} <span data-i18n="Tournament_Rounds">round(s)</span></p>
+              <p class="text-sm"><span data-i18n="Tournament_ScoreToReach">Score à atteindre</span> : ${score}</p>
+            </div>
+
+            <div class="bg-white border-2 border-purple-300 p-4 mb-6 rounded">
+              <h2 class="font-bold text-purple-600 mb-3 text-center"><span data-i18n="Tournament_Round">Round</span> 1 - ${getRoundName(matches.length)}</h2>
+              <div class="space-y-3">
+                ${matches.map((match, idx) => `
+                  <div class="border-2 border-purple-200 p-3 bg-purple-50 rounded">
+                    <div class="text-sm text-purple-500 mb-2"><span data-i18n="Tournament_Match">Match</span> ${idx + 1}</div>
+                    <div class="flex items-center justify-between gap-4">
+                      <div class="flex-1 flex items-center gap-2">
+                        <img src="/images/raquette_${match.p1.color}.png" class="w-4 h-12" alt="">
+                        <span class="font-semibold text-purple-800">${match.p1.name}</span>
+                      </div>
+                      <span class="text-purple-400 font-bold" data-i18n="Tournament_VS">VS</span>
+                      <div class="flex-1 flex items-center gap-2 justify-end">
+                        ${match.p2
+        ? `<span class="font-semibold text-purple-800">${match.p2.name}</span>
+                             <img src="/images/raquette_${match.p2.color}.png" class="w-4 h-12" alt="">`
+        : `<span class="text-purple-400 italic" data-i18n="Tournament_QualifiedByDefault">Qualifié d'office</span>`}
+                      </div>
+                    </div>
+                  </div>
+                `).join("")}
+              </div>
+            </div>
+
+            ${roundsNeeded > 1 ? `
+              <div class="bg-purple-100 border-2 border-purple-300 p-4 mb-6 rounded">
+                <h3 class="font-bold text-purple-600 mb-2 text-center" data-i18n="Tournament_NextRounds">Rounds suivants</h3>
+                <div class="text-sm text-purple-700 space-y-1">
+                  ${generateFutureRounds(totalPlayers, roundsNeeded)}
+                </div>
+              </div>
+            ` : ''}
+
+            <div class="flex justify-center">
+              <button id="start-tournament"
+                      class="relative px-8 py-2 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400
+                            text-purple-800 font-bold
+                            shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
+                            active:shadow-none active:translate-y-[2px] active:border-purple-300
+                            transition-all duration-100"
+                      data-i18n="Tournament_StartButton">
+                Commencer le tournoi
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+    updateUI();
+    document.getElementById("start-tournament")?.addEventListener("click", () => {
         const match0 = matches[0];
         navigate(`/game?mode=tournament&player1=${encodeURIComponent(match0.p1.name)}&player2=${encodeURIComponent(match0.p2?.name || "— (qualifié d'office)")}&color1=${match0.p1.color}&color2=${match0.p2?.color || "gris"}&score=${score}`);
     });
+}
+function getRoundName(matchCount) {
+    if (matchCount === 1)
+        return t("Tournament_Final");
+    if (matchCount === 2)
+        return t("Tournament_SemiFinal");
+    if (matchCount === 4)
+        return t("Tournament_QuarterFinal");
+    return `${matchCount} ${t("Tournament_Matches")}`;
+}
+function generateFutureRounds(totalPlayers, totalRounds) {
+    const rounds = [];
+    let playersRemaining = totalPlayers;
+    for (let round = 2; round <= totalRounds; round++) {
+        playersRemaining = Math.ceil(playersRemaining / 2);
+        const matchCount = Math.ceil(playersRemaining / 2);
+        rounds.push(`<p><span data-i18n="Tournament_Round">Round</span> ${round} : ${getRoundName(matchCount)} (${playersRemaining} <span data-i18n="Tournament_Players">joueurs</span>)</p>`);
+    }
+    return rounds.join("");
 }
