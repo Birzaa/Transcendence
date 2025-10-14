@@ -86,6 +86,6 @@ export function renderHome() {
         navigate('/chat');
     });
     document.getElementById('leaderboard-button')?.addEventListener('click', () => {
-        navigate('/leaderboard');
+        navigate('/performances');
     });
 }

@@ -414,21 +414,44 @@ function initRemoteGame(ws: WebSocket, role: Role, roomId: string, WIN_SCORE: nu
   }
 
 function handleCollisions() {
-    if (ballY <= 0 || ballY + ballSize >= gameHeight) ballVY *= -1;
+    // Collisions avec les murs haut et bas
+    if (ballY <= 0) {
+      ballY = 0;
+      ballVY = -ballVY;
+    } else if (ballY + ballSize >= gameHeight) {
+      ballY = gameHeight - ballSize;
+      ballVY = -ballVY;
+    }
 
-    if (ballX <= paddle1.offsetLeft + paddle1.offsetWidth &&
-        ballY + ballSize >= p1Y && ballY <= p1Y + paddleHeight) {
-      ballX = paddle1.offsetLeft + paddle1.offsetWidth;
-      ballVX = Math.abs(ballVX);
-      const hit = ((ballY + ballSize/2) - (p1Y + paddleHeight/2)) / (paddleHeight/2);
+    // Positions des raquettes
+    const p1Left = paddle1.offsetLeft;
+    const p1Right = p1Left + paddle1.offsetWidth;
+    const p2Left = paddle2.offsetLeft;
+    const p2Right = p2Left + paddle2.offsetWidth;
+
+    // Collision avec la raquette gauche (paddle1)
+    if (
+      ballX <= p1Right &&
+      ballX + ballSize >= p1Left &&
+      ballY + ballSize >= p1Y &&
+      ballY <= p1Y + paddleHeight
+    ) {
+      ballX = p1Right;
+      ballVX = Math.abs(ballVX) * 1.05;
+      const hit = ((ballY + ballSize / 2) - (p1Y + paddleHeight / 2)) / (paddleHeight / 2);
       ballVY = hit * Math.max(3, Math.abs(ballVX));
     }
 
-    if (ballX + ballSize >= (gameWidth - (paddle2 as HTMLElement).offsetWidth - 16) &&
-        ballY + ballSize >= p2Y && ballY <= p2Y + paddleHeight) {
-      ballX = gameWidth - (paddle2 as HTMLElement).offsetWidth - 16 - ballSize;
-      ballVX = -Math.abs(ballVX);
-      const hit = ((ballY + ballSize/2) - (p2Y + paddleHeight/2)) / (paddleHeight/2);
+    // Collision avec la raquette droite (paddle2)
+    if (
+      ballX + ballSize >= p2Left &&
+      ballX <= p2Right &&
+      ballY + ballSize >= p2Y &&
+      ballY <= p2Y + paddleHeight
+    ) {
+      ballX = p2Left - ballSize;
+      ballVX = -Math.abs(ballVX) * 1.05;
+      const hit = ((ballY + ballSize / 2) - (p2Y + paddleHeight / 2)) / (paddleHeight / 2);
       ballVY = hit * Math.max(3, Math.abs(ballVX));
     }
 

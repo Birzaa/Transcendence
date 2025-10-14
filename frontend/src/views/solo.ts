@@ -65,7 +65,7 @@ export function renderSoloGame(): void {
                 
                 <img id="ball"
                      src="/images/ball.png"
-                     class="absolute -translate-x-1/2 -translate-y-1/2"
+                     class="absolute"
                      style="width: 30px; height: 30px;"
                      alt="ball">
                 <img id="paddle"
@@ -242,45 +242,48 @@ function initSoloGame(WIN_SCORE: number) {
             ballX += ballSpeedX;
             ballY += ballSpeedY;
 
-            if (ballY <= 0 || ballY + ballSize >= gameHeight) {
+            // Collisions avec les murs haut et bas
+            if (ballY <= 0) {
+                ballY = 0;
                 ballSpeedY = -ballSpeedY;
-                if (ballY <= 0) ballY = 0;
-                if (ballY + ballSize >= gameHeight) ballY = gameHeight - ballSize;
+            } else if (ballY + ballSize >= gameHeight) {
+                ballY = gameHeight - ballSize;
+                ballSpeedY = -ballSpeedY;
             }
 
-            // collisions joueur
+            // Positions des raquettes
+            const paddleLeft = paddle.offsetLeft;
+            const paddleRight = paddleLeft + paddle.offsetWidth;
+            const aiPaddleLeft = aiPaddle.offsetLeft;
+            const aiPaddleRight = aiPaddleLeft + aiPaddle.offsetWidth;
+
+            // Collision avec la raquette gauche (joueur)
             if (
-                ballX <= paddle.offsetLeft + paddle.offsetWidth &&
+                ballX <= paddleRight &&
+                ballX + ballSize >= paddleLeft &&
                 ballY + ballSize >= paddleY &&
                 ballY <= paddleY + paddleHeight
             ) {
-                ballX = paddle.offsetLeft + paddle.offsetWidth;
+                ballX = paddleRight;
                 ballSpeedX = Math.abs(ballSpeedX) * 1.05;
-                const hit = ((ballY + ballSize/2) - (paddleY + paddleHeight/2)) / (paddleHeight/2);
+                const hit = ((ballY + ballSize / 2) - (paddleY + paddleHeight / 2)) / (paddleHeight / 2);
                 ballSpeedY = hit * Math.max(3, Math.abs(ballSpeedX));
-                ball.setAttribute("src", "/images/ball_hit.png");
-                setTimeout(() => {
-                    ball.setAttribute("src", "/images/ball.png");
-                }, 200);
             }
 
-            // collisions IA
+            // Collision avec la raquette droite (IA)
             if (
-                ballX + ballSize >= aiPaddle.offsetLeft &&
+                ballX + ballSize >= aiPaddleLeft &&
+                ballX <= aiPaddleRight &&
                 ballY + ballSize >= aiPaddleY &&
                 ballY <= aiPaddleY + paddleHeight
             ) {
-                ballX = aiPaddle.offsetLeft - ballSize;
+                ballX = aiPaddleLeft - ballSize;
                 ballSpeedX = -Math.abs(ballSpeedX) * 1.05;
-                const hit = ((ballY + ballSize/2) - (aiPaddleY + paddleHeight/2)) / (paddleHeight/2);
+                const hit = ((ballY + ballSize / 2) - (aiPaddleY + paddleHeight / 2)) / (paddleHeight / 2);
                 ballSpeedY = hit * Math.max(3, Math.abs(ballSpeedX));
-                ball.setAttribute("src", "/images/ball_hit.png");
-                setTimeout(() => {
-                    ball.setAttribute("src", "/images/ball.png");
-                }, 200);
             }
 
-            // score
+            // Gestion des scores
             if (ballX < 0) {
                 aiScore++;
                 aiScoreDisplay.textContent = String(aiScore).padStart(2, '0');

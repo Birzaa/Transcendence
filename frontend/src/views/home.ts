@@ -91,6 +91,6 @@ export function renderHome(): void {
   });
 
   document.getElementById('leaderboard-button')?.addEventListener('click', () => {
-    navigate('/leaderboard');
+    navigate('/performances');
   });
 }

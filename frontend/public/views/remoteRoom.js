@@ -260,7 +260,7 @@ function renderRemoteColorPicker() {
 
               <!-- Choix de raquette -->
               <div>
-                <h3 class="text-purple-600 font-bold text-center mb-2" data-i18n="Remote_ChoosePaddle">Choisissez votre raquette</h3>
+                <h3 class="text-purple-600 font-bold text-center mb-2">Choisissez votre raquette</h3>
                 <div class="pt-4 flex justify-center gap-2 flex-wrap">
                   ${["bleu", "vert", "jaune", "orange", "rose", "rouge", "violet", "gris"].map(c => `
                     <label>
