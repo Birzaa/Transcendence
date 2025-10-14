@@ -153,6 +153,130 @@ function initSoloGame(WIN_SCORE: number) {
     let upKeyPressed = false;
     let downKeyPressed = false;
 
+    // IA - Simulation d'entrées clavier
+    let aiUpKeyPressed = false;
+    let aiDownKeyPressed = false;
+
+    // IA - Snapshot du jeu (une fois par seconde)
+    let lastAIUpdate = 0;
+    let aiSnapshotBallX = ballX;
+    let aiSnapshotBallY = ballY;
+    let aiSnapshotBallSpeedX = ballSpeedX;
+    let aiSnapshotBallSpeedY = ballSpeedY;
+    let aiTargetY = aiPaddleY;
+    let aiDecisionTime = 0; // Moment où la décision a été prise
+
+    // IA - Difficulté et imperfection
+    const AI_UPDATE_INTERVAL = 1000; // 1 seconde (contrainte du module)
+    const AI_REACTION_ERROR = 0.30; // 30% d'erreur de prédiction (rend l'IA battable)
+    const AI_DECISION_THRESHOLD = 25; // Seuil pour décider de bouger (zone morte plus large)
+    const AI_REACTION_DELAY = 200; // Délai de réaction en ms (humanise l'IA)
+    const AI_MISS_CHANCE = 0.12; // 12% de chance de rater complètement (erreur humaine)
+
+    // IA - Prédire où la balle va arriver (avec rebonds)
+    function predictBallPosition(): number {
+        // Si la balle va vers le joueur (gauche), position défensive au centre
+        if (aiSnapshotBallSpeedX <= 0) {
+            return (gameHeight - paddleHeight) / 2;
+        }
+
+        // Simuler la trajectoire de la balle jusqu'à la raquette IA
+        let simX = aiSnapshotBallX;
+        let simY = aiSnapshotBallY;
+        let simSpeedX = aiSnapshotBallSpeedX;
+        let simSpeedY = aiSnapshotBallSpeedY;
+
+        // Position X de la raquette IA (côté droit)
+        const aiPaddleLeftEdge = aiPaddle.offsetLeft;
+        const maxIterations = 1000;
+        let iterations = 0;
+
+        // Simuler jusqu'à ce que la balle atteigne la position X de la raquette IA
+        while (simX + ballSize < aiPaddleLeftEdge && iterations < maxIterations) {
+            simX += simSpeedX;
+            simY += simSpeedY;
+
+            // Rebonds sur les murs haut et bas
+            if (simY <= 0) {
+                simY = 0;
+                simSpeedY = -simSpeedY;
+            } else if (simY + ballSize >= gameHeight) {
+                simY = gameHeight - ballSize;
+                simSpeedY = -simSpeedY;
+            }
+
+            // Si la balle change de direction (collision avec paddle joueur), arrêter
+            if (simX < 0) {
+                return (gameHeight - paddleHeight) / 2; // Position centrale
+            }
+
+            iterations++;
+        }
+
+        // Ajouter une erreur de prédiction aléatoire pour rendre l'IA humaine
+        const error = (Math.random() - 0.5) * gameHeight * AI_REACTION_ERROR;
+
+        // La cible est le centre de la balle
+        let predictedY = simY + (ballSize / 2) - (paddleHeight / 2) + error;
+
+        // Garder la prédiction dans les limites
+        predictedY = Math.max(0, Math.min(predictedY, gameHeight - paddleHeight));
+
+        return predictedY;
+    }
+
+    // IA - Mettre à jour la décision de l'IA (une fois par seconde)
+    function updateAIDecision(currentTime: number) {
+        if (currentTime - lastAIUpdate >= AI_UPDATE_INTERVAL) {
+            lastAIUpdate = currentTime;
+            aiDecisionTime = currentTime; // Enregistrer le moment de la décision
+
+            // Prendre un snapshot du jeu
+            aiSnapshotBallX = ballX;
+            aiSnapshotBallY = ballY;
+            aiSnapshotBallSpeedX = ballSpeedX;
+            aiSnapshotBallSpeedY = ballSpeedY;
+
+            // Calculer la position cible avec prédiction
+            // 12% de chance de rater complètement (erreur humaine)
+            if (Math.random() < AI_MISS_CHANCE) {
+                // L'IA rate et va au mauvais endroit
+                aiTargetY = Math.random() * (gameHeight - paddleHeight);
+            } else {
+                aiTargetY = predictBallPosition();
+            }
+        }
+    }
+
+    // IA - Appliquer la décision après le délai de réaction
+    function applyAIDecision(currentTime: number) {
+        // Vérifier si le délai de réaction est passé depuis la dernière décision
+        if (currentTime - aiDecisionTime < AI_REACTION_DELAY) {
+            // Pas encore réagi → ne rien faire (touches désactivées)
+            aiUpKeyPressed = false;
+            aiDownKeyPressed = false;
+            return;
+        }
+
+        // Le délai est passé → calculer la direction à prendre
+        const centerY = aiPaddleY + paddleHeight / 2;
+        const targetCenterY = aiTargetY + paddleHeight / 2;
+        const diff = targetCenterY - centerY;
+
+        // Réinitialiser les touches
+        aiUpKeyPressed = false;
+        aiDownKeyPressed = false;
+
+        // Décider de bouger seulement si la différence est significative
+        if (Math.abs(diff) > AI_DECISION_THRESHOLD) {
+            if (diff < 0) {
+                aiUpKeyPressed = true;
+            } else {
+                aiDownKeyPressed = true;
+            }
+        }
+    }
+
     // mise à jour des dimensions (resize + init)
     function updateDimensions() {
         gameWidth = gameContainer.clientWidth;
@@ -228,14 +352,22 @@ function initSoloGame(WIN_SCORE: number) {
 
     function gameLoop() {
         if (!gamePaused) {
+            const currentTime = Date.now();
+
+            if (!waitingForServe) {
+                // Mettre à jour la décision de l'IA (une fois par seconde)
+                updateAIDecision(currentTime);
+                // Appliquer la décision avec délai de réaction
+                applyAIDecision(currentTime);
+            }
+
             // paddle joueur → contrôlé par clavier
             if (upKeyPressed) paddleY = Math.max(paddleY - paddleSpeed, 0);
             if (downKeyPressed) paddleY = Math.min(paddleY + paddleSpeed, gameHeight - paddleHeight);
 
-            // paddle IA
-            const targetY = ballY - (paddleHeight / 2) + ballSize / 2;
-            aiPaddleY += (targetY - aiPaddleY) * 0.07;
-            aiPaddleY = Math.max(0, Math.min(aiPaddleY, gameHeight - paddleHeight));
+            // paddle IA → simulation d'entrées clavier (MÊME vitesse que le joueur)
+            if (aiUpKeyPressed) aiPaddleY = Math.max(aiPaddleY - paddleSpeed, 0);
+            if (aiDownKeyPressed) aiPaddleY = Math.min(aiPaddleY + paddleSpeed, gameHeight - paddleHeight);
         }
 
         if (!waitingForServe && !gamePaused) {
