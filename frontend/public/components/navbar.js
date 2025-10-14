@@ -20,18 +20,14 @@ export async function navBar() {
           <div class="absolute inset-0 flex items-center justify-center">
               <div class="h-full w-1 bg-purple-300/50"></div>
           </div>
-          <div class="absolute left-0 top-1/2 transform -translate-y-1/2 ping-pong-paddle-left">
-              <div class="relative" style="width:16px;height:32px;">
-                  <div class="absolute" style="width:4px;height:32px;background:#FF9FF3;left:0;box-shadow:4px 0 0 #FF9FF3,8px 0 0 #FF9FF3,12px 0 0 #FF9FF3;"></div>
-                  <div class="absolute" style="width:16px;height:8px;background:#FECA57;top:12px;box-shadow:0 8px 0 #FECA57;"></div>
-              </div>
-          </div>
-          <div class="absolute right-0 top-1/2 transform -translate-y-1/2 ping-pong-paddle-right">
-              <div class="relative" style="width:16px;height:32px;">
-                  <div class="absolute" style="width:4px;height:32px;background:#54A0FF;right:0;box-shadow:-4px 0 0 #54A0FF,-8px 0 0 #54A0FF,-12px 0 0 #54A0FF;"></div>
-                  <div class="absolute" style="width:16px;height:8px;background:#00D2D3;top:12px;box-shadow:0 8px 0 #00D2D3;"></div>
-              </div>
-          </div>
+          <img src="images/raquette_bleu.png"
+					     alt="paddle1"
+					     class="absolute left-0 top-1/2 transform -translate-y-1/2 ping-pong-paddle-left"
+					     style="width: 16px; height: 32px;">
+          <img src="images/raquette_violet.png"
+					     alt="paddle2"
+					     class="absolute right-0 top-1/2 transform -translate-y-1/2 ping-pong-paddle-right"
+					     style="width: 16px; height: 32px;">
           <img src="/images/blue.png" alt="Ball" class="absolute top-1/2 left-1/2 ping-pong-ball" style="width:20px;height:20px;">
       </div>
 
@@ -73,11 +69,11 @@ export async function navBar() {
 
 			/* Animation : gauche → bas → droite → haut → gauche */
 			@keyframes pingpong {
-    			0%   { left: 20%;   top: 25%; }   /* raquette gauche */
-    			25%  { left: 50%;  top: 50%; }  /* bas */
-    			50%  { left: 80%; top: 25%; }   /* raquette droite */
-    			75%  { left: 50%;  top: 0%; }    /* haut */
-    			100% { left: 20%;   top: 25%; }   /* retour raquette gauche */
+    			0%   { left: 22%;   top: 50%; }   /* raquette gauche */
+    			25%  { left: 50%;  top: 75%; }  /* bas */
+    			50%  { left: 80%; top: 50%; }   /* raquette droite */
+    			75%  { left: 50%;  top: 25%; }    /* haut */
+    			100% { left: 22%;   top: 50%; }   /* retour raquette gauche */
 			}
 
 			/* Raquette gauche */
