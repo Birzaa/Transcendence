@@ -136,114 +136,152 @@ function initSoloGame(WIN_SCORE) {
     let ballSpeedX = 0;
     let ballSpeedY = 0;
     const baseBallSpeed = 4;
-    // états des touches
-    let upKeyPressed = false;
-    let downKeyPressed = false;
-    // IA - Simulation d'entrées clavier
-    let aiUpKeyPressed = false;
-    let aiDownKeyPressed = false;
-    // IA - Snapshot du jeu (une fois par seconde)
-    let lastAIUpdate = 0;
-    let aiSnapshotBallX = ballX;
-    let aiSnapshotBallY = ballY;
-    let aiSnapshotBallSpeedX = ballSpeedX;
-    let aiSnapshotBallSpeedY = ballSpeedY;
-    let aiTargetY = aiPaddleY;
-    let aiDecisionTime = 0; // Moment où la décision a été prise
-    // IA - Difficulté et imperfection
+    // ========================================
+    // GESTION DU CLAVIER - JOUEUR HUMAIN
+    // ========================================
+    let upKeyPressed = false; // Flèche haut pressée
+    let downKeyPressed = false; // Flèche bas pressée
+    // ========================================
+    // INTELLIGENCE ARTIFICIELLE (IA/BOT)
+    // ========================================
+    // L'IA simule des entrées clavier pour avoir exactement la MÊME vitesse que le joueur.
+    // Cela garantit l'égalité des règles entre le joueur et le bot.
+    let aiUpKeyPressed = false; // Simule la flèche haut pour l'IA
+    let aiDownKeyPressed = false; // Simule la flèche bas pour l'IA
+    // IA - Snapshot du jeu (mis à jour toutes les 1 seconde)
+    // Le bot prend une "photo" de l'état du jeu une fois par seconde,
+    // conformément au module "Game customization options" qui impose cette contrainte.
+    let lastAIUpdate = 0; // Timestamp de la dernière mise à jour IA
+    let aiSnapshotBallX = ballX; // Position X de la balle au moment du snapshot
+    let aiSnapshotBallY = ballY; // Position Y de la balle au moment du snapshot
+    let aiSnapshotBallSpeedX = ballSpeedX; // Vitesse X de la balle au snapshot
+    let aiSnapshotBallSpeedY = ballSpeedY; // Vitesse Y de la balle au snapshot
+    let aiTargetY = aiPaddleY; // Position cible calculée par l'IA
+    let aiDecisionTime = 0; // Timestamp du moment où la décision a été prise
+    // IA - Paramètres de difficulté et d'imperfection
+    // Ces paramètres rendent l'IA battable et humaine (pas parfaite)
     const AI_UPDATE_INTERVAL = 1000; // 1 seconde (contrainte du module)
     const AI_REACTION_ERROR = 0.30; // 30% d'erreur de prédiction (rend l'IA battable)
-    const AI_DECISION_THRESHOLD = 25; // Seuil pour décider de bouger (zone morte plus large)
-    const AI_REACTION_DELAY = 200; // Délai de réaction en ms (humanise l'IA)
+    const AI_DECISION_THRESHOLD = 25; // Seuil minimum pour décider de bouger (zone morte)
+    const AI_REACTION_DELAY = 200; // 200ms de délai de réaction (humanise l'IA)
     const AI_MISS_CHANCE = 0.12; // 12% de chance de rater complètement (erreur humaine)
-    // IA - Prédire où la balle va arriver (avec rebonds)
+    // ========================================
+    // FONCTION IA : PRÉDICTION DE TRAJECTOIRE
+    // ========================================
+    // Cette fonction prédit où la balle va arriver en simulant sa trajectoire.
+    // Elle prend en compte les rebonds sur les murs haut et bas.
+    // IMPORTANT: Utilise le snapshot pris il y a max 1 seconde (pas les données en temps réel).
     function predictBallPosition() {
-        // Si la balle va vers le joueur (gauche), position défensive au centre
+        // CAS 1: La balle va vers le joueur (vitesse X négative ou nulle)
+        // → L'IA se positionne défensivement au centre du terrain
         if (aiSnapshotBallSpeedX <= 0) {
             return (gameHeight - paddleHeight) / 2;
         }
-        // Simuler la trajectoire de la balle jusqu'à la raquette IA
-        let simX = aiSnapshotBallX;
-        let simY = aiSnapshotBallY;
-        let simSpeedX = aiSnapshotBallSpeedX;
-        let simSpeedY = aiSnapshotBallSpeedY;
-        // Position X de la raquette IA (côté droit)
+        // CAS 2: La balle vient vers l'IA (vitesse X positive)
+        // → Simulation de la trajectoire jusqu'à la position de la raquette IA
+        // Variables de simulation (basées sur le snapshot)
+        let simX = aiSnapshotBallX; // Position X simulée
+        let simY = aiSnapshotBallY; // Position Y simulée
+        let simSpeedX = aiSnapshotBallSpeedX; // Vitesse X simulée
+        let simSpeedY = aiSnapshotBallSpeedY; // Vitesse Y simulée
+        // Position X de la raquette IA (côté droit du terrain)
         const aiPaddleLeftEdge = aiPaddle.offsetLeft;
+        // Sécurité: éviter une boucle infinie
         const maxIterations = 1000;
         let iterations = 0;
-        // Simuler jusqu'à ce que la balle atteigne la position X de la raquette IA
+        // BOUCLE DE SIMULATION: avancer la balle jusqu'à la raquette IA
         while (simX + ballSize < aiPaddleLeftEdge && iterations < maxIterations) {
+            // Déplacer la balle
             simX += simSpeedX;
             simY += simSpeedY;
-            // Rebonds sur les murs haut et bas
+            // GESTION DES REBONDS sur les murs haut et bas
             if (simY <= 0) {
                 simY = 0;
-                simSpeedY = -simSpeedY;
+                simSpeedY = -simSpeedY; // Inverser la direction verticale
             }
             else if (simY + ballSize >= gameHeight) {
                 simY = gameHeight - ballSize;
-                simSpeedY = -simSpeedY;
+                simSpeedY = -simSpeedY; // Inverser la direction verticale
             }
             // Si la balle change de direction (collision avec paddle joueur), arrêter
             if (simX < 0) {
-                return (gameHeight - paddleHeight) / 2; // Position centrale
+                return (gameHeight - paddleHeight) / 2; // Position centrale défensive
             }
             iterations++;
         }
-        // Ajouter une erreur de prédiction aléatoire pour rendre l'IA humaine
+        // AJOUT D'IMPERFECTION: Erreur de prédiction aléatoire (30% du terrain)
+        // Cela rend l'IA humaine et battable (elle ne prédit pas parfaitement)
         const error = (Math.random() - 0.5) * gameHeight * AI_REACTION_ERROR;
-        // La cible est le centre de la balle
+        // CALCUL DE LA POSITION CIBLE
+        // La cible est le centre de la balle moins la moitié de la hauteur de la raquette
+        // pour centrer la raquette sur la balle
         let predictedY = simY + (ballSize / 2) - (paddleHeight / 2) + error;
-        // Garder la prédiction dans les limites
+        // Garder la prédiction dans les limites du terrain
         predictedY = Math.max(0, Math.min(predictedY, gameHeight - paddleHeight));
         return predictedY;
     }
-    // IA - Mettre à jour la décision de l'IA (une fois par seconde)
+    // ========================================
+    // FONCTION IA : MISE À JOUR DE LA DÉCISION (1 fois par seconde)
+    // ========================================
+    // Cette fonction est appelée dans la boucle de jeu.
+    // Elle met à jour la décision de l'IA toutes les 1000ms (1 seconde).
     function updateAIDecision(currentTime) {
+        // Vérifier si 1 seconde s'est écoulée depuis la dernière mise à jour
         if (currentTime - lastAIUpdate >= AI_UPDATE_INTERVAL) {
             lastAIUpdate = currentTime;
             aiDecisionTime = currentTime; // Enregistrer le moment de la décision
-            // Prendre un snapshot du jeu
+            // ÉTAPE 1: Prendre un snapshot (photo) de l'état actuel du jeu
+            // L'IA travaillera avec ces données pendant 1 seconde
             aiSnapshotBallX = ballX;
             aiSnapshotBallY = ballY;
             aiSnapshotBallSpeedX = ballSpeedX;
             aiSnapshotBallSpeedY = ballSpeedY;
-            // Calculer la position cible avec prédiction
-            // 12% de chance de rater complètement (erreur humaine)
+            // ÉTAPE 2: Calculer la position cible avec prédiction
+            // Imperfection: 12% de chance de complètement rater (erreur humaine)
             if (Math.random() < AI_MISS_CHANCE) {
-                // L'IA rate et va au mauvais endroit
+                // L'IA fait une erreur et va à une position aléatoire
                 aiTargetY = Math.random() * (gameHeight - paddleHeight);
             }
             else {
+                // L'IA calcule correctement (avec une petite erreur de 30%)
                 aiTargetY = predictBallPosition();
             }
         }
     }
-    // IA - Appliquer la décision après le délai de réaction
+    // ========================================
+    // FONCTION IA : APPLICATION DE LA DÉCISION (avec délai de réaction)
+    // ========================================
+    // Cette fonction simule un délai de réaction humain de 200ms.
+    // L'IA ne réagit pas instantanément à sa décision, ce qui la rend plus humaine.
     function applyAIDecision(currentTime) {
-        // Vérifier si le délai de réaction est passé depuis la dernière décision
+        // PHASE 1: Délai de réaction (200ms après la décision)
+        // Pendant ce temps, l'IA ne bouge pas (simulation du temps de réaction humain)
         if (currentTime - aiDecisionTime < AI_REACTION_DELAY) {
-            // Pas encore réagi → ne rien faire (touches désactivées)
+            // Pas encore réagi → désactiver toutes les touches
             aiUpKeyPressed = false;
             aiDownKeyPressed = false;
             return;
         }
-        // Le délai est passé → calculer la direction à prendre
-        const centerY = aiPaddleY + paddleHeight / 2;
-        const targetCenterY = aiTargetY + paddleHeight / 2;
-        const diff = targetCenterY - centerY;
-        // Réinitialiser les touches
+        // PHASE 2: Le délai est passé, l'IA peut maintenant bouger
+        // Calculer la distance entre la position actuelle et la cible
+        const centerY = aiPaddleY + paddleHeight / 2; // Centre de la raquette IA
+        const targetCenterY = aiTargetY + paddleHeight / 2; // Centre de la cible
+        const diff = targetCenterY - centerY; // Différence (négatif = monter, positif = descendre)
+        // Réinitialiser les touches simulées
         aiUpKeyPressed = false;
         aiDownKeyPressed = false;
-        // Décider de bouger seulement si la différence est significative
+        // DÉCISION DE MOUVEMENT
+        // L'IA bouge seulement si la différence dépasse le seuil (zone morte de 25px)
+        // Cela évite les micro-ajustements constants et rend l'IA plus humaine
         if (Math.abs(diff) > AI_DECISION_THRESHOLD) {
             if (diff < 0) {
-                aiUpKeyPressed = true;
+                aiUpKeyPressed = true; // Cible au-dessus → monter
             }
             else {
-                aiDownKeyPressed = true;
+                aiDownKeyPressed = true; // Cible en-dessous → descendre
             }
         }
+        // Si la différence est petite (< 25px), l'IA ne bouge pas (zone morte)
     }
     // mise à jour des dimensions (resize + init)
     function updateDimensions() {
@@ -310,21 +348,32 @@ function initSoloGame(WIN_SCORE) {
             navigate("/");
         });
     }
+    // ========================================
+    // BOUCLE PRINCIPALE DU JEU (Game Loop)
+    // ========================================
+    // Cette fonction est appelée 60 fois par seconde (requestAnimationFrame).
+    // Elle gère tous les déplacements, collisions et la logique du jeu.
     function gameLoop() {
         if (!gamePaused) {
             const currentTime = Date.now();
+            // LOGIQUE IA: Mise à jour uniquement si la balle est en jeu
             if (!waitingForServe) {
-                // Mettre à jour la décision de l'IA (une fois par seconde)
+                // 1. Mettre à jour la décision de l'IA (toutes les 1 seconde)
                 updateAIDecision(currentTime);
-                // Appliquer la décision avec délai de réaction
+                // 2. Appliquer la décision avec délai de réaction (200ms)
                 applyAIDecision(currentTime);
             }
-            // paddle joueur → contrôlé par clavier
+            // ========================================
+            // MOUVEMENT DES RAQUETTES
+            // ========================================
+            // JOUEUR: Contrôlé directement par les touches du clavier
             if (upKeyPressed)
                 paddleY = Math.max(paddleY - paddleSpeed, 0);
             if (downKeyPressed)
                 paddleY = Math.min(paddleY + paddleSpeed, gameHeight - paddleHeight);
-            // paddle IA → simulation d'entrées clavier (MÊME vitesse que le joueur)
+            // IA/BOT: Contrôlé par simulation de touches (aiUpKeyPressed, aiDownKeyPressed)
+            // ÉGALITÉ DES RÈGLES: Utilise exactement la MÊME vitesse (paddleSpeed) que le joueur
+            // Cela garantit que le bot n'a aucun avantage de vitesse
             if (aiUpKeyPressed)
                 aiPaddleY = Math.max(aiPaddleY - paddleSpeed, 0);
             if (aiDownKeyPressed)
@@ -356,6 +405,8 @@ function initSoloGame(WIN_SCORE) {
                 ballSpeedX = Math.abs(ballSpeedX) * 1.05;
                 const hit = ((ballY + ballSize / 2) - (paddleY + paddleHeight / 2)) / (paddleHeight / 2);
                 ballSpeedY = hit * Math.max(3, Math.abs(ballSpeedX));
+                ball.setAttribute("src", "/images/ball_hit.png");
+                setTimeout(() => { ball.setAttribute("src", "/images/ball.png"); }, 200);
             }
             // Collision avec la raquette droite (IA)
             if (ballX + ballSize >= aiPaddleLeft &&
@@ -366,6 +417,8 @@ function initSoloGame(WIN_SCORE) {
                 ballSpeedX = -Math.abs(ballSpeedX) * 1.05;
                 const hit = ((ballY + ballSize / 2) - (aiPaddleY + paddleHeight / 2)) / (paddleHeight / 2);
                 ballSpeedY = hit * Math.max(3, Math.abs(ballSpeedX));
+                ball.setAttribute("src", "/images/ball_hit.png");
+                setTimeout(() => { ball.setAttribute("src", "/images/ball.png"); }, 200);
             }
             // Gestion des scores
             if (ballX < 0) {

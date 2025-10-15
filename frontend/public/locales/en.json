@@ -9,6 +9,8 @@
   "Classement": "☆ Ranking",
   "open_btn": "(=^･ω･^=) Open",
   "Top10": "٩(◕‿◕｡)۶Top 10",
+  "Home_Performances": "Performance",
+  "Home_PerformancesBtn": "٩(◕‿◕｡)۶ Open",
 
   "_comment_gamemenu": "Game mode selection menu",
   "Choisirunmodedejeu": "Choose a game mode",
@@ -190,6 +192,11 @@
   "Joueur1": "Player 1",
   "Joueur2": "Player 2",
   "1vs1_Result_partie": "Match Result",
+
+  "_comment_tournamentWinner": "Tournament Champion Page",
+  "TournamentWinner_Title": "🏆 Tournament Champion 🏆",
+  "TournamentWinner_Text": "wins the tournament 🎉",
+  "TournamentWinner_BackMenu": "← Back to menu",
 
   "_comment_performance": "Performance Page",
   "Performance_Title": "My Performance",

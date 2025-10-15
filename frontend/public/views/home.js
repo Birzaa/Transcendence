@@ -47,15 +47,15 @@ export function renderHome() {
           <div class="bg-baby-blue bg-opacity-90 p-6 border-2 border-darkest-blue shadow-lg relative">
             <img src="/images/logo.png" class="absolute -top-4 -left-4 w-12 h-12 -rotate-12" alt="Petit chat">
             <h3 class="font-bold text-purple-800 mb-4 flex justify-center items-center">
-              <span class="text-darkest-blue mr-2">☆</span> <span data-i18n="Classement">Classement</span>
+              <span class="text-darkest-blue mr-2">☆</span> <span data-i18n="Home_Performances">Performances</span>
             </h3>
             <button id="leaderboard-button"
               class="relative px-6 py-2 bg-purple-200 border-2 border-t-white border-l-white border-r-purple-400 border-b-purple-400
                 text-purple-800 font-bold shadow-[2px_2px_0px_0px_rgba(147,51,234,0.3)]
                 active:shadow-none active:translate-y-[2px] active:border-purple-300
                 transition-all duration-100 w-full"
-              data-i18n="Top10">
-              ٩(◕‿◕｡)۶ Top 10
+              data-i18n="Home_PerformancesBtn">
+              ٩(◕‿◕｡)۶ Ouvrir
             </button>
           </div>
         </div>

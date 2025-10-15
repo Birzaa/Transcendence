@@ -398,6 +398,8 @@ function init1vs1Game(player1Name, player2Name, mode, WIN_SCORE) {
                 ballSpeedX = Math.abs(ballSpeedX) * 1.05;
                 const hit = ((ballY + ballSize / 2) - (paddle1Y + paddleHeight / 2)) / (paddleHeight / 2);
                 ballSpeedY = hit * Math.max(3, Math.abs(ballSpeedX));
+                ball.setAttribute("src", "/images/ball_hit.png");
+                setTimeout(() => { ball.setAttribute("src", "/images/ball.png"); }, 200);
             }
             if (ballX + ballSize >= p2Left &&
                 ballX <= p2Right &&
@@ -407,6 +409,8 @@ function init1vs1Game(player1Name, player2Name, mode, WIN_SCORE) {
                 ballSpeedX = -Math.abs(ballSpeedX) * 1.05;
                 const hit = ((ballY + ballSize / 2) - (paddle2Y + paddleHeight / 2)) / (paddleHeight / 2);
                 ballSpeedY = hit * Math.max(3, Math.abs(ballSpeedX));
+                ball.setAttribute("src", "/images/ball_hit.png");
+                setTimeout(() => { ball.setAttribute("src", "/images/ball.png"); }, 200);
             }
             if (ballX < 0) {
                 player2Score++;

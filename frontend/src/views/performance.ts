@@ -67,7 +67,7 @@ export async function renderPerformances(): Promise<void> {
       labels: [t('Performance_Wins'), t('Performance_Losses'), t('Performance_Draws')],
       datasets: [{
         data: [stats.wins, stats.losses, stats.draws],
-        backgroundColor: ['#68D391', '#FC8181', '#F6AD55']
+        backgroundColor: ['#84e1e3', '#f590c3', '#F6AD55']
       }]
     }
   });
