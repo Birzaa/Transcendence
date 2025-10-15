@@ -14,6 +14,11 @@ export default async function (app: FastifyInstance) {
       return reply.status(400).send({ error: 'missing-fields' });
     }
 
+    if (name.length > 10) {
+      return reply.status(400).send({ error: 'name too long (max 10 characters)' });
+    }
+    
+
     try {
       const hashedPassword = await bcrypt.hash(password, 10);
 

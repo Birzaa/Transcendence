@@ -82,7 +82,7 @@ export async function renderAuth(): Promise<void> {
             <label for="name" class="whitespace-nowrap font-semibold mr-2 text-purple-600 w-32" data-i18n="Nom">Nom</label>
             <span class="text-purple-300 mx-1 text-lg">☆</span>
             <input type="text" id="name" required 
-                  class="flex-1 border-3 border-purple-300 px-3 py-2 rounded-none bg-white focus:border-purple-400" />
+                  class="flex-1 border-3 border-purple-300 px-3 py-2 rounded-none bg-white focus:border-purple-400" maxlength="10" />
           </div>
 
           <div class="flex items-center">
@@ -170,6 +170,13 @@ export async function renderAuth(): Promise<void> {
         message.style.color = 'red';
         message.setAttribute("data-i18n", "NomRequis");
         message.textContent = 'Le nom est requis';
+        updateUI();
+        return;
+      }
+
+      if (name.length > 10) {
+        message.style.color = 'red';
+        message.textContent = 'Le nom doit faire 10 caractères maximum.';
         updateUI();
         return;
       }
